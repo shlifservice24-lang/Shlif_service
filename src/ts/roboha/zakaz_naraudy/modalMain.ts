@@ -806,7 +806,7 @@ function renderModalContent(
       sclad_id: showCatalog ? null : null,
       slyusar_id: item["slyusar_id"] || null,
     })),
-  ];
+  ].filter((item) => item.name.trim() !== "");
 
   globalCache.initialActItems = allItems;
 
