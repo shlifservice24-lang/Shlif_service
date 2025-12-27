@@ -814,9 +814,6 @@ function renderModalContent(
 
   body.innerHTML = `
     <div class="zakaz_narayd-header">
-      <div class="zakaz_narayd-header-logo">
-        <img src="/logo.jpg" alt="Logo">
-      </div>
       <div class="zakaz_narayd-header-info">
         <h1>Shlif service</h1>
         <p>Адрес: вул. Івана Виговського 7 м. Самбір</p>
