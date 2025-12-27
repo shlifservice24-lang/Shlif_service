@@ -52,6 +52,7 @@ body {
     opacity: 0;
     transform: translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -92,18 +93,24 @@ body {
   &-info {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
 
     h1 {
       margin: 0;
       font-weight: 700;
       color: #fff;
     }
+
     p {
       margin: 2px 0;
       font-size: 14px;
       color: #fff;
     }
   }
+}
+
+.zakaz_narayd-header-info {
+  align-items: flex-start;
 }
 
 .zakaz_narayd-modal-body {
@@ -120,6 +127,7 @@ body {
     max-height: calc(93vh - 30px);
   }
 }
+
 @media (max-width: 768px) {
   .zakaz_narayd-modal-body {
     max-height: calc(93vh - 10px);
@@ -137,6 +145,7 @@ body {
     align-items: baseline;
     padding-bottom: 6px;
   }
+
   .highlight {
     outline: none;
     min-width: 100px;
@@ -169,6 +178,7 @@ body {
     min-width: 300px;
     order: 1;
   }
+
   &.right {
     flex: 1 1 48%;
     min-width: 300px;
@@ -179,10 +189,12 @@ body {
     color: red;
     font-weight: 700;
   }
+
   .green {
     color: #145214;
     font-weight: 700;
   }
+
   .red {
     color: #a30000;
     font-weight: 700;
@@ -244,20 +256,20 @@ body {
   td[data-name="name"] {
     text-align: left;
   }
-  
+
   /* Комірка з найменуванням має бути з відносним позиціонуванням для кнопки */
   td.name-cell {
     position: relative;
     padding-right: 30px !important;
-    
+
     /* Прибираємо зайві обгортки та забезпечуємо повну ширину */
-    > div {
+    >div {
       display: block;
       width: 100%;
       min-height: 20px;
     }
   }
-  
+
   /* Комірка ПІБ без зайвих обгорток */
   td.pib-magazin-cell {
     white-space: nowrap;
@@ -273,6 +285,7 @@ body {
   text-align: left;
   margin-top: 10px;
 }
+
 .add-row-button {
   padding: 8px 15px;
   cursor: pointer;
@@ -288,6 +301,7 @@ body {
     background-color: #45a049;
   }
 }
+
 .action-button {
   max-width: 150px;
   height: 35px;
@@ -302,7 +316,8 @@ body {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 1.2rem; /* Зробимо емодзі більшим */
+  font-size: 1.2rem;
+  /* Зробимо емодзі більшим */
   line-height: 1;
   opacity: 0.8;
   transition: opacity 0.2s, transform 0.2s;
@@ -312,12 +327,14 @@ body {
     transform: scale(1.1);
   }
 }
+
 /* КІНЕЦЬ ЗМІН 
 */
 
 .close-act-button {
   background-color: #d32f2f;
   color: #fff;
+
   &:hover {
     background-color: #b71c1c;
   }
@@ -326,7 +343,7 @@ body {
 .zakaz_narayd-sums-footer {
   text-align: right;
   padding: 10px 24px;
-  
+
   p {
     margin: 5px 0;
   }
@@ -348,13 +365,17 @@ body {
   font-weight: 700;
   color: #2e7d32;
   /* width: 100px;  // <-- прибрати */
-  width: auto;          /* дозволяємо рости */
-  min-width: 3ch;       /* мінімум (≈ “0 000”) */
-  max-width: 16ch;      /* верхня межа, за потреби змініть */
+  width: auto;
+  /* дозволяємо рости */
+  min-width: 3ch;
+  /* мінімум (≈ “0 000”) */
+  max-width: 16ch;
+  /* верхня межа, за потреби змініть */
   border: none;
   background: transparent;
   font-size: 1.0em;
-  box-sizing: content-box; /* щоб ширина рахувалась без padding */
+  box-sizing: content-box;
+  /* щоб ширина рахувалась без padding */
 
   &:focus {
     outline: none;
@@ -378,11 +399,14 @@ body {
 /* Рядок з сумами: лейбл тягнеться, число+грн прилипають праворуч */
 .sum-row {
   display: grid;
-  grid-template-columns: 1fr max-content max-content; /* label | value | грн */
+  grid-template-columns: 1fr max-content max-content;
+  /* label | value | грн */
   column-gap: 0.4ch;
   align-items: baseline;
-  justify-items: end;      /* елементи у своїх колонках праворуч */
-  text-align: initial;     /* перекриває .zakaz_narayd-sums-footer{text-align:right} */
+  justify-items: end;
+  /* елементи у своїх колонках праворуч */
+  text-align: initial;
+  /* перекриває .zakaz_narayd-sums-footer{text-align:right} */
   font-variant-numeric: tabular-nums;
   line-height: 1.25;
   margin: 5px 0;
@@ -398,6 +422,7 @@ body {
 .zakaz_narayd-table-container-value {
   padding: 0 24px;
 }
+
 .zakaz_narayd-table td {
   border: 0;
   padding: 2px 2px;
@@ -406,6 +431,7 @@ body {
 .reason-container {
   padding: 0 24px;
 }
+
 .zakaz_narayd-reason-line {
   display: flex;
   justify-content: space-between;
@@ -425,11 +451,13 @@ body {
     transform: scale(1.2);
     color: #007bff;
   }
+
   &:active {
     transform: scale(1.1);
     color: #0056b3;
   }
 }
+
 .zakaz_narayd-reason-line .print-button,
 .zakaz_narayd-reason-line .sklad {
   vertical-align: middle;
@@ -450,11 +478,13 @@ body {
     transform: scale(1.2);
     color: #007bff;
   }
+
   &:active {
     transform: scale(0.95);
     color: #0056b3;
   }
 }
+
 .status-row {
   display: flex;
   justify-content: flex-end; // ← ЗМІНА: вирівнюємо все по правому краю
@@ -471,6 +501,7 @@ body {
   width: 100%;
   gap: 1rem;
 }
+
 // І додайте обгортку для іконок у TypeScript коді:
 .status-dates {
   display: flex;
@@ -531,9 +562,11 @@ body {
     color: #e40b0b;
     font-weight: 700;
   }
+
   .neutral {
     color: #000;
   }
+
   .positive {
     color: #2e7d32;
     font-weight: 700;
@@ -556,21 +589,26 @@ body {
   overflow-y: auto;
   max-width: 500px;
 }
+
 .autocomplete-item {
   padding: 6px 10px;
   cursor: pointer;
 }
+
 .autocomplete-item:focus,
 .autocomplete-item:hover {
   background: #f1f5f9;
   outline: none;
 }
+
 .autocomplete-item.negative {
   color: #e40b0b;
 }
+
 .autocomplete-item.neutral {
   color: #888;
 }
+
 .autocomplete-item.item-detail {
   color: #1e88e5 !important;
   font-weight: 600;
@@ -596,10 +634,12 @@ body {
 
   p {
     margin: 0 0 3px 0;
+
     &:last-child {
       margin-bottom: 0;
     }
   }
+
   strong {
     font-size: inherit;
   }
@@ -631,11 +671,13 @@ body {
 .agreement-text {
   padding-top: 5px;
 }
+
 .signature-line {
   border-top: 1px solid #000;
   margin-top: 20px;
   width: 100px;
 }
+
 h1 {
   padding-top: 0vh;
 }
@@ -655,7 +697,7 @@ h1 {
 
 // Магія Flexbox для розташування
 .zakaz_narayd-buttons-container {
-  
+
   // Кнопка "Додати рядок"
   #add-row-button {
     margin-right: auto; // Відштовхує все, що праворуч, до правого краю
@@ -692,4 +734,3 @@ tr:hover .delete-row-btn {
   outline: 2px solid #000 !important;
   outline-offset: -2px;
 }
-
