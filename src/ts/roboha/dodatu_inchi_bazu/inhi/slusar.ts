@@ -215,8 +215,8 @@ const fillSlusarInputs = (data: any, selectedName: string) => {
     passwordInput.value = String(data.Пароль);
   }
   if (accessSelect && data?.Доступ) {
-    // Якщо вибрано "Брацлавець Б. С.", встановлюємо Адміністратор доступ і блокуємо селект
-    if (normalizeName(selectedName) === normalizeName("Брацлавець Б. С.")) {
+    // Якщо вибрано "Бемба В. Я.", встановлюємо Адміністратор доступ і блокуємо селект
+    if (normalizeName(selectedName) === normalizeName("Бемба В. Я.")) {
       accessSelect.value = "Адміністратор";
       accessSelect.disabled = true;
     } else {

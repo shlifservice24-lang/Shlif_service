@@ -16,7 +16,9 @@ async function checkMainPageSession() {
     if (error || !session) {
       console.warn("⛔ [Main] Немає Google сесії");
       alert("Сесія закінчилась. Увійдіть знову.");
-      window.location.replace("https://veron3373.github.io/STO/index.html");
+      window.location.replace(
+        "https://shlifservice24-lang.github.io/Shlif_service/index.html"
+      );
       return;
     }
 
@@ -25,14 +27,18 @@ async function checkMainPageSession() {
     if (!isEmailAllowed(email)) {
       console.warn("⛔ [Main] Email не в whitelist:", email);
       await supabase.auth.signOut();
-      window.location.replace("https://veron3373.github.io/STO/");
+      window.location.replace(
+        "https://shlifservice24-lang.github.io/Shlif_service/"
+      );
       return;
     }
 
     console.log("✅ [Main] Доступ дозволено:", email);
   } catch (err) {
     console.error("❌ [Main] Помилка перевірки:", err);
-    window.location.replace("https://veron3373.github.io/STO/index.html");
+    window.location.replace(
+      "https://shlifservice24-lang.github.io/Shlif_service/index.html"
+    );
   }
 }
 

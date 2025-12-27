@@ -17,7 +17,9 @@ async function checkPlanningAccess(): Promise<void> {
     if (error || !session) {
       console.warn("⛔ [Планування] Немає Google сесії");
       alert("Необхідна авторизація");
-      window.location.replace("https://veron3373.github.io/STO/index.html");
+      window.location.replace(
+        "https://shlifservice24-lang.github.io/Shlif_service/index.html"
+      );
       return;
     }
 
@@ -27,7 +29,9 @@ async function checkPlanningAccess(): Promise<void> {
       console.warn("⛔ [Планування] Email не в whitelist:", email);
       alert(`Доступ заборонено для ${email}`);
       await supabase.auth.signOut();
-      window.location.replace("https://veron3373.github.io/STO/");
+      window.location.replace(
+        "https://shlifservice24-lang.github.io/Shlif_service/"
+      );
       return;
     }
 
@@ -40,7 +44,9 @@ async function checkPlanningAccess(): Promise<void> {
     document.body.classList.add("auth-verified");
   } catch (err) {
     console.error("❌ [Планування] Помилка перевірки:", err);
-    window.location.replace("https://veron3373.github.io/STO/index.html");
+    window.location.replace(
+      "https://shlifservice24-lang.github.io/Shlif_service/index.html"
+    );
   }
 }
 

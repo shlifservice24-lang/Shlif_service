@@ -12,7 +12,7 @@ export async function signInWithGoogle() {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: "https://veron3373.github.io/STO/",
+      redirectTo: "https://shlifservice24-lang.github.io/Shlif_service/",
     },
   });
 

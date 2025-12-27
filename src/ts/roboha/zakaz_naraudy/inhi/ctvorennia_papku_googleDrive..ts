@@ -9,11 +9,11 @@ declare let google: any;
 
 // ------- Константи -------
 const CLIENT_ID =
-  "467665595953-63b13ucmm8ssbm2vfjjr41e3nqt6f11a.apps.googleusercontent.com";
+  "671438162736-hc3d9rc6lbpumdppteluicumav8khp8t.apps.googleusercontent.com";
 const SCOPES = "https://www.googleapis.com/auth/drive.file";
 
 const ALLOWED_ORIGINS = [
-  "https://veron3373.github.io",
+  "https://shlifservice24-lang.github.io",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
   "http://localhost:5173",
@@ -147,6 +147,12 @@ export async function initGoogleApi(): Promise<void> {
           }
 
           console.log("✅ [iOS Debug] Токен отримано");
+          console.log("🔍 [Debug] Token scope:", response.scope);
+          console.log(
+            "🔍 [Debug] Token expires in:",
+            response.expires_in,
+            "seconds"
+          );
           accessToken = response.access_token;
           gapi.client.setToken(response);
 
@@ -203,8 +209,21 @@ async function callDriveAPI(
   );
 
   if (!response.ok) {
+    const errorBody = await response.text();
+    console.error("❌ Drive API Error Details:", errorBody);
+
+    if (response.status === 403) {
+      throw new Error(
+        `Drive API 403: Доступ заборонено. Перевірте: \n` +
+          `1. Drive API увімкнено в Google Cloud Console\n` +
+          `2. OAuth scope правильний: ${SCOPES}\n` +
+          `3. Email додано до Test Users (якщо в Testing mode)\n` +
+          `Деталі: ${errorBody}`
+      );
+    }
+
     throw new Error(
-      `Drive API Error: ${response.status} ${response.statusText}`
+      `Drive API Error: ${response.status} ${response.statusText} - ${errorBody}`
     );
   }
 
