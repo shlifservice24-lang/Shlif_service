@@ -26,7 +26,7 @@ export async function renderActPreviewModal(data: any): Promise<void> {
   let clientPrumitka = "";
 
   const invoiceDateText = formatInvoiceDate(
-    data?.foundContrAgentRaxunokData || data?.contrAgent_raxunok_data || null
+    data?.foundContrAgentRaxunokData || data?.contragent_raxunok_data || null
   );
   const todayDateText = formatDateWithMonthName(new Date());
 
@@ -158,9 +158,8 @@ export async function renderActPreviewModal(data: any): Promise<void> {
   </tr>
 `;
 
-  const introText = `Ми, представники Замовника ${zamovnykSentencePart} директора <u>${directorGenitive}</u>, з одного боку, та представник Виконавця ${executorSentencePart}, з іншого боку, склали цей акт про те, що Виконавцем були проведені такі роботи (надані такі послуги) по рахунку № ${invoiceNumber}${
-    invoiceDateText ? ` від ${invoiceDateText}` : ""
-  }:`;
+  const introText = `Ми, представники Замовника ${zamovnykSentencePart} директора <u>${directorGenitive}</u>, з одного боку, та представник Виконавця ${executorSentencePart}, з іншого боку, склали цей акт про те, що Виконавцем були проведені такі роботи (надані такі послуги) по рахунку № ${invoiceNumber}${invoiceDateText ? ` від ${invoiceDateText}` : ""
+    }:`;
 
   const modalHtml = `
   <div id="${ACT_PREVIEW_MODAL_ID}" class="fakturaAct-overlay">
@@ -186,8 +185,8 @@ export async function renderActPreviewModal(data: any): Promise<void> {
           </table>
           <div class="fakturaAct-total-section">
             <p>Загальна вартість робіт (послуг) без ПДВ ${formatNumberWithSpaces(
-              totalSum
-            )} грн <strong contenteditable="true">${totalSumWords}</strong></p>
+    totalSum
+  )} грн <strong contenteditable="true">${totalSumWords}</strong></p>
             <p>Сторони претензій одна до одної не мають.</p>
           </div>
           <div class="fakturaAct-footer">
@@ -302,9 +301,8 @@ function formatDateWithMonthName(date: Date): string {
     "Листопада",
     "Грудня",
   ];
-  return `${date.getDate()} ${
-    months[date.getMonth()]
-  } ${date.getFullYear()} р.`;
+  return `${date.getDate()} ${months[date.getMonth()]
+    } ${date.getFullYear()} р.`;
 }
 
 function normalizeSingleLine(text: string): string {
@@ -442,8 +440,8 @@ async function saveActData(actId: number, actNumber: number): Promise<boolean> {
     const { error } = await supabase
       .from("acts")
       .update({
-        contrAgent_act: actNumber,
-        contrAgent_act_data: todayISO,
+        contragent_act: actNumber,
+        contragent_act_data: todayISO,
         xto_vbpbsav: userName,
       })
       .eq("act_id", actId);

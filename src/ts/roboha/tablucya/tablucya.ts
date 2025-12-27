@@ -350,9 +350,9 @@ function createStandardCell(
 
   if (isActNumberCell) {
     // 1. ЗВЕРХУ: ОУ-123 / 01.12.24 малим темно-помаранчевим
-    if (act.contrAgent_act && act.contrAgent_act_data) {
-      const actNum = act.contrAgent_act;
-      const actDateFormatted = convertISOtoShortDate(act.contrAgent_act_data);
+    if (act.contragent_act && act.contragent_act_data) {
+      const actNum = act.contragent_act;
+      const actDateFormatted = convertISOtoShortDate(act.contragent_act_data);
 
       if (actDateFormatted) {
         const actLabel = document.createElement("div");
@@ -368,10 +368,10 @@ function createStandardCell(
     td.appendChild(mainNumber);
 
     // 3. ЗНИЗУ: СФ-123 / 15.12.24 малим темно-помаранчевим
-    if (act.contrAgent_raxunok && act.contrAgent_raxunok_data) {
-      const raxunokNum = act.contrAgent_raxunok;
+    if (act.contragent_raxunok && act.contragent_raxunok_data) {
+      const raxunokNum = act.contragent_raxunok;
       const raxunokDateFormatted = convertISOtoShortDate(
-        act.contrAgent_raxunok_data
+        act.contragent_raxunok_data
       );
 
       if (raxunokDateFormatted) {
@@ -548,8 +548,8 @@ function filterActs(
     const actDate = getActDateAsDate(act);
     const formattedDate = actDate ? formatDate(actDate) : "";
     const amount = getActAmount(act);
-    const raxunokNum = act.contrAgent_raxunok || "";
-    const actNum = act.contrAgent_act || "";
+    const raxunokNum = act.contragent_raxunok || "";
+    const actNum = act.contragent_act || "";
 
     return filters.every((filter) => {
       const searchValue = filter.value.toUpperCase();

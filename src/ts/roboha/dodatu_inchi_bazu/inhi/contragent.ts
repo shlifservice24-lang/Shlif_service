@@ -160,7 +160,7 @@ async function showActNumberModal() {
   try {
     const { data, error } = await supabase
       .from("acts")
-      .select("contrAgent_raxunok")
+      .select("contragent_raxunok")
       .eq("act_id", 1)
       .single();
 
@@ -168,7 +168,7 @@ async function showActNumberModal() {
       console.error("❌ Помилка завантаження номера акту:", error);
       actNumberInput.placeholder = "Помилка завантаження";
     } else {
-      actNumberInput.value = data?.contrAgent_raxunok != null ? String(data.contrAgent_raxunok) : "";
+      actNumberInput.value = data?.contragent_raxunok != null ? String(data.contragent_raxunok) : "";
       actNumberInput.placeholder = "Введіть номер акту...";
     }
     actNumberInput.disabled = false;
@@ -236,7 +236,7 @@ async function showActNumberModal() {
     try {
       const { error } = await supabase
         .from("acts")
-        .update({ contrAgent_raxunok: parseInt(actNumber) })
+        .update({ contragent_raxunok: parseInt(actNumber) })
         .eq("act_id", 1);
 
       if (error) {
@@ -415,7 +415,7 @@ function removeActButton() {
   if (actButton) {
     actButton.remove();
     console.log("✅ Act button removed");
-    
+
     // ✅ ВИПРАВЛЕННЯ: Повертаємо стандартне вирівнювання для кнопки "Ok"
     const buttonsDiv = document.querySelector(".yes-no-buttons-all_other_bases") as HTMLElement;
     if (buttonsDiv) {
@@ -427,7 +427,7 @@ function removeActButton() {
 // ✅ НАЛАШТУВАННЯ АВТОМАТИЧНОГО ПРИХОВУВАННЯ КНОПКИ
 function setupActButtonAutoHide() {
   const otherButtons = document.querySelectorAll('.toggle-button-all_other_bases');
-  
+
   otherButtons.forEach((btn) => {
     const buttonText = btn.textContent?.trim();
     // Приховуємо кнопку при переключенні на будь-який інший розділ
