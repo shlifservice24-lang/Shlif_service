@@ -7,7 +7,7 @@ const SETTINGS = {
   2: { id: "toggle-receiver", label: "Каталог", class: "_receiver" },
   3: { id: "toggle-zarplata", label: "Зарплата", class: "_zarplata" },
   4: { id: "percentage-value", label: "Відсоток", class: "_percentage" },
-  5: { id: "toggle-sms", label: "SMS", class: "_sms" },
+/*   5: { id: "toggle-sms", label: "SMS", class: "_sms" }, */
 };
 
 const ROLES = [
