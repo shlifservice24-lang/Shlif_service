@@ -26,7 +26,7 @@ export async function renderActPreviewModal(data: any): Promise<void> {
   let clientPrumitka = "";
 
   const invoiceDateText = formatInvoiceDate(
-    data?.foundContrAgentRaxunokData || data?.contragent_raxunok_data || null
+    data?.foundContrAgentRaxunokData || data?.contrAgent_raxunok_data || null
   );
   const todayDateText = formatDateWithMonthName(new Date());
 
@@ -440,8 +440,8 @@ async function saveActData(actId: number, actNumber: number): Promise<boolean> {
     const { error } = await supabase
       .from("acts")
       .update({
-        contragent_act: actNumber,
-        contragent_act_data: todayISO,
+        contrAgent_act: actNumber,
+        contrAgent_act_data: todayISO,
         xto_vbpbsav: userName,
       })
       .eq("act_id", actId);

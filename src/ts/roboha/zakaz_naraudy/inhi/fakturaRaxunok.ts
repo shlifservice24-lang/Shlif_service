@@ -201,7 +201,7 @@ async function getInvoiceNumber(
   try {
     const { data: currentAct, error: currentError } = await supabase
       .from("acts")
-      .select("contragent_raxunok")
+      .select("contrAgent_raxunok")
       .eq("act_id", currentActId)
       .single();
 
@@ -209,16 +209,16 @@ async function getInvoiceNumber(
       console.error("Помилка отримання поточного акту:", currentError);
     }
 
-    if (currentAct?.contragent_raxunok) {
+    if (currentAct?.contrAgent_raxunok) {
       return {
-        number: formatNumberWithZeros(parseInt(currentAct.contragent_raxunok)),
+        number: formatNumberWithZeros(parseInt(currentAct.contrAgent_raxunok)),
         isNew: false,
       };
     }
 
     const { data: masterAct, error: masterError } = await supabase
       .from("acts")
-      .select("contragent_raxunok")
+      .select("contrAgent_raxunok")
       .eq("act_id", 1)
       .single();
 
@@ -227,7 +227,7 @@ async function getInvoiceNumber(
       return { number: "0000001", isNew: true };
     }
 
-    const currentNumber = parseInt(masterAct?.contragent_raxunok || "0");
+    const currentNumber = parseInt(masterAct?.contrAgent_raxunok || "0");
     const nextNumber = currentNumber + 1;
 
     return {
@@ -256,20 +256,20 @@ async function saveInvoiceNumber(
 
     const { data: masterAct, error: readError } = await supabase
       .from("acts")
-      .select("contragent_raxunok")
+      .select("contrAgent_raxunok")
       .eq("act_id", 1)
       .single();
 
     if (readError) {
       console.error("❌ Помилка зчитування мастер-акту:", readError);
     } else {
-      const currentMasterNum = parseInt(masterAct?.contragent_raxunok || "0");
+      const currentMasterNum = parseInt(masterAct?.contrAgent_raxunok || "0");
       const newNum = parseInt(invoiceNumber);
 
       if (newNum > currentMasterNum) {
         await supabase
           .from("acts")
-          .update({ contragent_raxunok: newNum })
+          .update({ contrAgent_raxunok: newNum })
           .eq("act_id", 1);
         console.log("✅ Мастер-акт оновлено");
       }
@@ -278,8 +278,8 @@ async function saveInvoiceNumber(
     const { error: currentError } = await supabase
       .from("acts")
       .update({
-        contragent_raxunok: parseInt(invoiceNumber),
-        contragent_raxunok_data: isoDateString,
+        contrAgent_raxunok: parseInt(invoiceNumber),
+        contrAgent_raxunok_data: isoDateString,
         faktura_id: fakturaId,
       })
       .eq("act_id", currentActId);

@@ -160,7 +160,7 @@ async function showActNumberModal() {
   try {
     const { data, error } = await supabase
       .from("acts")
-      .select("contragent_raxunok")
+      .select("contrAgent_raxunok")
       .eq("act_id", 1)
       .single();
 
@@ -168,7 +168,7 @@ async function showActNumberModal() {
       console.error("❌ Помилка завантаження номера акту:", error);
       actNumberInput.placeholder = "Помилка завантаження";
     } else {
-      actNumberInput.value = data?.contragent_raxunok != null ? String(data.contragent_raxunok) : "";
+      actNumberInput.value = data?.contrAgent_raxunok != null ? String(data.contrAgent_raxunok) : "";
       actNumberInput.placeholder = "Введіть номер акту...";
     }
     actNumberInput.disabled = false;
@@ -236,7 +236,7 @@ async function showActNumberModal() {
     try {
       const { error } = await supabase
         .from("acts")
-        .update({ contragent_raxunok: parseInt(actNumber) })
+        .update({ contrAgent_raxunok: parseInt(actNumber) })
         .eq("act_id", 1);
 
       if (error) {

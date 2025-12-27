@@ -356,7 +356,7 @@ export function initModalActRaxunokHandlers(): void {
         const { data: dbData, error } = await supabase
           .from("acts")
           // 👇 ДОДАЛИ НОВІ ПОЛЯ В SELECT
-          .select("faktura_id, contragent_raxunok, contragent_raxunok_data")
+          .select("faktura_id, contrAgent_raxunok, contrAgent_raxunok_data")
           .eq("act_id", extractedActId)
           .single();
 
@@ -365,8 +365,8 @@ export function initModalActRaxunokHandlers(): void {
         } else if (dbData) {
           // 4. Записуємо отримані дані
           actData.foundFakturaId = dbData.faktura_id;
-          actData.foundContrAgentRaxunok = dbData.contragent_raxunok; // Зберігаємо номер
-          actData.foundContrAgentRaxunokData = dbData.contragent_raxunok_data; // Зберігаємо дату
+          actData.foundContrAgentRaxunok = dbData.contrAgent_raxunok; // Зберігаємо номер
+          actData.foundContrAgentRaxunokData = dbData.contrAgent_raxunok_data; // Зберігаємо дату
 
           console.log("✅ Дані з БД отримано:", dbData);
         }
