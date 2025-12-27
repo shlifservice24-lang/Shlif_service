@@ -61,7 +61,7 @@ async function handleAuthenticatedUser(user: any) {
 
   console.log("✅ Email дозволено:", email);
   console.log("➡️ Перенаправлення на main.html");
-  window.location.href = "/STO/main.html";
+  window.location.href = "/Shlif_service/main.html";
 }
 
 // 🎯 Відстеження змін авторизації
