@@ -9,7 +9,7 @@ declare let google: any;
 
 // ------- Константи -------
 const CLIENT_ID =
-  "467665595953-63b13ucmm8ssbm2vfjjr41e3nqt6f11a.apps.googleusercontent.com";
+  "671438162736-hc3d9rc6lbpumdppteluicumav8khp8t.apps.googleusercontent.com";
 const SCOPES = "https://www.googleapis.com/auth/drive.file";
 
 const ALLOWED_ORIGINS = [
@@ -147,6 +147,12 @@ export async function initGoogleApi(): Promise<void> {
           }
 
           console.log("✅ [iOS Debug] Токен отримано");
+          console.log("🔍 [Debug] Token scope:", response.scope);
+          console.log(
+            "🔍 [Debug] Token expires in:",
+            response.expires_in,
+            "seconds"
+          );
           accessToken = response.access_token;
           gapi.client.setToken(response);
 
@@ -203,8 +209,21 @@ async function callDriveAPI(
   );
 
   if (!response.ok) {
+    const errorBody = await response.text();
+    console.error("❌ Drive API Error Details:", errorBody);
+
+    if (response.status === 403) {
+      throw new Error(
+        `Drive API 403: Доступ заборонено. Перевірте: \n` +
+          `1. Drive API увімкнено в Google Cloud Console\n` +
+          `2. OAuth scope правильний: ${SCOPES}\n` +
+          `3. Email додано до Test Users (якщо в Testing mode)\n` +
+          `Деталі: ${errorBody}`
+      );
+    }
+
     throw new Error(
-      `Drive API Error: ${response.status} ${response.statusText}`
+      `Drive API Error: ${response.status} ${response.statusText} - ${errorBody}`
     );
   }
 
@@ -330,8 +349,8 @@ export async function findAndRestoreFolderLink(
           ? cleanNameComponent(actInfo.year)
           : null,
         actInfo.phone &&
-          actInfo.phone !== "—" &&
-          actInfo.phone !== "Без_телефону"
+        actInfo.phone !== "—" &&
+        actInfo.phone !== "Без_телефону"
           ? cleanNameComponent(actInfo.phone)
           : null,
       ].filter(Boolean) as string[];
@@ -520,8 +539,8 @@ async function updateActPhotoLinkWithRetry(
       updatePhotoSection(savedLinks, false);
 
       // Із БД підтягнемо ще раз, щоб синхронізувати стан (на всякий випадок)
-      // Із БД підтягнемо ще раз, щоб синхронізувати стан (на всякий випадок)
-      // setTimeout(() => refreshPhotoData(actId), 500); // ВИДАЛЕНО: Викликає race condition (UI блимає червоним)
+      // FIX: Вимкнено, бо викликає "миготіння" інтерфейсу (повертає старий стан до реплікації)
+      // setTimeout(() => refreshPhotoData(actId), 500);
 
       return; // ✅ Успіх!
     } catch (error) {
@@ -560,19 +579,16 @@ export function updatePhotoSection(
   const hasLink =
     Array.isArray(photoLinks) && photoLinks.length > 0 && !!photoLinks[0];
 
-  photoCell.setAttribute("data-has-link", hasLink ? "true" : "false");
-  if (hasLink) {
-    photoCell.setAttribute("data-link-url", photoLinks[0]);
-  } else {
-    photoCell.removeAttribute("data-link-url");
-  }
-
   photoCell.innerHTML = hasLink
     ? `<span style="color:green; text-decoration: underline;">Відкрити архів фото</span>`
     : `<span style="color:red; text-decoration: underline;">Створити фото</span>`;
 
   photoCell.style.cursor = isActClosed && !hasLink ? "not-allowed" : "pointer";
   photoCell.setAttribute("aria-role", "button");
+
+  // ✅ [FIX] Зберігаємо стан в атрибутах для синхронного доступу (важливо для iOS)
+  photoCell.setAttribute("data-has-link", hasLink ? "true" : "false");
+  photoCell.setAttribute("data-link-url", hasLink ? photoLinks[0] : "");
 
   addGoogleDriveHandler(isActClosed);
 }
@@ -595,142 +611,98 @@ export function addGoogleDriveHandler(isActClosed = false): void {
   const onClick = async (e: MouseEvent) => {
     e.preventDefault();
 
-    if (isCreatingFolder) return; // 🚫 захист від мульти-кліків
+    // 🚫 Блокування подвійних кліків
+    if (isCreatingFolder) return;
 
-    // ⚡️ КРИТИЧНО ДЛЯ iOS: Перевіряємо UI стан синхронно
-    // Якщо кнопка "Створити" (червона), то ми ймовірно будемо викликати Auth
-    // Auth мусить бути викликаний ОДРАЗУ ж в обробнику кліку, до будь-яких await
-    const cell = e.currentTarget as HTMLElement;
-    const isCreateMode = cell.getAttribute("data-has-link") !== "true";
+    // 1️⃣ СИНХРОННА ПЕРЕВІРКА (для iOS/Safari)
+    // Читаємо атрибути прямо з DOM, щоб не чекати async операцій
+    const hasLink = photoCell.getAttribute("data-has-link") === "true";
+    const linkUrl = photoCell.getAttribute("data-link-url");
 
-    if (isCreateMode && !accessToken) {
-      console.log("📱 [iOS Debug] Pre-flight Auth check (Create Mode detected)...");
-      try {
-        await initGoogleApi();
-      } catch (authErr) {
-        console.error("❌ Auth cancelled/failed:", authErr);
-        // Не продовжуємо, якщо юзер скасував логін, бо далі все одно буде помилка
-        return;
+    // Якщо посилання є — відкриваємо негайно
+    if (hasLink && linkUrl) {
+      console.log("📂 [Click] Відкриття існуючої папки:", linkUrl);
+
+      if (isIOS()) {
+        // Для iOS найнадійніше — це direct navigation
+        window.location.href = linkUrl;
+      } else {
+        window.open(linkUrl, "_blank", "noopener,noreferrer");
       }
+      return;
     }
 
-    const modal = document.getElementById("zakaz_narayd-custom-modal");
-    const actIdStr = modal?.getAttribute("data-act-id");
-    if (!actIdStr) return;
-    const actId = Number(actIdStr);
+    // Якщо акт закритий (і немає посилання) — блокуємо
+    if (isActClosed) {
+      showNotification("Акт закритий — створення папки заборонено", "warning");
+      return;
+    }
+
+    // ==========================================
+    // 🚀 СТВОРЕННЯ ПАПКИ (Create Flow)
+    // ==========================================
+
+    isCreatingFolder = true;
+    photoCell.style.pointerEvents = "none";
 
     try {
-      // тягнемо АКТ із БД — беремо ЛИШЕ актуальний стан
-      const { data: act, error } = await supabase
-        .from("acts")
-        .select("data, date_off")
-        .eq("act_id", actId)
-        .single();
-
-      if (error || !act) {
-        showNotification("Помилка отримання даних акту", "error");
-        return;
-      }
-
-      const actData = safeParseJSON(act.data) || {};
-      const links: string[] = Array.isArray(actData?.["Фото"])
-        ? actData["Фото"]
-        : [];
-      const hasLink = links.length > 0 && links[0];
-
-      // Якщо посилання вже є — відкриваємо його
-      if (hasLink) {
-        console.log("📂 [iOS Debug] Відкриваємо існуючу папку:", links[0]);
-
-        // 🍎 Для iOS використовуємо прямий редірект (більш надійно)
-        if (isIOS()) {
-          console.log(
-            "📱 [iOS] Використовуємо window.location.href для переходу"
-          );
-
-          // Показуємо повідомлення
-          showNotification("Відкриваємо папку Google Drive...", "info");
-
-          // Прямий перехід (найнадійніший метод для iOS)
-          setTimeout(() => {
-            window.location.href = links[0];
-          }, 300);
-        } else {
-          // Для desktop - звичайне нове вікно
-          console.log("💻 [Desktop] Відкриваємо в новому вікні");
-          window.open(links[0], "_blank", "noopener,noreferrer");
-        }
-        return;
-      }
-
-      // Якщо акту «закритий» — створення заборонено
-      if (isActClosed || !!act.date_off) {
-        showNotification(
-          "Акт закритий — створення папки заборонено",
-          "warning"
-        );
-        return;
-      }
-
-      // 🔍 СПОЧАТКУ ШУКАЄМО ІСНУЮЧУ ПАПКУ (може бути створена, але не записана в БД)
-      isCreatingFolder = true;
-      photoCell.style.pointerEvents = "none";
-
-      // (Auth double-check, хоча ми вже зробили це вище)
+      // 2️⃣ АВТОРИЗАЦІЯ (Має йти ПЕРЕД будь-якими запитами до БД)
+      // Safari вимагає, щоб запит на попап йшов одразу після кліку.
+      // fetch/await до БД може розірвати ланцюжок "trusted user event".
       if (!accessToken) {
-        await initGoogleApi();
-      }
-
-      // Тільки після авторизації робимо запити до БД
-      console.log("📱 [iOS Debug] Отримання інформації про акт...");
-      const actInfo = await getActFullInfo(actId);
-      console.log("📱 [iOS Debug] Інформація про акт отримана:", actInfo);
-
-      showNotification("Пошук існуючої папки в Google Drive...", "info");
-      const existingUrl = await findAndRestoreFolderLink(actId, actInfo);
-
-      if (existingUrl) {
+        console.log("🔐 [Auth] Токен відсутній, ініціалізація...");
         showNotification(
-          "Знайдено існуючу папку! Посилання відновлено.",
-          "success"
+          isIOS()
+            ? "🔐 Авторизація Google (дозвольте popup)..."
+            : "Вхід у Google...",
+          "info"
         );
-        return;
-      }
 
-      // Якщо не знайдено — створюємо нову папку
-      showNotification("Створення нової папки в Google Drive...", "info");
-      await createDriveFolderStructure(actInfo);
-
-      showNotification("Готово. Посилання додано у форму.", "success");
-    } catch (err) {
-      console.error("❌ Google Drive помилка:", err);
-
-      let errorMessage = "Невідома помилка";
-      if (err instanceof Error) {
-        errorMessage = err.message;
-
-        // Спеціальні підказки для типових помилок
-        if (
-          errorMessage.includes("popup") ||
-          errorMessage.includes("blocked")
-        ) {
-          errorMessage +=
-            " (iOS Safari блокує popup-вікна - перевірте налаштування)";
-        } else if (
-          errorMessage.includes("token") ||
-          errorMessage.includes("auth")
-        ) {
-          errorMessage += " (Проблема з авторизацією Google)";
-        } else if (
-          errorMessage.includes("network") ||
-          errorMessage.includes("failed to fetch")
-        ) {
-          errorMessage += " (Проблема з мережею)";
+        try {
+          await initGoogleApi();
+        } catch (apiError) {
+          console.error("❌ [Auth] Помилка:", apiError);
+          showNotification(
+            "Не вдалося авторизуватися. Перевірте блокувальник спливаючих вікон.",
+            "error"
+          );
+          throw apiError;
         }
       }
 
+      // 3️⃣ ОТРИМАННЯ ДАНИХ (Тільки тепер йдемо в БД)
+      const modal = document.getElementById("zakaz_narayd-custom-modal");
+      const actIdStr = modal?.getAttribute("data-act-id");
+      if (!actIdStr) throw new Error("Act ID not found in modal");
+      const actId = Number(actIdStr);
+
+      console.log("📥 [Data] Отримання даних акту...");
+      const actInfo = await getActFullInfo(actId);
+
+      // Перевірка на закриття (double check)
+      if (actInfo.act_data.date_off) {
+        showNotification("Акт вже закритий!", "warning");
+        return;
+      }
+
+      // 4️⃣ ЛОГІКА ПАПОК
+      showNotification("Пошук/Створення папки...", "info");
+      
+      // Спроба знайти існуючу
+      const existingUrl = await findAndRestoreFolderLink(actId, actInfo);
+      if (existingUrl) {
+        showNotification("Папка знайдена і прив'язана!", "success");
+        return;
+      }
+
+      // Створення нової
+      await createDriveFolderStructure(actInfo);
+      showNotification("✅ Папка успішно створена!", "success");
+
+    } catch (err) {
+      console.error("❌ Error in click handler:", err);
       showNotification(
-        `Не вдалося створити/знайти папку: ${errorMessage}`,
+        `Помилка: ${err instanceof Error ? err.message : "Невідома помилка"}`,
         "error"
       );
     } finally {

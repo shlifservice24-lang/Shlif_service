@@ -141,7 +141,34 @@ export async function printModalToPdf(): Promise<void> {
     document.querySelector(".modal-footer") as HTMLElement,
   ].filter(Boolean) as HTMLElement[];
 
-   // таблиця для приховування колонок
+  // <--- ЗМІНА КОЛЬОРІВ ДЛЯ ДРУКУ --->
+  const headerBlock = modalBody.querySelector(".zakaz_narayd-header") as HTMLElement | null;
+  const headerInfoBlock = modalBody.querySelector(".zakaz_narayd-header-info") as HTMLElement | null;
+
+  let originalHeaderBg = "";
+  const originalTextColors: { el: HTMLElement; color: string }[] = [];
+
+  if (headerBlock) {
+    originalHeaderBg = headerBlock.style.backgroundColor;
+    headerBlock.style.backgroundColor = "white";
+  }
+
+  if (headerInfoBlock) {
+    // Змінюємо колір тексту для контейнера та його дітей (h1, p), 
+    // оскільки в CSS вони мають явний white колір
+    const textElements = [
+      headerInfoBlock,
+      ...Array.from(headerInfoBlock.querySelectorAll("h1, p")),
+    ] as HTMLElement[];
+
+    textElements.forEach((el) => {
+      originalTextColors.push({ el, color: el.style.color });
+      el.style.color = "black";
+    });
+  }
+  // <--- КІНЕЦЬ ЗМІНИ КОЛЬОРІВ --->
+
+  // таблиця для приховування колонок
   const table = document.querySelector(
     `#${ACT_ITEMS_TABLE_CONTAINER_ID} table.zakaz_narayd-items-table`
   ) as HTMLTableElement | null;
@@ -339,5 +366,14 @@ export async function printModalToPdf(): Promise<void> {
       modalContent.style.width = originalModalWidth;
       modalContent.style.maxWidth = originalModalMaxWidth;
     }
+
+    // <--- ПОВЕРНЕННЯ КОЛЬОРІВ --->
+    if (headerBlock) {
+      headerBlock.style.backgroundColor = originalHeaderBg;
+    }
+    originalTextColors.forEach(({ el, color }) => {
+      el.style.color = color;
+    });
+    // <--- КІНЕЦЬ ПОВЕРНЕННЯ КОЛЬОРІВ --->
   }
 }
