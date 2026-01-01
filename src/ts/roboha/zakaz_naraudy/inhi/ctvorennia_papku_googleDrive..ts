@@ -13,7 +13,7 @@ const CLIENT_ID =
 const SCOPES = "https://www.googleapis.com/auth/drive.file";
 
 const ALLOWED_ORIGINS = [
-  "https://veron3373.github.io",
+  "https://shlifservice24-lang.github.io",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
   "http://localhost:5173",
