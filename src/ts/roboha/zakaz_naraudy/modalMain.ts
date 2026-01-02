@@ -868,9 +868,9 @@ function renderModalContent(
   body.innerHTML = `
     <div class="${headerClass}">
       <div class="zakaz_narayd-header-info">
-        <h1>B.S.Motorservice</h1>
-        <p>Адрес: вул. Корольова, 6, Вінниця</p>
-        <p>068 931 24 38 тел</p>
+        <h1>Shlif service</h1>
+        <p>Адрес: вул. Івана Виговського 7 м. Самбір</p>
+        <p>068 128 17 73 тел</p>
       </div>
     </div>
     <div class="zakaz_narayd-table-container">
