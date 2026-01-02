@@ -11,6 +11,7 @@ import {
   checkEmployeeExists,
   saveSlusarData,
 } from "./inhi/slusar";
+import { tryHandleFakturaCrud } from "./inhi/contragent";
 
 export const savePromptModalId = "save-prompt-modal";
 
@@ -614,7 +615,6 @@ export function showSavePromptModal(): Promise<boolean> {
         // ✅ ОБРОБКА "FAKTURA" (КОНТРАГЕНТИ) - ПРІОРИТЕТ #1
         // ==========================================================
         if (tableFromDraft === "faktura") {
-          const { tryHandleFakturaCrud } = await import("./inhi/contragent");
           const ok = await tryHandleFakturaCrud();
           results.push(ok);
 
