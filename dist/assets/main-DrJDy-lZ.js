@@ -997,7 +997,7 @@ var nd=Object.defineProperty;var rd=(a,e,i)=>e in a?nd(a,e,{enumerable:!0,config
 
       <div class="percentage-control">
         <label class="percentage-label">
-          <span class="percentage-title">Націнка на запчастини</span>
+          <span class="percentage-title">Відсоток</span>
           <div class="percentage-input-wrapper">
             <input type="range" id="percentage-slider" min="0" max="100" value="0" step="1" />
             <div class="percentage-value-display">
