@@ -8,9 +8,9 @@
     "build": "tsc -b && vite build ",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy": "gh-pages -d dist --no-history",
+    "deploy": "tsc -b && vite build && gh-pages -d dist --no-history",
     "deploy1": "git status -sb && git add -A && (git commit -m \"опис\" || echo No changes to commit) && git push origin main && npm run deploy",
-    "deploy2": "tsc -b && vite build && git add -A && (git commit -m \"опис\" || echo No changes to commit) && git push --force origin main"
+    "deploy2": "git fetch origin && git status -sb && git add -A && (git commit -m \"опис\" || echo No changes to commit) && git push --force-with-lease origin main && npm run deploy"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
