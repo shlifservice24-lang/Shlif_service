@@ -7,6 +7,15 @@ import {
   createSavePromptModal,
   savePromptModalId,
 } from "./vikno_pidtverdchennay_inchi_bazu";
+import {
+  initScladMagasunDetal,
+  handleScladClick,
+} from "./inhi/scladMagasunDetal";
+import { initRobota, handleRobotaClick } from "./inhi/robota";
+import { initSlusar, handleSlusarClick } from "./inhi/slusar";
+import { initPruimalnik, handlePruimalnikClick } from "./inhi/pruimalnuk";
+import { initDherelo, handleDhereloClick } from "./inhi/djerelo";
+import { handleDhereloContragent } from "./inhi/contragent";
 
 // Змінні для експорту
 export let all_bd: string | null = null;
@@ -169,22 +178,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }); */
 
   // Ініціалізуємо всі модулі
-  (async () => {
-    const { initScladMagasunDetal } = await import("./inhi/scladMagasunDetal");
-    initScladMagasunDetal();
-
-    const { initRobota } = await import("./inhi/robota");
-    initRobota();
-
-    const { initSlusar } = await import("./inhi/slusar");
-    initSlusar();
-
-    const { initPruimalnik } = await import("./inhi/pruimalnuk");
-    initPruimalnik();
-
-    const { initDherelo } = await import("./inhi/djerelo");
-    initDherelo();
-  })();
+  initScladMagasunDetal();
+  initRobota();
+  initSlusar();
+  initPruimalnik();
+  initDherelo();
 
   const toggleButtons = modal_all_other_bases.querySelectorAll(
     ".toggle-button-all_other_bases"
@@ -381,32 +379,26 @@ document.addEventListener("DOMContentLoaded", () => {
         case "Склад": {
           if (globalSearchWrap)
             globalSearchWrap.classList.add("hidden-all_other_bases");
-          const { handleScladClick } = await import("./inhi/scladMagasunDetal");
           await handleScladClick();
           break;
         }
         case "Робота": {
-          const { handleRobotaClick } = await import("./inhi/robota");
           await handleRobotaClick();
           break;
         }
         case "Співробітники": {
-          const { handleSlusarClick } = await import("./inhi/slusar");
           await handleSlusarClick();
           break;
         }
         case "Приймальник": {
-          const { handlePruimalnikClick } = await import("./inhi/pruimalnuk");
           await handlePruimalnikClick();
           break;
         }
         case "Джерело": {
-          const { handleDhereloClick } = await import("./inhi/djerelo");
           await handleDhereloClick();
           break;
         }
         case "Контрагент": {
-          const { handleDhereloContragent } = await import("./inhi/contragent");
           await handleDhereloContragent();
           break;
         }

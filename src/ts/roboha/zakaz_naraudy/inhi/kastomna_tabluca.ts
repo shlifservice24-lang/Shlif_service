@@ -11,6 +11,7 @@ import {
   updateCatalogWarningForRow,
   updatePriceWarningForRow,
 } from "./kastomna_tabluca_poperedhennya";
+import { calculateRowSum } from "../modalUI";
 export {
   refreshQtyWarningsIn,
   initializeActWarnings,
@@ -1400,16 +1401,9 @@ async function applyCatalogSelectionById(
   const typeFromCell = nameCell?.getAttribute("data-type");
 
   if (typeFromCell === "works") {
-    import("../modalUI")
-      .then(async ({ calculateRowSum }) => {
-        await calculateRowSum(row);
-      })
-      .catch((err) => {
-        console.error(
-          "Помилка при розрахунку суми після вибору каталогу:",
-          err
-        );
-      });
+    calculateRowSum(row).catch((err) => {
+      console.error("Помилка при розрахунку суми після вибору каталогу:", err);
+    });
   } else {
     recalcRowSum(row);
   }

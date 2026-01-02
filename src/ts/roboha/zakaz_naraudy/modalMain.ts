@@ -868,7 +868,7 @@ function renderModalContent(
   body.innerHTML = `
     <div class="${headerClass}">
       <div class="zakaz_narayd-header-info">
-        <h1>Shlif service</h1>
+        <h1 style="text-align: left;">Shlif service</h1>
         <p>Адрес: вул. Івана Виговського 7 м. Самбір</p>
         <p>068 128 17 73 тел</p>
       </div>
