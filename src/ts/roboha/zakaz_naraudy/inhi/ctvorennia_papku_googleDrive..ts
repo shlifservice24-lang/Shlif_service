@@ -28,6 +28,9 @@ let accessToken: string | null = null;
 // 🚫 Блокування повторних кліків під час створення
 let isCreatingFolder = false;
 
+// 📱 Для iOS: зберігаємо tokenClient глобально для повторного використання
+let globalTokenClient: any = null;
+
 // ================= УТИЛІТИ =================
 
 function handleError(error: unknown): Error {
@@ -69,6 +72,99 @@ function sleep(ms: number): Promise<void> {
 // Детекція iOS
 function isIOS(): boolean {
   return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+// Детекція Safari
+function isSafari(): boolean {
+  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+}
+
+/**
+ * 📱 Для iOS/Safari: Попередньо ініціалізуємо token client СИНХРОННО при кліку
+ * Це зберігає user gesture контекст для popup
+ */
+function prepareTokenClientSync(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    // Якщо вже є токен — не треба
+    if (accessToken) {
+      resolve();
+      return;
+    }
+
+    // Якщо скрипти не завантажені — завантажуємо
+    if (typeof google === "undefined" || typeof gapi === "undefined") {
+      // Для iOS важливо завантажити скрипти заздалегідь
+      const gisScript = document.createElement("script");
+      gisScript.src = "https://accounts.google.com/gsi/client";
+      gisScript.async = true;
+      gisScript.defer = true;
+
+      gisScript.onload = () => {
+        const gapiScript = document.createElement("script");
+        gapiScript.src = "https://apis.google.com/js/api.js";
+        gapiScript.async = true;
+        gapiScript.defer = true;
+
+        gapiScript.onload = () => {
+          initTokenClient(resolve, reject);
+        };
+        gapiScript.onerror = () =>
+          reject(new Error("Не вдалося завантажити GAPI"));
+        document.head.appendChild(gapiScript);
+      };
+
+      gisScript.onerror = () => reject(new Error("Не вдалося завантажити GIS"));
+      document.head.appendChild(gisScript);
+    } else {
+      initTokenClient(resolve, reject);
+    }
+  });
+}
+
+function initTokenClient(
+  resolve: () => void,
+  reject: (e: Error) => void
+): void {
+  try {
+    globalTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: async (response: any) => {
+        console.log("🔐 [iOS] OAuth callback отримано");
+
+        if (response.error || !response.access_token) {
+          console.error("❌ [iOS] OAuth помилка:", response.error);
+          reject(new Error(response.error || "Не отримано токен доступу"));
+          return;
+        }
+
+        accessToken = response.access_token;
+
+        // Ініціалізуємо GAPI
+        gapi.load("client", async () => {
+          try {
+            gapi.client.setToken(response);
+            await gapi.client.init({});
+            await gapi.client.load("drive", "v3");
+            console.log("✅ [iOS] Google API повністю ініціалізовано");
+            resolve();
+          } catch (err) {
+            reject(handleError(err));
+          }
+        });
+      },
+      error_callback: (err: any) => {
+        console.error("❌ [iOS] OAuth error callback:", err);
+        reject(handleError(err));
+      },
+    });
+
+    // 🚀 КЛЮЧОВИЙ МОМЕНТ: Відкриваємо popup ОДРАЗУ (синхронно)
+    console.log("🔐 [iOS] Відкриття OAuth popup СИНХРОННО...");
+    globalTokenClient.requestAccessToken();
+  } catch (e) {
+    reject(handleError(e));
+  }
 }
 
 // ================= ЗАВАНТАЖЕННЯ API =================
@@ -473,7 +569,7 @@ async function getActFullInfo(actId: number): Promise<{
 async function updateActPhotoLinkWithRetry(
   actId: number,
   driveUrl: string,
-  maxRetries: number = 3
+  maxRetries: number = 5 // Збільшено з 3 до 5 спроб
 ): Promise<void> {
   let lastError: Error | null = null;
 
@@ -548,8 +644,12 @@ async function updateActPhotoLinkWithRetry(
       console.error(`❌ Спроба ${attempt} невдала:`, lastError.message);
 
       if (attempt < maxRetries) {
-        console.log(`⏳ Очікування 2 секунди перед наступною спробою...`);
-        await sleep(2000); // Збільшено затримку для уникнення конфліктів
+        // Експоненційна затримка: 1с, 2с, 4с, 8с
+        const delay = Math.pow(2, attempt - 1) * 1000;
+        console.log(
+          `⏳ Очікування ${delay / 1000} секунд перед наступною спробою...`
+        );
+        await sleep(delay);
       }
     }
   }
@@ -558,6 +658,44 @@ async function updateActPhotoLinkWithRetry(
   throw new Error(
     `Не вдалося записати шлях після ${maxRetries} спроб: ${lastError?.message}`
   );
+}
+
+/**
+ * 🔍 Фінальна верифікація збереження посилання в БД
+ * Викликається після createDriveFolderStructure для впевненості
+ */
+async function verifyLinkSaved(
+  actId: number,
+  expectedUrl: string
+): Promise<boolean> {
+  try {
+    await sleep(500); // Невелика затримка для реплікації
+
+    const { data: act, error } = await supabase
+      .from("acts")
+      .select("data")
+      .eq("act_id", actId)
+      .single();
+
+    if (error || !act) return false;
+
+    const actData = safeParseJSON(act.data) || {};
+    const photos: string[] = Array.isArray(actData?.["Фото"])
+      ? actData["Фото"]
+      : [];
+
+    const isSaved = photos.includes(expectedUrl);
+    console.log(
+      `🔍 [Verify] Перевірка збереження: ${
+        isSaved ? "✅ OK" : "❌ НЕ ЗНАЙДЕНО"
+      }`
+    );
+
+    return isSaved;
+  } catch (e) {
+    console.error("❌ [Verify] Помилка верифікації:", e);
+    return false;
+  }
 }
 
 // ================= МОДАЛЬНЕ ВІКНО: "ФОТО" =================
@@ -645,25 +783,38 @@ export function addGoogleDriveHandler(isActClosed = false): void {
     isCreatingFolder = true;
     photoCell.style.pointerEvents = "none";
 
-    try {
-      // 2️⃣ АВТОРИЗАЦІЯ (Має йти ПЕРЕД будь-якими запитами до БД)
-      // Safari вимагає, щоб запит на попап йшов одразу після кліку.
-      // fetch/await до БД може розірвати ланцюжок "trusted user event".
-      if (!accessToken) {
-        console.log("🔐 [Auth] Токен відсутній, ініціалізація...");
-        showNotification(
-          isIOS()
-            ? "🔐 Авторизація Google (дозвольте popup)..."
-            : "Вхід у Google...",
-          "info"
-        );
+    // 🔑 КРИТИЧНО ДЛЯ iOS/Safari:
+    // Авторизація має йти ПЕРШОЮ і СИНХРОННО після кліку!
+    // Жодних await до цього моменту!
 
+    let authPromise: Promise<void> | null = null;
+
+    if (!accessToken) {
+      console.log("🔐 [Auth] Токен відсутній, ініціалізація СИНХРОННО...");
+
+      // На iOS/Safari показуємо повідомлення і ОДРАЗУ запускаємо OAuth
+      if (isIOS() || isSafari()) {
+        showNotification("🔐 Дозвольте popup для входу в Google...", "info");
+        // Запускаємо OAuth СИНХРОННО (без await до цього!)
+        authPromise = prepareTokenClientSync();
+      } else {
+        showNotification("Вхід у Google...", "info");
+        authPromise = initGoogleApi();
+      }
+    }
+
+    try {
+      // Тепер чекаємо на авторизацію (якщо вона була запущена)
+      if (authPromise) {
         try {
-          await initGoogleApi();
+          await authPromise;
+          console.log("✅ [Auth] Авторизація успішна");
         } catch (apiError) {
           console.error("❌ [Auth] Помилка:", apiError);
           showNotification(
-            "Не вдалося авторизуватися. Перевірте блокувальник спливаючих вікон.",
+            isIOS() || isSafari()
+              ? "Не вдалося авторизуватися. Дозвольте спливаючі вікна для цього сайту в налаштуваннях Safari."
+              : "Не вдалося авторизуватися. Перевірте блокувальник спливаючих вікон.",
             "error"
           );
           throw apiError;
@@ -687,18 +838,55 @@ export function addGoogleDriveHandler(isActClosed = false): void {
 
       // 4️⃣ ЛОГІКА ПАПОК
       showNotification("Пошук/Створення папки...", "info");
-      
+
       // Спроба знайти існуючу
-      const existingUrl = await findAndRestoreFolderLink(actId, actInfo);
-      if (existingUrl) {
-        showNotification("Папка знайдена і прив'язана!", "success");
-        return;
+      let existingUrl: string | null = null;
+      try {
+        existingUrl = await findAndRestoreFolderLink(actId, actInfo);
+      } catch (findError) {
+        console.warn(
+          "⚠️ Помилка пошуку існуючої папки (продовжуємо):",
+          findError
+        );
       }
 
-      // Створення нової
-      await createDriveFolderStructure(actInfo);
-      showNotification("✅ Папка успішно створена!", "success");
+      if (existingUrl) {
+        // Верифікуємо що посилання справді збереглось
+        const verified = await verifyLinkSaved(actId, existingUrl);
+        if (verified) {
+          showNotification("Папка знайдена і прив'язана!", "success");
+          return;
+        }
+      }
 
+      // Створення нової папки
+      await createDriveFolderStructure(actInfo);
+
+      // 5️⃣ ФІНАЛЬНА ВЕРИФІКАЦІЯ
+      // Отримуємо URL створеної папки для перевірки
+      const { data: checkAct } = await supabase
+        .from("acts")
+        .select("data")
+        .eq("act_id", actId)
+        .single();
+
+      const checkData = safeParseJSON(checkAct?.data) || {};
+      const savedPhotos: string[] = Array.isArray(checkData?.["Фото"])
+        ? checkData["Фото"]
+        : [];
+
+      if (savedPhotos.length > 0 && savedPhotos[0]) {
+        console.log("✅ [Final] Посилання успішно збережено:", savedPhotos[0]);
+        showNotification("✅ Папка успішно створена!", "success");
+      } else {
+        console.warn(
+          "⚠️ [Final] Папка створена, але посилання не збережено в БД"
+        );
+        showNotification(
+          "⚠️ Папка створена, але виникла проблема збереження. Спробуйте ще раз.",
+          "warning"
+        );
+      }
     } catch (err) {
       console.error("❌ Error in click handler:", err);
       showNotification(
