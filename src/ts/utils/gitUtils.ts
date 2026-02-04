@@ -66,7 +66,7 @@ export function buildGitUrl(gitName: string, path: string = ""): string {
   
   if (hostname.endsWith('.github.io')) {
     // GitHub Pages - старий формат
-    baseUrl = `https://${gitName}.github.io/STO`;
+    baseUrl = `https://${gitName}.github.io/Shlif_service`;
   } else {
     // Vercel, localhost або інший хостинг - використовуємо origin
     baseUrl = window.location.origin;
