@@ -62,5 +62,5 @@ if ($LASTEXITCODE -ne 0) {
 Set-Location ..
 
 Write-Host "`n✅ Deployment completed successfully!" -ForegroundColor Green
-Write-Host "🌐 Your site will be available at: https://shlifservice24-lang.github.io/STO/" -ForegroundColor Cyan
+Write-Host "🌐 Your site will be available at: https://shlifservice24-lang.github.io/Shlif_service/" -ForegroundColor Cyan
 Write-Host "⏳ Note: It may take a few minutes for changes to appear." -ForegroundColor Yellow
