@@ -40,7 +40,7 @@ $commitMessage = "Deploy to GitHub Pages - $(Get-Date -Format 'yyyy-MM-dd HH:mm:
 git commit -m $commitMessage
 
 # Step 7: Add remote (if not exists)
-$remoteUrl = "https://github.com/Veron3373/STO.git"
+$remoteUrl = "https://github.com/shlifservice24-lang/Shlif_service.git"
 $remoteExists = git remote | Select-String -Pattern "origin"
 
 if (-not $remoteExists) {
@@ -62,5 +62,5 @@ if ($LASTEXITCODE -ne 0) {
 Set-Location ..
 
 Write-Host "`n✅ Deployment completed successfully!" -ForegroundColor Green
-Write-Host "🌐 Your site will be available at: https://veron3373.github.io/STO/" -ForegroundColor Cyan
+Write-Host "🌐 Your site will be available at: https://shlifservice24-lang.github.io/STO/" -ForegroundColor Cyan
 Write-Host "⏳ Note: It may take a few minutes for changes to appear." -ForegroundColor Yellow

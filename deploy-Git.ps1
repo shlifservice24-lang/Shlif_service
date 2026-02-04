@@ -1,145 +1,78 @@
+# Налаштування Git для цього проєкту
+$GITHUB_USERNAME = "shlifservice24-lang"
+$GITHUB_REPO = "Shlif_service"
+$GITHUB_EMAIL = "shlifservice24@gmail.com"
+
 $ErrorActionPreference = "Stop"
 $Root = $PSScriptRoot
 Set-Location -LiteralPath $Root
 
-# Set console encoding for Ukrainian
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$OutputEncoding = [System.Text.Encoding]::UTF8
-
 Write-Host "========================================"
-Write-Host "  Auto Deploy: Git Push -> Vercel"
+Write-Host "  Auto Deploy: Git Push -> GitHub Pages"
+Write-Host "  Repo: $GITHUB_USERNAME/$GITHUB_REPO"
 Write-Host "========================================"
 Write-Host ""
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# GIT ACCOUNT SELECTION (GUI Window)
-# ═══════════════════════════════════════════════════════════════════════════════
+# 0. Перевірка та налаштування remote
+Write-Host "[0/5] Checking Git remote configuration..."
+$currentRemote = git remote get-url origin 2>$null
+$expectedRemote = "https://github.com/$GITHUB_USERNAME/$GITHUB_REPO.git"
 
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName System.Drawing
-
-$gitAccounts = @(
-    @{ Name = "Veron3373 (GitHub)"; Email = "veron3373@gmail.com"; Username = "Veron3373" },
-    @{ Name = "Account 2"; Email = "your-email2@gmail.com"; Username = "username2" },
-    @{ Name = "Account 3"; Email = "your-email3@gmail.com"; Username = "username3" },
-    @{ Name = "Account 4"; Email = "your-email4@gmail.com"; Username = "username4" },
-    @{ Name = "Account 5"; Email = "your-email5@gmail.com"; Username = "username5" }
-)
-
-# Create form
-$form = New-Object System.Windows.Forms.Form
-$form.Text = "Git Account Selection"
-$form.Size = New-Object System.Drawing.Size(400, 320)
-$form.StartPosition = "CenterScreen"
-$form.FormBorderStyle = "FixedDialog"
-$form.MaximizeBox = $false
-$form.TopMost = $true
-
-$label = New-Object System.Windows.Forms.Label
-$label.Location = New-Object System.Drawing.Point(20, 15)
-$label.Size = New-Object System.Drawing.Size(350, 25)
-$label.Text = "Select Git account for deploy:"
-$label.Font = New-Object System.Drawing.Font("Segoe UI", 11, [System.Drawing.FontStyle]::Bold)
-$form.Controls.Add($label)
-
-$listBox = New-Object System.Windows.Forms.ListBox
-$listBox.Location = New-Object System.Drawing.Point(20, 50)
-$listBox.Size = New-Object System.Drawing.Size(350, 150)
-$listBox.Font = New-Object System.Drawing.Font("Consolas", 10)
-
-# Add accounts to list
-$listBox.Items.Add("[Current] - Use current Git config")
-foreach ($acc in $gitAccounts) {
-    $listBox.Items.Add("$($acc.Name) - $($acc.Email)")
+if ($currentRemote -ne $expectedRemote) {
+    Write-Host "Updating remote from: $currentRemote" -ForegroundColor Yellow
+    Write-Host "                  to: $expectedRemote" -ForegroundColor Green
+    git remote set-url origin $expectedRemote
 }
-$listBox.SelectedIndex = 0
+Write-Host "Remote configured: $expectedRemote" -ForegroundColor Green
 
-$form.Controls.Add($listBox)
+# 1. Налаштування Git user
+Write-Host "[1/5] Configuring Git user..."
+git config user.name $GITHUB_USERNAME
+git config user.email $GITHUB_EMAIL
+Write-Host "Git user: $GITHUB_USERNAME <$GITHUB_EMAIL>" -ForegroundColor Green
 
-$okButton = New-Object System.Windows.Forms.Button
-$okButton.Location = New-Object System.Drawing.Point(150, 220)
-$okButton.Size = New-Object System.Drawing.Size(100, 35)
-$okButton.Text = "Deploy"
-$okButton.Font = New-Object System.Drawing.Font("Segoe UI", 10, [System.Drawing.FontStyle]::Bold)
-$okButton.BackColor = [System.Drawing.Color]::FromArgb(0, 120, 215)
-$okButton.ForeColor = [System.Drawing.Color]::White
-$okButton.FlatStyle = "Flat"
-$okButton.DialogResult = [System.Windows.Forms.DialogResult]::OK
-$form.AcceptButton = $okButton
-$form.Controls.Add($okButton)
-
-$result = $form.ShowDialog()
-
-if ($result -ne [System.Windows.Forms.DialogResult]::OK) {
-    Write-Host "Cancelled by user." -ForegroundColor Yellow
-    exit 0
-}
-
-$selectedIndex = $listBox.SelectedIndex
-
-if ($selectedIndex -eq 0) {
-    $currentUser = git config user.name
-    $currentEmail = git config user.email
-    $msg = "Using current: " + $currentUser + " (" + $currentEmail + ")"
-    Write-Host $msg -ForegroundColor Green
-} else {
-    $selected = $gitAccounts[$selectedIndex - 1]
-    Write-Host "Setting Git config for: $($selected.Name)..." -ForegroundColor Cyan
-    
-    git config user.name $selected.Username
-    git config user.email $selected.Email
-    
-    $msg = "Git configured: " + $selected.Username + " (" + $selected.Email + ")"
-    Write-Host $msg -ForegroundColor Green
-}
-
-Write-Host ""
-Write-Host "========================================"
-
-# 0. Sync
-Write-Host "[0/4] Syncing with remote repository..."
-git pull --rebase origin main
+# 2. GitHub Login
+Write-Host "[2/5] Logging into GitHub..."
+git credential-manager github login
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "Pull rebase failed! Trying to continue..." -ForegroundColor Yellow
+    Write-Host "GitHub login skipped or failed. Trying to continue..." -ForegroundColor Yellow
 }
-Write-Host "✅ Sync complete!" -ForegroundColor Green
+Write-Host "GitHub login complete!" -ForegroundColor Green
 
 $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm"
 
-# 1. Build для GitHub (з базовим шляхом /STO/)
-Write-Host "[1/4] Building for GitHub Pages (base: /STO/)..."
-npm run build:github
+# 3. Build
+Write-Host "[3/5] Building for GitHub Pages..."
+npm run build
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ BUILD FAILED! Fixing required before deploy." -ForegroundColor Red
+    Write-Host "BUILD FAILED! Fixing required before deploy." -ForegroundColor Red
     exit 1
 }
-Write-Host "✅ Build Success!" -ForegroundColor Green
+Write-Host "Build Success!" -ForegroundColor Green
 
-# 2. Git Commit & Push (Triggers Vercel)
-Write-Host "[2/4] Pushing to GitHub (will trigger Vercel build)..."
+# 4. Git Commit and Push (force)
+Write-Host "[4/5] Pushing to GitHub (force)..."
 git add -A
 git commit --allow-empty -m "deploy: $timestamp"
-# Check if commit failed but continue (should not fail with --allow-empty)
-if ($LASTEXITCODE -ne 0) { Write-Host "Commit failed (unexpected), proceeding..." }
-
-git push origin main
+git push --force origin main
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ Push failed!" -ForegroundColor Red
+    Write-Host "Push failed!" -ForegroundColor Red
+    Write-Host "Hint: Make sure the repository exists: https://github.com/$GITHUB_USERNAME/$GITHUB_REPO" -ForegroundColor Yellow
+    Write-Host "Hint: Run 'git credential-manager github logout' and try again" -ForegroundColor Yellow
     exit 1
 }
-Write-Host "✅ Pushed to GitHub! Vercel should start building automatically." -ForegroundColor Green
+Write-Host "Pushed to GitHub!" -ForegroundColor Green
 
-# 3. Deploy to GitHub Pages (Optional but good to keep)
-Write-Host "[3/4] Deploying to GitHub Pages..."
+# 5. Deploy to GitHub Pages
+Write-Host "[5/5] Deploying to GitHub Pages..."
 npm run deploy
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ GitHub Pages deploy failed!" -ForegroundColor Red
+    Write-Host "GitHub Pages deploy failed!" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "[4/4] DONE!"
 Write-Host ""
 Write-Host "========================================"
-Write-Host "  ✅ DEPLOYMENT STARTED"
-Write-Host "  - GitHub Pages: https://veron3373.github.io/STO/"
+Write-Host "  DEPLOYMENT COMPLETE"
+Write-Host "  https://$GITHUB_USERNAME.github.io/$GITHUB_REPO/"
 Write-Host "========================================"

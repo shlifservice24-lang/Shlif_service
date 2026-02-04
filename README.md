@@ -34,8 +34,8 @@
 ### Крок 1: Клонування репозиторію
 
 ```bash
-git clone https://github.com/Veron3373/STO.git
-cd STO
+git clone https://github.com/shlifservice24-lang/Shlif_service.git
+cd Shlif_service
 ```
 
 ### Крок 2: Встановлення залежностей
