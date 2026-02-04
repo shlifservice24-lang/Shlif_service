@@ -13,19 +13,21 @@
 // INFORMACIYA PRO PROEKT
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 export const PROJECT_INFO = {
-  name: "stobraclavec",
-  displayName: "STO Braclavets",
-  description: "Sistema upravlinnya STO",
+  name: "shlifservice24",
+  displayName: "Shlif Service",
+  description: "Sistema upravlinnya STO - м. Самбір, вул. Івана Виговського 7",
   version: "1.0.0",
+  email: "shlifservice24@gmail.com",
+  phone: "0681281773",
 } as const;
 
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 // URL-ADRESY DEPLOYU
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 export const DEPLOY_URLS = {
-  vercel: "stobraclavec.vercel.app",
-  githubUsername: "veron3373",
-  githubRepo: "STO",
+  vercel: "shlifservice24.vercel.app",
+  githubUsername: "shlifservice24-lang",
+  githubRepo: "Shlif_service",
   localPort: 5173,
   
   get vercelUrl() { return `https://${this.vercel}`; },
@@ -38,7 +40,7 @@ export const DEPLOY_URLS = {
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 export const SUPABASE_CONFIG = {
   get url() { 
-    return import.meta.env.VITE_SUPABASE_URL || "https://eksifjzzszcqsufwcbsx.supabase.co"; 
+    return import.meta.env.VITE_SUPABASE_URL || "https://qbaqtaakgxsgpbpnmfxl.supabase.co"; 
   },
   get anonKey() { 
     return import.meta.env.VITE_SUPABASE_KEY || ""; 
@@ -69,16 +71,14 @@ export const GOOGLE_CONFIG = {
 // GIT AKAUNTY (dlya deploy skryptiv)
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 export const GIT_ACCOUNTS = [
-  { name: "Veron3373 (GitHub)", email: "veron3373@gmail.com", username: "Veron3373" },
-  { name: "AlimDan662", email: "alimdanfull@gmail.com", username: "AlimDanfull" },
-  { name: "BraclaveSTO", email: "braclave.sto@gmail.com", username: "BraclaveSTO" },
+  { name: "shlifservice24-lang (GitHub)", email: "shlifservice24@gmail.com", username: "shlifservice24-lang" }
 ] as const;
 
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 // VERCEL AKAUNTY
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 export const VERCEL_ACCOUNTS = [
-  { name: "Veron3373 (Main)", team: "", scope: "" },
+  { name: "shlifservice24-lang (Main)", team: "", scope: "" },
   { name: "BraclaveSTO", team: "braclave", scope: "braclave" },
   { name: "AlimDan", team: "", scope: "" },
 ] as const;
