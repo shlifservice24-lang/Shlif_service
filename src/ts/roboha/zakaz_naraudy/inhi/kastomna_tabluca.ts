@@ -1232,30 +1232,15 @@ export function setupAutocompleteForEditableCells(
       // ← НОВИЙ КОД: використовуємо нову функцію з кешуванням
       suggestions = await getNameSuggestions(currTextRaw);
 
+      // 🔶 ВИМКНЕНО: Не очищаємо pibMagCell при редагуванні найменування
+      // Користувач вирішив що при редагуванні/заміні НЕ потрібно очищати інші поля
       const row = target.closest("tr");
       const pibMagCell = row?.querySelector(
         '[data-name="pib_magazin"]'
       ) as HTMLElement | null;
       if (pibMagCell) {
-        const t = updatePibMagazinDataType(pibMagCell);
-        const currentText = pibMagCell.textContent?.trim() || "";
-        if (t === "slyusars") {
-          const allowedSlyusarNames = globalCache.slyusars
-            .filter((s) => s.Доступ === "Слюсар")
-            .map((s) => s.Name.toLowerCase());
-          if (!allowedSlyusarNames.includes(currentText.toLowerCase())) {
-            pibMagCell.textContent = "";
-          }
-        }
-        if (
-          t === "shops" &&
-          !globalCache.shops
-            .map((s) => s.Name.toLowerCase())
-            .includes(currentText.toLowerCase())
-        ) {
-          pibMagCell.textContent = "";
-        }
-        if (query.length === 0) pibMagCell.textContent = "";
+        // Тільки оновлюємо data-type, але НЕ очищаємо вміст
+        updatePibMagazinDataType(pibMagCell);
       }
     } else if (dataName === "pib_magazin") {
       const t = updatePibMagazinDataType(target);

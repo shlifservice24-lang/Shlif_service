@@ -296,34 +296,13 @@ export async function updateSlyusarSumWarningForRow(row: HTMLElement) {
 }
 
 /* ===================== CLEAR CELLS ON NAME CHANGE ===================== */
-async function clearCellsOnNameChange(row: HTMLElement, prevNameLength: number, currentNameLength: number) {
-  if (currentNameLength >= prevNameLength) return;
-
-  const cellsToClear = [
-    '[data-name="catalog"]',
-    '[data-name="id_count"]',
-    '[data-name="price"]',
-    '[data-name="sum"]',
-    '[data-name="slyusar_sum"]',
-    '[data-name="pib_magazin"]'
-  ];
-
-  for (const selector of cellsToClear) {
-    const cell = row.querySelector(selector) as HTMLElement | null;
-    if (!cell) continue;
-    cell.textContent = '';
-    cell.removeAttribute('data-sclad-id');
-    cell.removeAttribute('data-type');
-    cell.removeAttribute('title');
-    if (selector === '[data-name="id_count"]') setWarningFlag(cell, false);
-    if (selector === '[data-name="price"]') setPriceWarningFlag(cell, false);
-    if (selector === '[data-name="slyusar_sum"]') setSlyusarSumWarningFlag(cell, false);
-  }
-
-  updateCalculatedSumsInFooter();
-  await updateCatalogWarningForRow(row);
-  await updatePriceWarningForRow(row);
-  await updateSlyusarSumWarningForRow(row);
+// 🔶 ВИМКНЕНО: Користувач вирішив, що при редагуванні Найменування 
+// НЕ потрібно очищати інші комірки (Каталог, К-ть, Ціна, Сума, Зар-та, ПІБ_Магазин)
+// Оригінальна логіка: якщо довжина тексту зменшується - очищались усі комірки.
+// Тепер залишаємо дані недоторканими при редагуванні/заміні найменування.
+async function clearCellsOnNameChange(_row: HTMLElement, _prevNameLength: number, _currentNameLength: number) {
+  // Функція вимкнена - нічого не робимо
+  return;
 }
 
 /* ===================== MASS REFRESH ===================== */

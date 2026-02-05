@@ -183,6 +183,15 @@ export async function printModalToPdf(): Promise<void> {
       ],
       elementsToHide
     );
+
+    // 🔶 ДОДАТКОВО: Приховуємо комірки pib-magazin-cell напряму за класом
+    // (на випадок якщо заголовок стовпця не відображається)
+    const pibMagazinCells = table.querySelectorAll<HTMLElement>('.pib-magazin-cell');
+    pibMagazinCells.forEach((cell) => elementsToHide.push(cell));
+
+    // 🔶 Приховуємо комірки зарплати напряму за класом
+    const slyusarSumCells = table.querySelectorAll<HTMLElement>('.slyusar-sum-cell');
+    slyusarSumCells.forEach((cell) => elementsToHide.push(cell));
   }
 
   // 🔶 Приховуємо рядок знижки, якщо знижка = 0
