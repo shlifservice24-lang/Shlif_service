@@ -676,17 +676,19 @@ function renderAutocompleteList(target: HTMLElement, suggestions: Suggest[]) {
           );
 
           if (typeToSet === "works") {
-            // Auto-fill Mechanic Name
-            const userName = getUserNameFromLocalStorage();
-            const userLevel = getUserAccessLevelFromLocalStorage();
-
-            if (userName && userLevel === "Слюсар") {
-              pibMagCell.textContent = userName;
-            } else {
-              pibMagCell.textContent = "";
+            // 🔶 ВИПРАВЛЕНО: При виборі роботи з списку НЕ очищаємо ПІБ_Магазин
+            // Тільки заповнюємо якщо поле пусте І користувач Слюсар
+            const currentPibValue = (pibMagCell.textContent || "").trim();
+            if (!currentPibValue) {
+              const userName = getUserNameFromLocalStorage();
+              const userLevel = getUserAccessLevelFromLocalStorage();
+              if (userName && userLevel === "Слюсар") {
+                pibMagCell.textContent = userName;
+              }
+              // Якщо не Слюсар — залишаємо пустим, НЕ очищаємо (воно і так пусте)
             }
 
-            // Auto-fill Catalog with Work ID
+            // Auto-fill Catalog with Work ID (тільки Каталог змінюється)
             const workObj = globalCache.worksWithId.find(
               (w) => w.name === fullText
             );
@@ -699,12 +701,12 @@ function renderAutocompleteList(target: HTMLElement, suggestions: Suggest[]) {
               }
             }
           } else {
-            // ✅ ВИПРАВЛЕНО: Якщо вибрано деталь зі складу - підтягуємо всі дані
+            // 🔶 ВИПРАВЛЕНО: Якщо вибрано деталь зі складу - підтягуємо дані ТІЛЬКИ якщо є sclad_id
+            // Якщо sclad_id відсутній — НЕ очищаємо існуючі дані
             if (chosenScladId !== undefined) {
               applyCatalogSelectionById(target, chosenScladId, fullText);
-            } else {
-              pibMagCell.textContent = "";
             }
+            // Прибрано: else { pibMagCell.textContent = ""; } — не очищаємо поля
           }
         }
 
