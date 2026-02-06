@@ -104,7 +104,6 @@ let currentStatusFilter: StatusFilter = "all";
 
 let lastSearchDateOpen: string = "";
 let lastSearchDateClose: string = "";
-let hasDataForAllEmployees: boolean = false;
 
 // НОВІ ЗМІННІ ДЛЯ АВТОФІЛЬТРАЦІЇ РОБІТ
 let allPodlegleData: PodlegleRecord[] = [];
@@ -907,10 +906,10 @@ export function createNameSelect(): void {
     select.addEventListener("change", (event) => {
       const selectedName = (event.target as HTMLSelectElement).value;
 
-      if (hasDataForAllEmployees) {
+      // 🔥 БАГ-ФІКС: Викликаємо пошук якщо є збережені дати (не тільки якщо hasDataForAllEmployees)
+      if (lastSearchDateOpen || lastSearchDateClose) {
         console.log(
-          `🔄 Автоматичне фільтрування по співробітнику: ${selectedName || "всі"
-          }`
+          `🔄 Автоматичне фільтрування по співробітнику: ${selectedName || "всі"}`
         );
 
         searchDataInDatabase(
@@ -918,6 +917,9 @@ export function createNameSelect(): void {
           lastSearchDateClose,
           selectedName
         );
+      } else {
+        // Якщо немає збережених дат - просто оновлюємо таблицю з поточними даними
+        updatepodlegleTable();
       }
 
       refreshWorkDropdownOptions();
@@ -927,6 +929,13 @@ export function createNameSelect(): void {
 
 export function getFilteredpodlegleData(): PodlegleRecord[] {
   let filteredData = podlegleData;
+
+  // 🔥 БАГ-ФІКС: Спочатку фільтруємо по імені з селекту
+  const selectedName = byId<HTMLSelectElement>("Bukhhalter-podlegle-name-select")?.value || "";
+  if (selectedName) {
+    filteredData = filteredData.filter((item) => item.name === selectedName);
+    console.log(`📋 Фільтрація по імені '${selectedName}': ${filteredData.length} записів`);
+  }
 
   if (currentPaymentFilter === "paid") {
     filteredData = filteredData.filter((item) => item.isPaid);
@@ -1234,9 +1243,6 @@ export function searchDataInDatabase(
 
   lastSearchDateOpen = dateOpen;
   lastSearchDateClose = dateClose;
-
-  const isSearchForAllEmployees = !selectedName;
-  if (isSearchForAllEmployees) hasDataForAllEmployees = true;
 
   const toIsoClose = dateClose || todayIso();
 
@@ -2202,14 +2208,35 @@ export async function runMassPaymentCalculation(): Promise<void> {
           }
           // 2. ЛОГІКА ДЛЯ СЛЮСАРЯ (шукаємо в масиві Записи)
           else if (actRecord.Записи) {
-            // ✅ ВИПРАВЛЕНО: Шукаємо тільки по РОБОТІ
-            const workEntry = actRecord.Записи.find(
-              (e) => e.Робота === record.work && !e.Розраховано
-            );
+            // 🔥 БАГ-ФІКС: Шукаємо спочатку по recordId, потім по workIndex, потім по роботі
+            let workEntry = null;
+            
+            // Спочатку шукаємо по recordId (найточніший пошук)
+            if (record.recordId) {
+              workEntry = actRecord.Записи.find(
+                (e) => e.recordId === record.recordId && !e.Розраховано
+              );
+            }
+            
+            // Якщо не знайдено по recordId, шукаємо по workIndex
+            if (!workEntry && record.workIndex !== undefined) {
+              const entryByIndex = actRecord.Записи[record.workIndex];
+              if (entryByIndex && entryByIndex.Робота === record.work && !entryByIndex.Розраховано) {
+                workEntry = entryByIndex;
+              }
+            }
+            
+            // Fallback: шукаємо по назві роботи
+            if (!workEntry) {
+              workEntry = actRecord.Записи.find(
+                (e) => e.Робота === record.work && !e.Розраховано
+              );
+            }
 
             if (workEntry) {
               workEntry.Розраховано = currentDate;
               updatedCount++;
+              console.log(`✅ Розраховано запис: ${record.name} - ${record.work} (Акт ${record.act})`);
 
               // Оновлюємо локальний масив
               const originalIndex = podlegleData.findIndex(
@@ -2342,7 +2369,6 @@ export function clearpodlegleForm(): void {
   podlegleData = [];
   allPodlegleData = [];
   hasPodlegleDataLoaded = false;
-  hasDataForAllEmployees = false;
   lastSearchDateOpen = "";
   lastSearchDateClose = "";
 
