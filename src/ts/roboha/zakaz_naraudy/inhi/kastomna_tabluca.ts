@@ -979,6 +979,18 @@ export function setupAutocompleteForEditableCells(
     let suggestions: Suggest[] = [];
 
     if (dataName === "name") {
+      // 🔵 ПОКАЗУЄМО ПОВНИЙ ТЕКСТ ПРИ ФОКУСІ (для редагування)
+      const fullNameAttr = target.getAttribute("data-full-name");
+      const currentText = (target.textContent || "").trim();
+      
+      if (fullNameAttr && currentText.includes(".....")) {
+        // Зберігаємо скорочений варіант для відновлення
+        (target as any)._shortenedText = currentText;
+        // Показуємо повний текст
+        target.textContent = fullNameAttr;
+        console.log(`📝 Розгорнуто для редагування: "${currentText}" → "${fullNameAttr}"`);
+      }
+      
       // ← НОВИЙ КОД: використовуємо нову функцію з кешуванням
       const query = target.textContent?.trim() || "";
       suggestions = await getNameSuggestions(query);
@@ -1377,15 +1389,35 @@ export function setupAutocompleteForEditableCells(
     ) {
       setTimeout(() => {
         const row = target.closest("tr");
-        const nameText = (target.textContent || "").trim();
+        let nameText = (target.textContent || "").trim();
+        
+        // 🔵 СКОРОЧУЄМО ТЕКСТ ПРИ ВТРАТІ ФОКУСУ
+        const prevFullName = target.getAttribute("data-full-name");
+        const shortenedText = shortenTextToFirstAndLast(nameText);
+        const needsShortening = shortenedText !== nameText && nameText.split(/\.(?:\s+|$)/).filter(s => s.trim()).length >= 3;
+        
+        if (needsShortening) {
+          // Зберігаємо повний текст в атрибуті
+          target.setAttribute("data-full-name", nameText);
+          // Показуємо скорочений варіант
+          target.textContent = shortenedText;
+          nameText = shortenedText; // Оновлюємо для подальшої логіки
+          console.log(`📄 Скорочено при втраті фокусу: "${nameText}"`);
+        } else if (!nameText.includes(".....") && prevFullName) {
+          // Якщо текст змінився і більше не потребує скорочення - видаляємо атрибут
+          target.removeAttribute("data-full-name");
+        }
 
         if (row && nameText) {
           const indexCell = row.querySelector(".row-index");
           const currentType = target.getAttribute("data-type");
 
+          // 🔵 Використовуємо ПОВНИЙ текст для перевірки типу (не скорочений)
+          const fullNameForCheck = target.getAttribute("data-full-name") || nameText;
+          
           // Check exact matches if type is not set or we want to double check
-          const isDetail = globalCache.details.includes(nameText);
-          const isWork = globalCache.works.includes(nameText);
+          const isDetail = globalCache.details.includes(fullNameForCheck);
+          const isWork = globalCache.works.includes(fullNameForCheck);
 
           let finalType = currentType;
 
