@@ -1415,12 +1415,13 @@ export function createModal(): void {
   const closeBtn = newModalOverlay.querySelector<HTMLButtonElement>("#zakaz-narayd-close-btn");
   closeBtn?.addEventListener("click", () => closeZakazNaraydModal());
 
-  // Обробник для закриття по кліку на overlay
-  newModalOverlay.addEventListener("click", (e) => {
-    if (e.target === newModalOverlay) {
-      closeZakazNaraydModal();
-    }
-  });
+  // 🔶 ВИМКНЕНО: Закриття по кліку на overlay (по запиту користувача)
+  // Модальне вікно тепер закривається ТІЛЬКИ по кнопці ×
+  // newModalOverlay.addEventListener("click", (e) => {
+  //   if (e.target === newModalOverlay) {
+  //     closeZakazNaraydModal();
+  //   }
+  // });
 }
 
 /** Функція для закриття модального вікна */
