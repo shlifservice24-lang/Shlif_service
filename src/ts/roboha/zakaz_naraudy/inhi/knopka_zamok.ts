@@ -354,6 +354,105 @@ function validateActTableBeforeClosing(): {
   };
 }
 
+/** 🔵 Валідація заповненості всіх полів для Слюсаря перед підтвердженням виконання */
+function validateAllFieldsForSlusar(): {
+  isValid: boolean;
+  emptyFields: string[];
+} {
+  const emptyFields: string[] = [];
+
+  const tableRows = document.querySelectorAll(
+    `#${ACT_ITEMS_TABLE_CONTAINER_ID} tbody tr`
+  );
+
+  // Перевіряємо видимість стовпців
+  const catalogHeader = document.querySelector(`#${ACT_ITEMS_TABLE_CONTAINER_ID} thead th[data-col="catalog"], #${ACT_ITEMS_TABLE_CONTAINER_ID} thead th:has([data-name="catalog"])`) as HTMLElement | null;
+  const isCatalogVisible = catalogHeader ? catalogHeader.offsetParent !== null : false;
+  
+  const zarplataCell = document.querySelector(
+    `#${ACT_ITEMS_TABLE_CONTAINER_ID} tbody tr [data-name="slyusar_sum"]`
+  ) as HTMLElement | null;
+  const isZarplataVisible = zarplataCell ? zarplataCell.offsetParent !== null : false;
+
+  const pibMagazinCell = document.querySelector(
+    `#${ACT_ITEMS_TABLE_CONTAINER_ID} tbody tr [data-name="pib_magazin"]`
+  ) as HTMLElement | null;
+  const isPibMagazinVisible = pibMagazinCell ? pibMagazinCell.offsetParent !== null : false;
+
+  let rowIndex = 0;
+  tableRows.forEach((tr) => {
+    rowIndex++;
+    
+    const nameCell = tr.querySelector('[data-name="name"]') as HTMLElement | null;
+    const name = cleanText(nameCell?.textContent);
+    
+    // Пропускаємо пусті рядки (без найменування)
+    if (!name) return;
+
+    const rowLabel = `Рядок ${rowIndex} ("${name.substring(0, 20)}${name.length > 20 ? '...' : ''}")`;
+
+    // 1. Найменування - завжди перевіряємо
+    if (!name) {
+      emptyFields.push(`${rowLabel}: Найменування - пусте`);
+    }
+
+    // 2. Каталог - перевіряємо якщо стовпець видимий
+    if (isCatalogVisible) {
+      const catalogCell = tr.querySelector('[data-name="catalog"]') as HTMLElement | null;
+      const catalog = cleanText(catalogCell?.textContent);
+      if (!catalog) {
+        emptyFields.push(`${rowLabel}: Каталог - пустий`);
+      }
+    }
+
+    // 3. К-ть
+    const qtyCell = tr.querySelector('[data-name="id_count"]') as HTMLElement | null;
+    const qty = parseNum(qtyCell?.textContent);
+    if (!qty || qty === 0) {
+      emptyFields.push(`${rowLabel}: К-ть - пусте або 0`);
+    }
+
+    // 4. Ціна
+    const priceCell = tr.querySelector('[data-name="price"]') as HTMLElement | null;
+    const price = parseNum(priceCell?.textContent);
+    if (!price || price === 0) {
+      emptyFields.push(`${rowLabel}: Ціна - пуста або 0`);
+    }
+
+    // 5. Сума
+    const sumCell = tr.querySelector('[data-name="sum"]') as HTMLElement | null;
+    const sum = parseNum(sumCell?.textContent);
+    if (!sum || sum === 0) {
+      emptyFields.push(`${rowLabel}: Сума - пуста або 0`);
+    }
+
+    // 6. Зар-та - перевіряємо якщо стовпець видимий
+    if (isZarplataVisible) {
+      const zarplataCell = tr.querySelector('[data-name="slyusar_sum"]') as HTMLElement | null;
+      const zarplata = parseNum(zarplataCell?.textContent);
+      // Для деталей зарплата може бути 0, тому перевіряємо тільки для робіт
+      const type = nameCell?.getAttribute('data-type');
+      if (type === 'works' && (!zarplata || zarplata === 0)) {
+        emptyFields.push(`${rowLabel}: Зар-та - пуста або 0`);
+      }
+    }
+
+    // 7. ПІБ_Магазин - перевіряємо якщо стовпець видимий
+    if (isPibMagazinVisible) {
+      const pibCell = tr.querySelector('[data-name="pib_magazin"]') as HTMLElement | null;
+      const pib = cleanText(pibCell?.textContent);
+      if (!pib) {
+        emptyFields.push(`${rowLabel}: ПІБ_Магазин - пустий`);
+      }
+    }
+  });
+
+  return {
+    isValid: emptyFields.length === 0,
+    emptyFields,
+  };
+}
+
 /** Синхронізувати у shops.data.Історія для 1 акту (групування по магазинах) */
 async function syncShopsHistoryForAct(params: {
   actId: number;
@@ -740,6 +839,23 @@ export function initStatusLockDelegation(): void {
             "warning",
             4000
           );
+          btn.disabled = false;
+          return;
+        }
+
+        // 🔵 ПЕРЕВІРКА ЗАПОВНЕНОСТІ ВСІХ ПОЛІВ ПЕРЕД ПІДТВЕРДЖЕННЯМ
+        const validation = validateAllFieldsForSlusar();
+        if (!validation.isValid) {
+          const maxErrors = 5; // Показуємо перші 5 помилок
+          const errorsToShow = validation.emptyFields.slice(0, maxErrors);
+          const remainingErrors = validation.emptyFields.length - maxErrors;
+          
+          let errorMessage = "❌ Заповніть всі поля:\n" + errorsToShow.join("\n");
+          if (remainingErrors > 0) {
+            errorMessage += `\n... та ще ${remainingErrors} пустих полів`;
+          }
+          
+          showNotification(errorMessage, "warning", 6000);
           btn.disabled = false;
           return;
         }
