@@ -1334,17 +1334,15 @@ function updateFinalSumWithAvans(): void {
             // Розраховуємо БАЗУ для зворотного розрахунку
             const currentDiscountBase = calculateDiscountBase(overallSum);
 
-            // Розраховуємо відсоток від бази (якщо база > 0)
-            const calculatedPercent =
+            // Розраховуємо ТОЧНИЙ відсоток від бази (якщо база > 0)
+            const exactPercent =
               currentDiscountBase > 0
                 ? (numValue / currentDiscountBase) * 100
                 : 0;
 
-            // Заокруглюємо до 0.5 (математичне заокруглювання)
-            const roundedToHalf = Math.round(calculatedPercent / 0.5) * 0.5;
-
-            // Встановлюємо розраховані відсотки (максимум 100%)
-            const finalPercent = Math.min(roundedToHalf, 100);
+            // Встановлюємо ТОЧНИЙ відсоток (БЕЗ округлення) - він збережеться в БД
+            // При відображенні він округляється до 0.5, але тут зберігаємо точний
+            const finalPercent = Math.min(exactPercent, 100);
             discountInputEl.value = String(finalPercent);
 
             // Встановлюємо флаг, що сума вводилася вручну
