@@ -1713,6 +1713,12 @@ async function saveActData(actId: number, originalActData: any): Promise<void> {
     ? parseFloat(discountAmountInput.value.replace(/\s/g, "") || "0")
     : 0;
 
+  // 🔥 Розраховуємо ТОЧНИЙ відсоток знижки від загальної суми
+  // Щоб при зворотному розрахунку вийшла ТОЧНО та сама сума
+  const exactDiscountPercent = grandTotalSum > 0 
+    ? (discountAmountValue / grandTotalSum) * 100 
+    : 0;
+
   // Розраховуємо знижку від ВАЛУ (загальної суми), а НЕ від маржі
   // Знижка застосовується до загальної суми продажу
   const discountMultiplier = discountValue > 0 ? 1 - discountValue / 100 : 1;
@@ -1746,8 +1752,7 @@ async function saveActData(actId: number, originalActData: any): Promise<void> {
     "За роботу": totalWorksSum,
     "Загальна сума": grandTotalSum,
     Аванс: avansValue,
-    Знижка: discountAmountValue, // 🔥 Тепер зберігаємо СУМУ знижки (в грн), а не відсоток
-    "Відсоток знижки": discountValue, // Зберігаємо відсоток окремо для відображення
+    Знижка: exactDiscountPercent, // 🔥 Зберігаємо ТОЧНИЙ відсоток (з усіма десятковими), щоб сума була точна
     "Прибуток за деталі": Number(finalDetailsProfit.toFixed(2)),
     "Прибуток за роботу": Number(finalWorksProfit.toFixed(2)),
   };

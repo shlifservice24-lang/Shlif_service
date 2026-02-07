@@ -1466,24 +1466,25 @@ function renderModalContent(
       avansInput.dispatchEvent(new Event("input"));
     }
 
-    // 🔥 Тепер "Знижка" містить СУМУ (грн), а "Відсоток знижки" - відсоток
+    // 🔥 "Знижка" містить ТОЧНИЙ відсоток (з усіма десятковими) 
+    // для відображення округлюємо до 0.5
     if (discountInput) {
-      const discountValue = Number(
-        actDetails?.["Відсоток знижки"] ?? 0
-      );
-      discountInput.value = String(discountValue);
+      const exactPercent = Number(actDetails?.["Знижка"] ?? 0);
+      // Округлюємо для відображення до 0.5
+      const roundedPercent = Math.round(exactPercent / 0.5) * 0.5;
+      discountInput.value = String(roundedPercent);
       discountInput.dispatchEvent(new Event("input"));
     }
 
     if (discountAmountInput) {
-      // Читаємо суму знижки з поля "Знижка" (тепер там сума в грн)
-      const discountAmountValue = Number(
-        actDetails?.["Знижка"] ?? 0
-      );
+      // Розраховуємо точну суму з ТОЧНОГО відсотка
+      const exactPercent = Number(actDetails?.["Знижка"] ?? 0);
+      const totalSum = Number(actDetails?.["Загальна сума"] ?? 0);
+      const discountAmountValue = (totalSum * exactPercent) / 100;
+      
       discountAmountInput.value = String(discountAmountValue);
       
-      // Якщо є збережена сума знижки > 0, встановлюємо флаг що сума введена вручну
-      // Це запобігає перерахунку суми з відсотка
+      // Якщо є збережена знижка > 0, встановлюємо флаг
       if (discountAmountValue > 0) {
         (window as any).isDiscountAmountManuallySet = true;
       }
@@ -2230,21 +2231,25 @@ export async function refreshActTableSilently(actId: number): Promise<void> {
       avansInput.dispatchEvent(new Event("input"));
     }
 
-    // Знижка (відсоток) - читаємо з "Відсоток знижки"
+    // Знижка (відсоток) - округлюємо для відображення
     const discountInput = document.getElementById("editable-discount") as HTMLInputElement | null;
     if (discountInput) {
-      const discountValue = Number(actDetails?.["Відсоток знижки"] ?? 0);
-      discountInput.value = String(discountValue);
+      const exactPercent = Number(actDetails?.["Знижка"] ?? 0);
+      const roundedPercent = Math.round(exactPercent / 0.5) * 0.5;
+      discountInput.value = String(roundedPercent);
       discountInput.dispatchEvent(new Event("input"));
     }
 
-    // Знижка (сума) - читаємо з "Знижка" (тепер там сума в грн)
+    // Знижка (сума) - розраховуємо з ТОЧНОГО відсотка
     const discountAmountInput = document.getElementById("editable-discount-amount") as HTMLInputElement | null;
     if (discountAmountInput) {
-      const discountAmountValue = Number(actDetails?.["Знижка"] ?? 0);
+      const exactPercent = Number(actDetails?.["Знижка"] ?? 0);
+      const totalSum = Number(actDetails?.["Загальна сума"] ?? 0);
+      const discountAmountValue = (totalSum * exactPercent) / 100;
+      
       discountAmountInput.value = String(discountAmountValue);
       
-      // Якщо є збережена сума знижки > 0, встановлюємо флаг
+      // Якщо є збережена знижка > 0, встановлюємо флаг
       if (discountAmountValue > 0) {
         (window as any).isDiscountAmountManuallySet = true;
       }
