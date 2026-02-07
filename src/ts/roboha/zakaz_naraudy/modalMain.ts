@@ -1467,10 +1467,10 @@ function renderModalContent(
     }
 
     // 🔥 "Знижка" містить ТОЧНИЙ відсоток (з усіма десятковими) 
-    // Показуємо його БЕЗ округлення
+    // Показуємо його БЕЗ округлення, але тільки 2 знаки після коми
     if (discountInput) {
       const exactPercent = Number(actDetails?.["Знижка"] ?? 0);
-      discountInput.value = String(exactPercent);
+      discountInput.value = exactPercent.toFixed(2);
       discountInput.dispatchEvent(new Event("input"));
     }
 
@@ -2229,11 +2229,11 @@ export async function refreshActTableSilently(actId: number): Promise<void> {
       avansInput.dispatchEvent(new Event("input"));
     }
 
-    // Знижка (відсоток) - показуємо точний відсоток
+    // Знижка (відсоток) - показуємо точний відсоток, але тільки 2 знаки після коми
     const discountInput = document.getElementById("editable-discount") as HTMLInputElement | null;
     if (discountInput) {
       const exactPercent = Number(actDetails?.["Знижка"] ?? 0);
-      discountInput.value = String(exactPercent);
+      discountInput.value = exactPercent.toFixed(2);
       discountInput.dispatchEvent(new Event("input"));
     }
 

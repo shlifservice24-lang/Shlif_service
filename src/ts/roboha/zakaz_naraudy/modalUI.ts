@@ -1341,9 +1341,9 @@ function updateFinalSumWithAvans(): void {
                 : 0;
 
             // Встановлюємо ТОЧНИЙ відсоток (БЕЗ округлення) - він збережеться в БД
-            // При відображенні він округляється до 0.5, але тут зберігаємо точний
+            // Але для відображення показуємо тільки 2 знаки після коми
             const finalPercent = Math.min(exactPercent, 100);
-            discountInputEl.value = String(finalPercent);
+            discountInputEl.value = finalPercent.toFixed(2);
 
             // Встановлюємо флаг, що сума вводилася вручну
             (window as any).isDiscountAmountManuallySet = true;
