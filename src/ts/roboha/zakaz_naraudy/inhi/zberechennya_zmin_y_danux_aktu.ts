@@ -1746,8 +1746,8 @@ async function saveActData(actId: number, originalActData: any): Promise<void> {
     "За роботу": totalWorksSum,
     "Загальна сума": grandTotalSum,
     Аванс: avansValue,
-    Знижка: discountValue,
-    "Знижка сума": discountAmountValue, // Зберігаємо точну суму знижки
+    Знижка: discountAmountValue, // 🔥 Тепер зберігаємо СУМУ знижки (в грн), а не відсоток
+    "Відсоток знижки": discountValue, // Зберігаємо відсоток окремо для відображення
     "Прибуток за деталі": Number(finalDetailsProfit.toFixed(2)),
     "Прибуток за роботу": Number(finalWorksProfit.toFixed(2)),
   };

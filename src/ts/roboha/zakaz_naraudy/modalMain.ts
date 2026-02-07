@@ -1466,17 +1466,19 @@ function renderModalContent(
       avansInput.dispatchEvent(new Event("input"));
     }
 
+    // 🔥 Тепер "Знижка" містить СУМУ (грн), а "Відсоток знижки" - відсоток
     if (discountInput) {
       const discountValue = Number(
-        act?.discount ?? actDetails?.["Знижка"] ?? 0
+        actDetails?.["Відсоток знижки"] ?? 0
       );
       discountInput.value = String(discountValue);
       discountInput.dispatchEvent(new Event("input"));
     }
 
     if (discountAmountInput) {
+      // Читаємо суму знижки з поля "Знижка" (тепер там сума в грн)
       const discountAmountValue = Number(
-        actDetails?.["Знижка сума"] ?? 0
+        actDetails?.["Знижка"] ?? 0
       );
       discountAmountInput.value = String(discountAmountValue);
       
@@ -2228,18 +2230,18 @@ export async function refreshActTableSilently(actId: number): Promise<void> {
       avansInput.dispatchEvent(new Event("input"));
     }
 
-    // Знижка (відсоток)
+    // Знижка (відсоток) - читаємо з "Відсоток знижки"
     const discountInput = document.getElementById("editable-discount") as HTMLInputElement | null;
     if (discountInput) {
-      const discountValue = Number(act?.discount ?? actDetails?.["Знижка"] ?? 0);
+      const discountValue = Number(actDetails?.["Відсоток знижки"] ?? 0);
       discountInput.value = String(discountValue);
       discountInput.dispatchEvent(new Event("input"));
     }
 
-    // Знижка (сума)
+    // Знижка (сума) - читаємо з "Знижка" (тепер там сума в грн)
     const discountAmountInput = document.getElementById("editable-discount-amount") as HTMLInputElement | null;
     if (discountAmountInput) {
-      const discountAmountValue = Number(actDetails?.["Знижка сума"] ?? 0);
+      const discountAmountValue = Number(actDetails?.["Знижка"] ?? 0);
       discountAmountInput.value = String(discountAmountValue);
       
       // Якщо є збережена сума знижки > 0, встановлюємо флаг
