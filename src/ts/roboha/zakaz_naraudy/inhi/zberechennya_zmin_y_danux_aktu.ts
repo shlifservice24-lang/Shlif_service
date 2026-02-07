@@ -1705,6 +1705,14 @@ async function saveActData(actId: number, originalActData: any): Promise<void> {
     ? parseFloat(discountInput.value.replace(/\s/g, "") || "0")
     : 0;
 
+  // Отримуємо збережену суму знижки (введену вручну або розраховану)
+  const discountAmountInput = document.getElementById(
+    "editable-discount-amount"
+  ) as HTMLInputElement;
+  const discountAmountValue = discountAmountInput
+    ? parseFloat(discountAmountInput.value.replace(/\s/g, "") || "0")
+    : 0;
+
   // Розраховуємо знижку від ВАЛУ (загальної суми), а НЕ від маржі
   // Знижка застосовується до загальної суми продажу
   const discountMultiplier = discountValue > 0 ? 1 - discountValue / 100 : 1;
@@ -1739,6 +1747,7 @@ async function saveActData(actId: number, originalActData: any): Promise<void> {
     "Загальна сума": grandTotalSum,
     Аванс: avansValue,
     Знижка: discountValue,
+    "Знижка сума": discountAmountValue, // Зберігаємо точну суму знижки
     "Прибуток за деталі": Number(finalDetailsProfit.toFixed(2)),
     "Прибуток за роботу": Number(finalWorksProfit.toFixed(2)),
   };

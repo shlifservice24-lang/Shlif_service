@@ -731,6 +731,9 @@ export async function showModal(
   clickSource: 'client' | 'other' = 'other',
   skipPresence: boolean = false
 ): Promise<void> {
+  // 🔄 Скидаємо флаг суми знижки при відкритті нового акту
+  (window as any).isDiscountAmountManuallySet = false;
+  
   const canOpen = await canUserOpenActs();
 
   if (!canOpen) {
@@ -1473,9 +1476,16 @@ function renderModalContent(
 
     if (discountAmountInput) {
       const discountAmountValue = Number(
-        act?.discount_amount ?? actDetails?.["ПроцентЗнижки"] ?? 0
+        actDetails?.["Знижка сума"] ?? 0
       );
       discountAmountInput.value = String(discountAmountValue);
+      
+      // Якщо є збережена сума знижки > 0, встановлюємо флаг що сума введена вручну
+      // Це запобігає перерахунку суми з відсотка
+      if (discountAmountValue > 0) {
+        (window as any).isDiscountAmountManuallySet = true;
+      }
+      
       discountAmountInput.dispatchEvent(new Event("input"));
     }
   }, 60);
@@ -2231,6 +2241,12 @@ export async function refreshActTableSilently(actId: number): Promise<void> {
     if (discountAmountInput) {
       const discountAmountValue = Number(actDetails?.["Знижка сума"] ?? 0);
       discountAmountInput.value = String(discountAmountValue);
+      
+      // Якщо є збережена сума знижки > 0, встановлюємо флаг
+      if (discountAmountValue > 0) {
+        (window as any).isDiscountAmountManuallySet = true;
+      }
+      
       discountAmountInput.dispatchEvent(new Event("input"));
     }
 
