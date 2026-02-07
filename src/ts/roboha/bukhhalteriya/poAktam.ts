@@ -1053,7 +1053,7 @@ export function updateDetailsTable(): void {
       // Показуємо маржу з індикатором знижки якщо вона є
       const discountIndicator =
         item.discountPercent && item.discountPercent > 0
-          ? ` <span style="color: #ff9800; font-size: 0.75em;">(-${item.discountPercent}%)</span>`
+          ? ` <span style="color: #ff9800; font-size: 0.75em;">(-${Math.round(item.discountPercent)}%)</span>`
           : "";
 
       const marginHtml =

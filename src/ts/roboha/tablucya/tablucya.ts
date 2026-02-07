@@ -971,7 +971,7 @@ function createSumCell(act: any, actId: number): HTMLTableCellElement {
     // Нижній: сума після знижки (284 грн)
     td.innerHTML = `
       <div class="sum-full-price">
-        ${fullAmount.toLocaleString("uk-UA")}<sup class="discount-percent">-${discountPercent}%</sup>
+        ${fullAmount.toLocaleString("uk-UA")}<sup class="discount-percent">-${Math.round(discountPercent)}%</sup>
       </div>
       <div class="sum-discounted-price">${discountedAmount.toLocaleString("uk-UA")} грн</div>
     `;
