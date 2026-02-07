@@ -1265,7 +1265,9 @@ function updateFinalSumWithAvans(): void {
   } else {
     // Інакше розраховуємо з процента ВІД НОВОЇ БАЗИ
     actualDiscountAmount = (discountBase * discountPercent) / 100;
-    // Оновлюємо поле суми знижки (БЕЗ заокруглення)
+    // Округлюємо математично (319.6 → 320, 319.4 → 319)
+    actualDiscountAmount = Math.round(actualDiscountAmount);
+    // Оновлюємо поле суми знижки
     if (discountAmountInput) {
       discountAmountInput.value = format(actualDiscountAmount);
     }
@@ -1279,7 +1281,7 @@ function updateFinalSumWithAvans(): void {
   // Спочатку знижка (червона), потім аванс (зелений)
   if (discountPercent > 0 || actualDiscountAmount > 0) {
     displayText += ` - <input type="text" id="editable-discount-amount" class="editable-discount-amount" value="${formatNumberWithSpaces(
-      actualDiscountAmount
+      Math.round(actualDiscountAmount)
     )}" style="color: #d32f2f; font-weight: 700; border: none; background: transparent; width: auto; padding: 0; margin: 0; font-size: inherit;" /> <span style="color: #d32f2f; font-weight: 700;">грн (знижка)</span>`;
   }
 

@@ -1480,7 +1480,7 @@ function renderModalContent(
       // Розраховуємо точну суму з ТОЧНОГО відсотка
       const exactPercent = Number(actDetails?.["Знижка"] ?? 0);
       const totalSum = Number(actDetails?.["Загальна сума"] ?? 0);
-      const discountAmountValue = (totalSum * exactPercent) / 100;
+      const discountAmountValue = Math.round((totalSum * exactPercent) / 100);
       
       discountAmountInput.value = String(discountAmountValue);
       
@@ -2245,7 +2245,7 @@ export async function refreshActTableSilently(actId: number): Promise<void> {
     if (discountAmountInput) {
       const exactPercent = Number(actDetails?.["Знижка"] ?? 0);
       const totalSum = Number(actDetails?.["Загальна сума"] ?? 0);
-      const discountAmountValue = (totalSum * exactPercent) / 100;
+      const discountAmountValue = Math.round((totalSum * exactPercent) / 100);
       
       discountAmountInput.value = String(discountAmountValue);
       
