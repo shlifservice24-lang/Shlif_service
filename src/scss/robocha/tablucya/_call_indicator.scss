@@ -24,6 +24,20 @@
   }
 }
 
+/* Статус очікування - показується лише при ховері на рядок */
+.call-indicator-pending {
+  opacity: 0;
+}
+
+tbody tr:hover .call-indicator-pending {
+  opacity: 1;
+}
+
+/* Результат (взяв/не взяв) - показується завжди статично */
+.call-indicator-result {
+  opacity: 1;
+}
+
 /* Анімація для slideIn повідомлень */
 @keyframes slideIn {
   from {

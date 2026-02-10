@@ -901,7 +901,10 @@ async function handleCallIndicatorClick(
       }
     }
     callIndicator.textContent = displayText;
-    callIndicator.style.opacity = hasCallRecord ? "1" : "0";
+    // Оновлюємо класи залежно від стану
+    callIndicator.className = hasCallRecord 
+      ? "call-indicator call-indicator-result" 
+      : "call-indicator call-indicator-pending";
 
     // Оновлюємо дані в глобальному масиві
     const actIndex = actsGlobal.findIndex((a) => a.act_id === actId);
@@ -913,7 +916,7 @@ async function handleCallIndicatorClick(
     // Показуємо повідомлення
     let message = "";
     if (newEmoji === "📞") {
-      message = "��� Дзвінок: взяв слухавку";
+      message = "��� Дзвінок: взяв слухавку";
     } else if (newEmoji === "📵") {
       message = "📵 Дзвінок: не взяв слухавку";
     } else {
@@ -998,7 +1001,9 @@ function createClientCell(
 
   // Додаємо емодзі дзвінка з датою
   const callIndicator = document.createElement("span");
-  callIndicator.className = "call-indicator";
+  // Додаємо клас залежно від стану: pending (⏳) або result (📞/📵)
+  const statusClass = hasCallRecord ? "call-indicator-result" : "call-indicator-pending";
+  callIndicator.className = `call-indicator ${statusClass}`;
   callIndicator.textContent = callDisplayText;
   callIndicator.style.cssText = `
     position: absolute;
@@ -1006,7 +1011,6 @@ function createClientCell(
     top: 0;
     font-size: 0.85em;
     cursor: pointer;
-    opacity: ${hasCallRecord ? "1" : "0"};
     transition: opacity 0.2s;
     z-index: 10;
     white-space: nowrap;
