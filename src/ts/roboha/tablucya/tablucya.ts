@@ -1036,21 +1036,21 @@ function createClientCell(
     phones.forEach((p) => {
       if (smsHtml) {
         // Для збереження центрування телефону використовуємо position: relative
-        td.innerHTML += `
+        td.insertAdjacentHTML('beforeend', `
            <div style="position: relative; width: 100%; margin-top: 4px; min-height: 1.2em;">
              <div style="position: absolute; left: 0; top: 0; white-space: nowrap;">${smsHtml}</div>
              <div class="phone-blue-italic" style="text-align: center; width: 100%;">${p}</div>
-           </div>`;
+           </div>`);
         // Очищаємо smsHtml щоб не дублювати
         smsHtml = "";
       } else {
         // ✏️ Телефон і редактор на одній лінії
-        td.innerHTML += `<div class="phone-editor-row"><span class="phone-blue-italic">${p}</span>${editorHtml}</div>`;
+        td.insertAdjacentHTML('beforeend', `<div class="phone-editor-row"><span class="phone-blue-italic">${p}</span>${editorHtml}</div>`);
       }
     });
   } else if (smsHtml) {
     // Якщо телефонів немає, але є SMS
-    td.innerHTML += `<div style="margin-top: 4px; text-align: left;">${smsHtml}</div>`;
+    td.insertAdjacentHTML('beforeend', `<div style="margin-top: 4px; text-align: left;">${smsHtml}</div>`);
   }
 
   // Показуємо емодзі при наведенні на комірку (тільки якщо немає запису)
