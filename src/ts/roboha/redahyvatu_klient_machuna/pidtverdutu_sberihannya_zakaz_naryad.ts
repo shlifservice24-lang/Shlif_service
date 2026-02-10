@@ -91,6 +91,7 @@ export async function createActInDatabase(
       "Причина звернення": reason,
       "Прибуток за деталі": 0,
       "Прибуток за роботу": 0,
+      "Дзвінок": "",
     };
     const { data: newAct, error } = await supabase
       .from("acts")

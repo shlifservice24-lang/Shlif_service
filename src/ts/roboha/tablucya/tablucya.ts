@@ -425,11 +425,11 @@ function subscribeToGlobalActPresence() {
 
     // Порівнюємо зі старою мапою та оновлюємо DOM
     const allActIds = new Set([...actEditorsMap.keys(), ...newEditorsMap.keys()]);
-    
+
     allActIds.forEach((actId) => {
       const oldEditor = actEditorsMap.get(actId);
       const newEditor = newEditorsMap.get(actId);
-      
+
       if (oldEditor !== newEditor) {
         // Оновлюємо DOM для цього акту
         updateEditorInfoInDom(actId, newEditor || null);
@@ -463,7 +463,7 @@ function updateEditorInfoInDom(actId: number, editorName: string | null): void {
   if (!table) return;
 
   const rows = table.querySelectorAll("tbody tr");
-  
+
   rows.forEach((row) => {
     const firstCell = row.querySelector("td");
     if (!firstCell) return;
@@ -832,6 +832,116 @@ function isActClosed(act: any): boolean {
 }
 
 // =============================================================================
+// ОБРОБКА ІНДИКАТОРА ДЗВІНКА
+// =============================================================================
+
+/**
+ * Обробляє клік на індикатор дзвінка
+ * Циклічно змінює стан: 📞⏳ → 📞✅ → 📞❌ → 📞⏳
+ */
+async function handleCallIndicatorClick(
+  actId: number,
+  act: any,
+  callIndicator: HTMLElement
+): Promise<void> {
+  try {
+    // Отримуємо поточні дані акту
+    const actData = safeParseJSON(act.info || act.data || act.details);
+    const currentCallData = actData?.["Дзвінок"] || "";
+
+    // Визначаємо наступний стан
+    let newCallData = "";
+    let newEmoji = "";
+
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const year = now.getFullYear();
+    const timestamp = `${hours}:${minutes} ${day}.${month}.${year}`;
+
+    if (!currentCallData || currentCallData === "") {
+      // 📞⏳ → 📞✅ (взяв слухавку)
+      newCallData = timestamp;
+      newEmoji = "📞✅";
+    } else if (currentCallData.includes("невзяв")) {
+      // 📞❌ → 📞⏳ (очікування)
+      newCallData = "";
+      newEmoji = "📞⏳";
+    } else {
+      // 📞✅ → 📞❌ (не взяв слухавку)
+      newCallData = `${timestamp} невзяв`;
+      newEmoji = "📞❌";
+    }
+
+    // Оновлюємо дані акту
+    actData["Дзвінок"] = newCallData;
+
+    // Зберігаємо в базу даних
+    const { error } = await supabase
+      .from("acts")
+      .update({ data: actData })
+      .eq("act_id", actId);
+
+    if (error) {
+      console.error("❌ Помилка при збереженні даних дзвінка:", error);
+      showNotificationMessage("❌ Помилка при збереженні", "#f44336");
+      return;
+    }
+
+    // Оновлюємо візуальний індикатор
+    callIndicator.textContent = newEmoji;
+
+    // Оновлюємо дані в глобальному масиві
+    const actIndex = actsGlobal.findIndex((a) => a.act_id === actId);
+    if (actIndex !== -1) {
+      actsGlobal[actIndex].data = actData;
+      actsGlobal[actIndex].info = actData;
+    }
+
+    // Показуємо повідомлення
+    let message = "";
+    if (newEmoji === "📞✅") {
+      message = "✅ Дзвінок: взяв слухавку";
+    } else if (newEmoji === "📞❌") {
+      message = "❌ Дзвінок: не взяв слухавку";
+    } else {
+      message = "⏳ Дзвінок: очікування";
+    }
+    showNotificationMessage(message, "#4caf50");
+
+    console.log(`📞 Оновлено статус дзвінка для акту #${actId}: ${newEmoji}`);
+  } catch (error) {
+    console.error("❌ Помилка в handleCallIndicatorClick:", error);
+    showNotificationMessage("❌ Помилка при обробці дзвінка", "#f44336");
+  }
+}
+
+/**
+ * Показує спливаюче повідомлення
+ */
+function showNotificationMessage(message: string, color: string): void {
+  const notification = document.createElement("div");
+  notification.textContent = message;
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${color};
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 10001;
+    font-size: 16px;
+    animation: slideIn 0.3s ease;
+  `;
+  document.body.appendChild(notification);
+  setTimeout(() => notification.remove(), 2500);
+}
+
+// =============================================================================
 // РЕНДЕРИНГ ТАБЛИЦІ (СТВОРЕННЯ КОМІРОК)
 // =============================================================================
 
@@ -844,8 +954,57 @@ function createClientCell(
   const phones = clientInfo.phone ? [clientInfo.phone] : [];
   let pibOnly = clientInfo.pib;
 
-  // Додаємо ПІБ
-  td.innerHTML = `<div>${pibOnly}</div>`;
+  // Отримуємо дані про дзвінок з акту
+  const actData = safeParseJSON(act.info || act.data || act.details);
+  const callData = actData?.["Дзвінок"] || "";
+
+  // Визначаємо емодзі для дзвінка
+  let callEmoji = "📞⏳"; // За замовчуванням - очікування
+  if (callData) {
+    if (callData.includes("невзяв")) {
+      callEmoji = "📞❌";
+    } else if (callData !== "") {
+      callEmoji = "📞✅";
+    }
+  }
+
+  // Створюємо контейнер для ПІБ з емодзі дзвінка
+  const pibContainer = document.createElement("div");
+  pibContainer.style.position = "relative";
+  pibContainer.innerHTML = `<div>${pibOnly}</div>`;
+
+  // Додаємо емодзі дзвінка (показується при ховері)
+  const callIndicator = document.createElement("span");
+  callIndicator.className = "call-indicator";
+  callIndicator.textContent = callEmoji;
+  callIndicator.style.cssText = `
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-size: 1.2em;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 10;
+  `;
+  callIndicator.setAttribute("data-act-id", actId.toString());
+
+  // Показуємо емодзі при наведенні на комірку
+  td.addEventListener("mouseenter", () => {
+    callIndicator.style.opacity = "1";
+  });
+  td.addEventListener("mouseleave", () => {
+    callIndicator.style.opacity = "0";
+  });
+
+  // Обробник кліку на емодзі дзвінка
+  callIndicator.addEventListener("click", async (e) => {
+    e.stopPropagation(); // Запобігаємо відкриттю модального вікна
+    await handleCallIndicatorClick(actId, act, callIndicator);
+  });
+
+  pibContainer.appendChild(callIndicator);
+  td.appendChild(pibContainer);
 
   let smsHtml = "";
   // Формуємо HTML для SMS, якщо є
@@ -869,8 +1028,8 @@ function createClientCell(
 
   // ✏️ Отримуємо інформацію про редактора
   const editorName = actEditorsMap.get(actId);
-  const editorHtml = editorName 
-    ? `<span class="act-editor-info">✏️ ${editorName}</span>` 
+  const editorHtml = editorName
+    ? `<span class="act-editor-info">✏️ ${editorName}</span>`
     : `<span class="act-editor-info" style="display: none;"></span>`;
 
   // Виводимо телефони і SMS
@@ -958,14 +1117,14 @@ function createDateCell(act: any, actId: number): HTMLTableCellElement {
 function createSumCell(act: any, actId: number): HTMLTableCellElement {
   const td = document.createElement("td");
   td.classList.add("act-table-cell", "act-sum-cell");
-  
+
   const discountPercent = getActDiscount(act); // Відсоток знижки
   const fullAmount = getActFullAmount(act); // Повна сума ДО знижки (За деталі + За роботу)
-  
+
   if (discountPercent > 0 && fullAmount > 0) {
     // Обчислюємо суму після знижки: 315 - 10% = 284
     const discountedAmount = Math.round(fullAmount * (1 - discountPercent / 100));
-    
+
     // Є знижка - показуємо в два рядки
     // Верхній: повна сума (315) з відсотком (-10%)
     // Нижній: сума після знижки (284 грн)
@@ -979,7 +1138,7 @@ function createSumCell(act: any, actId: number): HTMLTableCellElement {
     // Без знижки - звичайний вивід
     td.innerHTML = `${fullAmount.toLocaleString("uk-UA")} грн`;
   }
-  
+
   td.addEventListener("dblclick", async () => {
     const canOpen = await canUserOpenActs();
     if (canOpen) {
@@ -989,7 +1148,7 @@ function createSumCell(act: any, actId: number): HTMLTableCellElement {
       showNoAccessNotification();
     }
   });
-  
+
   return td;
 }
 
