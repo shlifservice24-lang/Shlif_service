@@ -905,6 +905,8 @@ async function handleCallIndicatorClick(
     callIndicator.className = hasCallRecord 
       ? "call-indicator call-indicator-result" 
       : "call-indicator call-indicator-pending";
+    // Видаляємо інлайн opacity, щоб CSS класи працювали
+    callIndicator.style.opacity = "";
 
     // Оновлюємо дані в глобальному масиві
     const actIndex = actsGlobal.findIndex((a) => a.act_id === actId);
