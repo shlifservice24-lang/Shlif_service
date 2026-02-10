@@ -862,17 +862,17 @@ async function handleCallIndicatorClick(
     const timestamp = `${hours}:${minutes} ${day}.${month}.${year}`;
 
     if (!currentCallData || currentCallData === "") {
-      // 📞⏳ → 📞✅ (взяв слухавку)
+      // ⏳ → 📞 (взяв слухавку)
       newCallData = timestamp;
-      newEmoji = "📞✅";
+      newEmoji = "📞";
     } else if (currentCallData.includes("невзяв")) {
-      // 📞❌ → 📞⏳ (очікування)
+      // � → ⏳ (очікування)
       newCallData = "";
-      newEmoji = "📞⏳";
+      newEmoji = "⏳";
     } else {
-      // 📞✅ → 📞❌ (не взяв слухавку)
+      // 📞 → � (не взяв слухавку)
       newCallData = `${timestamp} невзяв`;
-      newEmoji = "📞❌";
+      newEmoji = "�";
     }
 
     // Оновлюємо дані акту
@@ -906,9 +906,9 @@ async function handleCallIndicatorClick(
 
     // Показуємо повідомлення
     let message = "";
-    if (newEmoji === "📞✅") {
+    if (newEmoji === "📞") {
       message = "✅ Дзвінок: взяв слухавку";
-    } else if (newEmoji === "📞❌") {
+    } else if (newEmoji === "�") {
       message = "❌ Дзвінок: не взяв слухавку";
     } else {
       message = "⏳ Дзвінок: очікування";
@@ -963,12 +963,12 @@ function createClientCell(
   const callData = actData?.["Дзвінок"] || "";
 
   // Визначаємо емодзі для дзвінка
-  let callEmoji = "📞⏳"; // За замовчуванням - очікування
+  let callEmoji = "⏳"; // За замовчуванням - очікування
   if (callData) {
     if (callData.includes("невзяв")) {
-      callEmoji = "📞❌";
+      callEmoji = "📵";
     } else if (callData !== "") {
-      callEmoji = "📞✅";
+      callEmoji = "📞";
     }
   }
 
