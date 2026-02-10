@@ -862,17 +862,17 @@ async function handleCallIndicatorClick(
     const timestamp = `${hours}:${minutes} ${day}.${month}.${year}`;
 
     if (!currentCallData || currentCallData === "") {
-      // 📞⏳ → 📞✅ (взяв слухавку)
+      // 📞 → 📞 (взяв слухавку)
       newCallData = timestamp;
-      newEmoji = "📞✅";
+      newEmoji = "📞";
     } else if (currentCallData.includes("невзяв")) {
-      // 📞❌ → 📞⏳ (очікування)
+      // ⏳ → ⏳ (очікування)
       newCallData = "";
-      newEmoji = "📞⏳";
+      newEmoji = "⏳";
     } else {
-      // 📞✅ → 📞❌ (не взяв слухавку)
+      // 📵 → 📵 (не взяв слухавку)
       newCallData = `${timestamp} невзяв`;
-      newEmoji = "📞❌";
+      newEmoji = "📵";
     }
 
     // Оновлюємо дані акту
@@ -912,10 +912,10 @@ async function handleCallIndicatorClick(
 
     // Показуємо повідомлення
     let message = "";
-    if (newEmoji === "📞✅") {
-      message = "✅ Дзвінок: взяв слухавку";
-    } else if (newEmoji === "📞❌") {
-      message = "❌ Дзвінок: не взяв слухавку";
+    if (newEmoji === "📞") {
+      message = "��� Дзвінок: взяв слухавку";
+    } else if (newEmoji === "📵") {
+      message = "📵 Дзвінок: не взяв слухавку";
     } else {
       message = "⏳ Дзвінок: очікування";
     }
