@@ -152,7 +152,7 @@ export async function subscribeToActPresence(
         })
         .on("broadcast", { event: "act_saved" }, async (payload: any) => {
             console.log("📢 Received act_saved broadcast:", payload);
-            
+
             // Отримуємо actId з payload (Supabase обгортає в payload.payload)
             const receivedActId = payload?.payload?.actId || payload?.actId || actId;
             console.log("📢 Received actId:", receivedActId, "Current actId:", actId);
@@ -166,7 +166,7 @@ export async function subscribeToActPresence(
 
             if (isLocked) {
                 console.log("🔄 Auto-refreshing table data due to remote save (silent mode)...");
-                
+
                 // ✅ Використовуємо "тихе" оновлення тільки таблиці без перезавантаження модалу
                 try {
                     const { refreshActTableSilently } = await import("./modalMain");
@@ -224,7 +224,7 @@ export async function subscribeToActPresence(
         allUsers.sort((a, b) => {
             return new Date(a.openedAt).getTime() - new Date(b.openedAt).getTime();
         });
-        
+
         // 🔐 Перевіряємо чи хтось відкрив раніше нас
         const someoneOpenedBeforeUs = allUsers.some(user => {
             if (user.userName === currentUserName) return false;
@@ -232,14 +232,14 @@ export async function subscribeToActPresence(
             const myOpenedAtTime = myOpenedAt ? new Date(myOpenedAt).getTime() : Date.now();
             return userOpenedAt < myOpenedAtTime;
         });
-        
+
         const firstUserBeforeUs = allUsers.find(user => {
             if (user.userName === currentUserName) return false;
             const userOpenedAt = new Date(user.openedAt).getTime();
             const myOpenedAtTime = myOpenedAt ? new Date(myOpenedAt).getTime() : Date.now();
             return userOpenedAt < myOpenedAtTime;
         });
-        
+
         if (someoneOpenedBeforeUs && firstUserBeforeUs) {
             presenceResult.isLocked = true;
             presenceResult.lockedBy = firstUserBeforeUs.userName;
@@ -308,7 +308,9 @@ async function trackGlobalActPresence(actId: number): Promise<void> {
 async function untrackGlobalActPresence(): Promise<void> {
     if (globalPresenceChannel) {
         await globalPresenceChannel.untrack();
-        console.log("✏️ [GlobalPresence] Untracked presence");
+        await supabase.removeChannel(globalPresenceChannel);
+        globalPresenceChannel = null;
+        console.log("✏️ [GlobalPresence] Untracked and removed channel");
     }
 }
 
@@ -322,10 +324,10 @@ export async function unsubscribeFromActPresence(): Promise<void> {
         presenceChannel = null;
         console.log("✅ Unsubscribed from act presence");
     }
-    
+
     // 🔐 Очищаємо зафіксований час відкриття
     myOpenedAt = null;
-    
+
     // ✏️ Також прибираємо з глобального каналу
     await untrackGlobalActPresence();
 }
