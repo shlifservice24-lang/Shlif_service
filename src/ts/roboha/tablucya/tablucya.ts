@@ -862,17 +862,17 @@ async function handleCallIndicatorClick(
     const timestamp = `${hours}:${minutes} ${day}.${month}.${year}`;
 
     if (!currentCallData || currentCallData === "") {
-      // ⏳ → 📞 (взяв слухавку)
+      // 📞⏳ → 📞✅ (взяв слухавку)
       newCallData = timestamp;
-      newEmoji = "📞";
+      newEmoji = "📞✅";
     } else if (currentCallData.includes("невзяв")) {
-      // � → ⏳ (очікування)
+      // 📞❌ → 📞⏳ (очікування)
       newCallData = "";
-      newEmoji = "⏳";
+      newEmoji = "📞⏳";
     } else {
-      // 📞 → � (не взяв слухавку)
+      // 📞✅ → 📞❌ (не взяв слухавку)
       newCallData = `${timestamp} невзяв`;
-      newEmoji = "�";
+      newEmoji = "📞❌";
     }
 
     // Оновлюємо дані акту
@@ -890,11 +890,17 @@ async function handleCallIndicatorClick(
       return;
     }
 
-    // Оновлюємо візуальний індикатор
-    callIndicator.textContent = newEmoji;
-
-    // Якщо є запис про дзвінок - показуємо емодзі завжди, інакше - ховаємо
+    // Оновлюємо візуальний індикатор з датою
     const hasCallRecord = newCallData && newCallData !== "";
+    let displayText = newEmoji;
+    if (hasCallRecord) {
+      // Витягуємо дату/час з newCallData
+      const dateTimeMatch = newCallData.match(/(\d{2}:\d{2} \d{2}\.\d{2}\.\d{4})/);
+      if (dateTimeMatch) {
+        displayText = `${newEmoji} ${dateTimeMatch[1]}`;
+      }
+    }
+    callIndicator.textContent = displayText;
     callIndicator.style.opacity = hasCallRecord ? "1" : "0";
 
     // Оновлюємо дані в глобальному масиві
@@ -906,9 +912,9 @@ async function handleCallIndicatorClick(
 
     // Показуємо повідомлення
     let message = "";
-    if (newEmoji === "📞") {
+    if (newEmoji === "📞✅") {
       message = "✅ Дзвінок: взяв слухавку";
-    } else if (newEmoji === "�") {
+    } else if (newEmoji === "📞❌") {
       message = "❌ Дзвінок: не взяв слухавку";
     } else {
       message = "⏳ Дзвінок: очікування";
@@ -980,19 +986,30 @@ function createClientCell(
   // Визначаємо, чи є запис про дзвінок
   const hasCallRecord = callData && callData !== "";
 
-  // Додаємо емодзі дзвінка
+  // Формуємо текст для відображення (емодзі + дата/час)
+  let callDisplayText = callEmoji;
+  if (hasCallRecord) {
+    // Витягуємо дату/час з callData (формат: "14:57 10.02.2026" або "14:57 10.02.2026 невзяв")
+    const dateTimeMatch = callData.match(/(\d{2}:\d{2} \d{2}\.\d{2}\.\d{4})/);
+    if (dateTimeMatch) {
+      callDisplayText = `${callEmoji} ${dateTimeMatch[1]}`;
+    }
+  }
+
+  // Додаємо емодзі дзвінка з датою
   const callIndicator = document.createElement("span");
   callIndicator.className = "call-indicator";
-  callIndicator.textContent = callEmoji;
+  callIndicator.textContent = callDisplayText;
   callIndicator.style.cssText = `
     position: absolute;
     left: 0;
     top: 0;
-    font-size: 1.2em;
+    font-size: 0.85em;
     cursor: pointer;
     opacity: ${hasCallRecord ? "1" : "0"};
     transition: opacity 0.2s;
     z-index: 10;
+    white-space: nowrap;
   `;
   callIndicator.setAttribute("data-act-id", actId.toString());
 
