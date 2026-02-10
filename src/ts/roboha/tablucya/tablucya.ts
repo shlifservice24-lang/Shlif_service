@@ -996,16 +996,6 @@ function createClientCell(
   `;
   callIndicator.setAttribute("data-act-id", actId.toString());
 
-  // Показуємо емодзі при наведенні на комірку (тільки якщо немає запису)
-  if (!hasCallRecord) {
-    td.addEventListener("mouseenter", () => {
-      callIndicator.style.opacity = "1";
-    });
-    td.addEventListener("mouseleave", () => {
-      callIndicator.style.opacity = "0";
-    });
-  }
-
   // Обробник кліку на емодзі дзвінка
   callIndicator.addEventListener("click", async (e) => {
     e.stopPropagation(); // Запобігаємо відкриттю модального вікна
@@ -1061,6 +1051,17 @@ function createClientCell(
   } else if (smsHtml) {
     // Якщо телефонів немає, але є SMS
     td.innerHTML += `<div style="margin-top: 4px; text-align: left;">${smsHtml}</div>`;
+  }
+
+  // Показуємо емодзі при наведенні на комірку (тільки якщо немає запису)
+  // Додаємо обробники ПІСЛЯ того, як всі елементи додані до DOM
+  if (!hasCallRecord) {
+    td.addEventListener("mouseenter", () => {
+      callIndicator.style.opacity = "1";
+    });
+    td.addEventListener("mouseleave", () => {
+      callIndicator.style.opacity = "0";
+    });
   }
 
   td.addEventListener("click", async () => {
