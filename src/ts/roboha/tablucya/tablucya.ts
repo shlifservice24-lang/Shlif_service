@@ -916,7 +916,7 @@ async function handleCallIndicatorClick(
     // Показуємо повідомлення
     let message = "";
     if (newEmoji === "📞") {
-      message = "📵 Дзвінок: взяв слухавку";
+      message = "📞 Дзвінок: взяв слухавку";
     } else if (newEmoji === "📵") {
       message = "📵 Дзвінок: не взяв слухавку";
     } else {
