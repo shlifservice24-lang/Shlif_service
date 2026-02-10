@@ -33,9 +33,17 @@ tbody tr:hover .call-indicator-pending {
   opacity: 1;
 }
 
-/* Результат (взяв/не взяв) - показується завжди статично */
+/* Результат (взяв/не взяв) - показується завжди статично з вищим пріоритетом */
 .call-indicator-result {
-  opacity: 1;
+  opacity: 1 !important;
+}
+
+tbody tr .call-indicator-result {
+  opacity: 1 !important;
+}
+
+tbody tr:hover .call-indicator-result {
+  opacity: 1 !important;
 }
 
 /* Анімація для slideIn повідомлень */
