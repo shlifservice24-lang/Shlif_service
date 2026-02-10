@@ -893,6 +893,10 @@ async function handleCallIndicatorClick(
     // Оновлюємо візуальний індикатор
     callIndicator.textContent = newEmoji;
 
+    // Якщо є запис про дзвінок - показуємо емодзі завжди, інакше - ховаємо
+    const hasCallRecord = newCallData && newCallData !== "";
+    callIndicator.style.opacity = hasCallRecord ? "1" : "0";
+
     // Оновлюємо дані в глобальному масиві
     const actIndex = actsGlobal.findIndex((a) => a.act_id === actId);
     if (actIndex !== -1) {
@@ -973,7 +977,10 @@ function createClientCell(
   pibContainer.style.position = "relative";
   pibContainer.innerHTML = `<div>${pibOnly}</div>`;
 
-  // Додаємо емодзі дзвінка (показується при ховері)
+  // Визначаємо, чи є запис про дзвінок
+  const hasCallRecord = callData && callData !== "";
+
+  // Додаємо емодзі дзвінка
   const callIndicator = document.createElement("span");
   callIndicator.className = "call-indicator";
   callIndicator.textContent = callEmoji;
@@ -983,19 +990,21 @@ function createClientCell(
     top: 0;
     font-size: 1.2em;
     cursor: pointer;
-    opacity: 0;
+    opacity: ${hasCallRecord ? "1" : "0"};
     transition: opacity 0.2s;
     z-index: 10;
   `;
   callIndicator.setAttribute("data-act-id", actId.toString());
 
-  // Показуємо емодзі при наведенні на комірку
-  td.addEventListener("mouseenter", () => {
-    callIndicator.style.opacity = "1";
-  });
-  td.addEventListener("mouseleave", () => {
-    callIndicator.style.opacity = "0";
-  });
+  // Показуємо емодзі при наведенні на комірку (тільки якщо немає запису)
+  if (!hasCallRecord) {
+    td.addEventListener("mouseenter", () => {
+      callIndicator.style.opacity = "1";
+    });
+    td.addEventListener("mouseleave", () => {
+      callIndicator.style.opacity = "0";
+    });
+  }
 
   // Обробник кліку на емодзі дзвінка
   callIndicator.addEventListener("click", async (e) => {
