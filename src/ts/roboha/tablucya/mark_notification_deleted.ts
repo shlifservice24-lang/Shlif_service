@@ -2,7 +2,7 @@
 
 import { supabase } from "../../vxid/supabaseClient";
 import type { ActNotificationPayload } from "./povidomlennya_tablucya";
-import { userAccessLevel, getSavedUserDataFromLocalStorage } from "./users"; // ✅ Додано для перевірки ролі
+import { userAccessLevel } from "./users"; // ✅ Додано для перевірки ролі
 
 /**
  * Позначає повідомлення як видалене в БД (встановлює delit = TRUE)
@@ -23,44 +23,15 @@ export async function markNotificationAsDeleted(
       return false;
     }
 
-    // Отримуємо ПІБ поточного Приймальника
-    const userData = getSavedUserDataFromLocalStorage?.();
-    const currentUserName = userData?.name;
-
-    if (!currentUserName) {
-      console.warn("⚠️ Не вдалося отримати ПІБ поточного користувача");
-      return false;
-    }
-
     console.log(
-      `🗑️ Позначаємо повідомлення ${notificationId} як видалене (Приймальник: ${currentUserName})...`
+      `🗑️ Позначаємо повідомлення ${notificationId} як видалене (Приймальник)...`
     );
 
-    // Спочатку перевіряємо, чи це повідомлення належить цьому Приймальнику
-    const { data: notificationData, error: fetchError } = await supabase
-      .from("act_changes_notifications")
-      .select("pruimalnyk")
-      .eq("notification_id", notificationId)
-      .single();
-
-    if (fetchError) {
-      console.error("❌ Помилка отримання повідомлення:", fetchError);
-      return false;
-    }
-
-    if (notificationData?.pruimalnyk !== currentUserName) {
-      console.log(
-        `⏭️ Повідомлення ${notificationId} не належить приймальнику ${currentUserName} (pruimalnyk: ${notificationData?.pruimalnyk})`
-      );
-      return false;
-    }
-
-    // Видаляємо тільки якщо pruimalnyk = ПІБ поточного Приймальника
+    // ✅ Приймальник може видаляти будь-які повідомлення (як і Адміністратор)
     const { error } = await supabase
       .from("act_changes_notifications")
       .update({ delit: true }) // TRUE = видалене, не показувати
-      .eq("notification_id", notificationId)
-      .eq("pruimalnyk", currentUserName); // ✅ Додатковий захист
+      .eq("notification_id", notificationId); // ✅ БЕЗ фільтру по приймальнику
 
     if (error) {
       console.error(
@@ -71,7 +42,7 @@ export async function markNotificationAsDeleted(
     }
 
     console.log(
-      `✅ Повідомлення ${notificationId} позначено як видалене (Приймальник: ${currentUserName})`
+      `✅ Повідомлення ${notificationId} позначено як видалене (Приймальник)`
     );
     return true;
   } catch (err) {
@@ -128,26 +99,14 @@ export async function loadUnseenNotifications(): Promise<
       }));
     }
 
-    // ✅ Для Приймальника - фільтруємо по pruimalnyk
+    // ✅ Для Приймальника - показуємо ВСІ повідомлення (без фільтрації)
     if (userAccessLevel === "Приймальник") {
-      // Отримуємо ПІБ поточного користувача через функцію
-      const userData = getSavedUserDataFromLocalStorage();
-      const currentUserName = userData?.name || null;
-
-      if (!currentUserName) {
-        console.warn("⚠️ Не вдалося отримати ПІБ поточного користувача");
-        return [];
-      }
-
-      console.log(
-        `📋 Фільтруємо повідомлення для приймальника: "${currentUserName}"`
-      );
+      console.log(`📋 Завантажуємо ВСІ повідомлення для Приймальника`);
 
       const { data, error } = await supabase
         .from("act_changes_notifications")
         .select("*")
-        .eq("delit", false)
-        .eq("pruimalnyk", currentUserName) // ✅ Фільтр по приймальнику
+        .eq("delit", false) // ✅ БЕЗ фільтру по приймальнику
         .order("data", { ascending: true });
 
       if (error) {
@@ -156,12 +115,12 @@ export async function loadUnseenNotifications(): Promise<
       }
 
       if (!data || data.length === 0) {
-        console.log(`ℹ️ Повідомлень для ${currentUserName} не знайдено`);
+        console.log(`ℹ️ Повідомлень не знайдено`);
         return [];
       }
 
       console.log(
-        `✅ Завантажено ${data.length} повідомлень для ${currentUserName}`
+        `✅ Завантажено ${data.length} повідомлень для Приймальника`
       );
 
       // Конвертуємо дані з БД в формат ActNotificationPayload

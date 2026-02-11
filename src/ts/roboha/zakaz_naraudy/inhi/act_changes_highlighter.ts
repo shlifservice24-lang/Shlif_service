@@ -1,10 +1,7 @@
 // ===== ФАЙЛ: src/ts/roboha/zakaz_naraudy/inhi/act_changes_highlighter.ts =====
 
 import { supabase } from "../../../vxid/supabaseClient";
-import {
-  userAccessLevel,
-  getSavedUserDataFromLocalStorage,
-} from "../../tablucya/users";
+import { userAccessLevel } from "../../tablucya/users";
 import { ACT_ITEMS_TABLE_CONTAINER_ID, globalCache } from "../globalCache";
 import { clearNotificationVisualOnly } from "../../tablucya/tablucya";
 
@@ -302,22 +299,12 @@ async function loadChangesForAct(actId: number): Promise<{
     return { added, deleted };
   }
 
-  // ✅ Для Приймальника - фільтруємо по pruimalnyk
+  // ✅ Для Приймальника - показуємо ВСІ зміни (без фільтрації)
   if (userAccessLevel === "Приймальник") {
-    // Отримуємо ПІБ поточного користувача через функцію
-    const userData = getSavedUserDataFromLocalStorage();
-    const currentUserName = userData?.name || null;
-
-    if (!currentUserName) {
-      console.warn("⚠️ Не вдалося отримати ПІБ поточного користувача");
-      return { added: [], deleted: [] };
-    }
-
     const { data, error } = await supabase
       .from("act_changes_notifications")
       .select("*")
-      .eq("act_id", actId)
-      .eq("pruimalnyk", currentUserName); // ✅ Фільтр по приймальнику
+      .eq("act_id", actId); // ✅ БЕЗ фільтру по приймальнику
 
     if (error) {
       console.error("❌ Помилка завантаження змін:", error);
@@ -329,7 +316,7 @@ async function loadChangesForAct(actId: number): Promise<{
     const deleted = changes.filter((c) => c.dodav_vudaluv === false);
 
     console.log(
-      `📊 Завантажено змін для акту #${actId} (приймальник: ${currentUserName}): додано=${added.length}, видалено=${deleted.length}`
+      `📊 Завантажено змін для акту #${actId} (Приймальник): додано=${added.length}, видалено=${deleted.length}`
     );
     return { added, deleted };
   }
@@ -345,28 +332,17 @@ async function loadChangesForAct(actId: number): Promise<{
  * - Адміністратор видаляє ВСІ записи для даного акту (незалежно від pruimalnyk)
  */
 async function deleteProcessedChanges(actId: number): Promise<void> {
-  // ✅ Для Приймальника - видаляємо тільки свої записи
+  // ✅ Для Приймальника - видаляємо ВСІ записи для акту
   if (userAccessLevel === "Приймальник") {
-    const userData = getSavedUserDataFromLocalStorage();
-    const currentUserName = userData?.name || null;
-
-    if (!currentUserName) {
-      console.warn(
-        "⚠️ Не вдалося отримати ПІБ поточного користувача для видалення"
-      );
-      return;
-    }
-
     console.log(
-      `🔍 [deleteProcessedChanges] Приймальник: "${currentUserName}", видаляємо записи для акту #${actId}`
+      `🔍 [deleteProcessedChanges] Приймальник видаляє ВСІ записи для акту #${actId}`
     );
 
-    // ✅ Видаляємо ТІЛЬКИ ті записи, де pruimalnyk = ПІБ поточного Приймальника
+    // ✅ Видаляємо ВСІ записи для акту (без фільтрації по pruimalnyk)
     const { error } = await supabase
       .from("act_changes_notifications")
       .delete()
-      .eq("act_id", actId)
-      .eq("pruimalnyk", currentUserName); // ✅ Видаляємо тільки свої записи
+      .eq("act_id", actId); // ✅ БЕЗ фільтру по приймальнику
 
     if (error) {
       console.error("❌ Помилка видалення оброблених змін:", error);
@@ -374,7 +350,7 @@ async function deleteProcessedChanges(actId: number): Promise<void> {
     }
 
     console.log(
-      `🗑️ Видалено оброблені записи для акту #${actId} (Приймальник: ${currentUserName})`
+      `🗑️ Видалено ВСІ записи для акту #${actId} (Приймальник)`
     );
     return;
   }

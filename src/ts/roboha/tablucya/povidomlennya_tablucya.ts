@@ -5,7 +5,6 @@ import {
   loadUnseenNotifications,
 } from "./mark_notification_deleted";
 import { supabase } from "../../vxid/supabaseClient";
-import { getSavedUserDataFromLocalStorage } from "./users";
 import { clearNotificationVisualOnly, decrementNotificationCount } from "./tablucya";
 
 export interface ActNotificationPayload {
@@ -498,21 +497,12 @@ export async function loadAndShowExistingNotifications(): Promise<void> {
 async function checkAndRemoveActHighlightIfNoNotifications(
   actId: number
 ): Promise<void> {
-  // Отримуємо ПІБ поточного користувача
-  const userData = getSavedUserDataFromLocalStorage?.();
-  const currentUserName = userData?.name;
-
-  if (!currentUserName) {
-    return;
-  }
-
-  // Перевіряємо чи є ще повідомлення для цього акту
+  // Перевіряємо чи є ще повідомлення для цього акту (БЕЗ фільтрації по приймальнику)
   const { data, error } = await supabase
     .from("act_changes_notifications")
     .select("notification_id")
     .eq("act_id", actId)
-    .eq("delit", false)
-    .eq("pruimalnyk", currentUserName)
+    .eq("delit", false) // ✅ БЕЗ фільтру по приймальнику
     .limit(1);
 
   if (error) {

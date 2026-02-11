@@ -133,21 +133,12 @@ async function fetchModifiedActIds(): Promise<Set<number>> {
     return ids;
   }
 
-  // ✅ Для Приймальника - фільтруємо по pruimalnyk
+  // ✅ Для Приймальника - показуємо ВСІ повідомлення (без фільтрації)
   if (userAccessLevel === "Приймальник") {
-    const userData = getSavedUserDataFromLocalStorage?.();
-    const currentUserName = userData?.name;
-
-    if (!currentUserName) {
-      console.warn("⚠️ Не вдалося отримати ПІБ поточного користувача");
-      return new Set();
-    }
-
     const { data, error } = await supabase
       .from("act_changes_notifications")
       .select("act_id")
-      .eq("delit", false)
-      .eq("pruimalnyk", currentUserName); // ✅ Фільтр по приймальнику
+      .eq("delit", false); // ✅ БЕЗ фільтру по приймальнику
 
     if (error) {
       console.error("❌ Помилка завантаження сповіщень:", error);
@@ -189,21 +180,12 @@ async function fetchActNotificationCounts(): Promise<Map<number, number>> {
     return counts;
   }
 
-  // ✅ Для Приймальника - фільтруємо по pruimalnyk
+  // ✅ Для Приймальника - показуємо ВСІ повідомлення (без фільтрації)
   if (userAccessLevel === "Приймальник") {
-    const userData = getSavedUserDataFromLocalStorage?.();
-    const currentUserName = userData?.name;
-
-    if (!currentUserName) {
-      console.warn("⚠️ Не вдалося отримати ПІБ поточного користувача");
-      return counts;
-    }
-
     const { data, error } = await supabase
       .from("act_changes_notifications")
       .select("act_id")
-      .eq("delit", false)
-      .eq("pruimalnyk", currentUserName);
+      .eq("delit", false); // ✅ БЕЗ фільтру по приймальнику
 
     if (error) {
       console.error("❌ Помилка завантаження кількості повідомлень:", error);
@@ -233,10 +215,6 @@ function subscribeToActNotifications() {
 
   console.log(`📡 Підключення до Realtime повідомлень (${userAccessLevel})...`);
 
-  // ✅ Отримуємо ПІБ поточного користувача для фільтрації
-  const userData = getSavedUserDataFromLocalStorage?.();
-  const currentUserName = userData?.name;
-
   supabase
     .channel("act-notifications-channel")
     .on(
@@ -254,21 +232,7 @@ function subscribeToActNotifications() {
         const newNotification = payload.new;
 
         if (newNotification && newNotification.act_id) {
-          // ✅ ФІЛЬТРАЦІЯ ДЛЯ ПРИЙМАЛЬНИКА
-          if (userAccessLevel === "Приймальник") {
-            const notificationPruimalnyk = newNotification.pruimalnyk;
-
-            if (notificationPruimalnyk !== currentUserName) {
-              console.log(
-                `⏭️ Повідомлення не для поточного приймальника (${currentUserName} != ${notificationPruimalnyk})`
-              );
-              return; // Пропускаємо
-            }
-            console.log(
-              `✅ Повідомлення для поточного приймальника: ${currentUserName}`
-            );
-          }
-
+          // ✅ БЕЗ ФІЛЬТРАЦІЇ - Приймальник бачить ВСІ повідомлення
           const actId = Number(newNotification.act_id);
 
           // 1. Додаємо ID в локальний сет для підсвітки
@@ -320,9 +284,6 @@ function subscribeToSlusarNotifications() {
     `📡 [slusarsOn] Підключення до Realtime для ${userAccessLevel}...`
   );
 
-  const userData = getSavedUserDataFromLocalStorage?.();
-  const currentUserName = userData?.name;
-
   // 🔥 ПІДПИСКА БЕЗПОСЕРЕДНЬО НА ЗМІНИ В ТАБЛИЦІ acts
   supabase
     .channel("slusarsOn-realtime-channel")
@@ -351,15 +312,7 @@ function subscribeToSlusarNotifications() {
           `📡 [slusarsOn] Акт #${actId}: slusarsOn=${newSlusarsOn}, closed=${isClosed}, pruimalnyk=${pruimalnyk}`
         );
 
-        // ✅ ФІЛЬТРАЦІЯ ДЛЯ ПРИЙМАЛЬНИКА
-        if (userAccessLevel === "Приймальник") {
-          if (pruimalnyk !== currentUserName) {
-            console.log(
-              `⏭️ [slusarsOn] Пропускаємо: не для ${currentUserName}`
-            );
-            return;
-          }
-        }
+        // ✅ БЕЗ ФІЛЬТРАЦІЇ - Приймальник бачить ВСІ закінчення робіт
 
         // 🎨 МИТТЄВЕ ОНОВЛЕННЯ КЛАСУ РЯДКА
         updateSlusarsOnRowInDom(actId, newSlusarsOn, isClosed, pruimalnyk);
@@ -572,16 +525,16 @@ function applyClassToRow(
   row: Element,
   slusarsOn: boolean,
   isClosed: boolean,
-  pruimalnyk: string | undefined,
-  currentUserName: string | undefined,
+  _pruimalnyk: string | undefined, // ✅ Не використовується, але залишаємо для сумісності
+  _currentUserName: string | undefined, // ✅ Не використовується, але залишаємо для сумісності
   actId: number
 ): void {
   const shouldShowSlusarsOn =
     slusarsOn &&
     !isClosed &&
     (userAccessLevel === "Адміністратор" ||
-      userAccessLevel === "Слюсар" ||
-      (userAccessLevel === "Приймальник" && pruimalnyk === currentUserName));
+      userAccessLevel === "Приймальник" || // ✅ Приймальник бачить ВСІ закінчення робіт
+      userAccessLevel === "Слюсар");
 
   if (shouldShowSlusarsOn) {
     row.classList.add("row-slusar-on");
@@ -902,8 +855,8 @@ async function handleCallIndicatorClick(
     }
     callIndicator.textContent = displayText;
     // Оновлюємо класи залежно від стану
-    callIndicator.className = hasCallRecord 
-      ? "call-indicator call-indicator-result" 
+    callIndicator.className = hasCallRecord
+      ? "call-indicator call-indicator-result"
       : "call-indicator call-indicator-pending";
     // Видаляємо інлайн opacity, щоб CSS класи працювали
     callIndicator.style.opacity = "";

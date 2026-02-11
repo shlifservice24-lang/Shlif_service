@@ -111,8 +111,8 @@ export async function hideSlusarNotificationsForAct(
  * @returns Кількість непереглянутих повідомлень
  */
 export async function getUnviewedSlusarNotificationsCount(
-  userAccessLevel: string,
-  userName?: string
+  _userAccessLevel: string, // ✅ Не використовується, але залишено для сумісності API
+  _userName?: string // ✅ Не використовується, але залишено для сумісності API
 ): Promise<number> {
   try {
     let query = supabase
@@ -121,10 +121,8 @@ export async function getUnviewedSlusarNotificationsCount(
       .eq("delit", false)
       .eq("viewed", false);
 
-    // Фільтрація для Приймальника
-    if (userAccessLevel === "Приймальник" && userName) {
-      query = query.eq("pruimalnyk", userName);
-    }
+    // ✅ БЕЗ фільтрації для Приймальника - показуємо ВСІ повідомлення
+    // (Адміністратор і Приймальник бачать всі повідомлення)
 
     const { count, error } = await query;
 
