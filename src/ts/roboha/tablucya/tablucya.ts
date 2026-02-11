@@ -1254,14 +1254,13 @@ function renderActsRows(
     row.classList.add(isClosed ? "row-closed" : "row-open");
 
     // 💛 ПЕРЕВІРКА slusarsOn ДЛЯ ЗОЛОТИСТОГО ФАРБУВАННЯ (ТІЛЬКИ ДЛЯ ВІДКРИТИХ АКТІВ)
-    // ✨ Для Приймальника показувати тільки якщо pruimalnyk === currentUserName
+    // ✅ Приймальник бачить ВСІ закінчені роботи (як і Адміністратор)
     const shouldShowSlusarsOn =
       act.slusarsOn === true &&
       !isClosed &&
       (userAccessLevel === "Адміністратор" ||
-        userAccessLevel === "Слюсар" ||
-        (userAccessLevel === "Приймальник" &&
-          act.pruimalnyk === currentUserName));
+        userAccessLevel === "Приймальник" || // ✅ БЕЗ перевірки pruimalnyk
+        userAccessLevel === "Слюсар");
 
     if (shouldShowSlusarsOn) {
       row.classList.add("row-slusar-on");
