@@ -310,12 +310,12 @@ export function calculateSlyusarSum(totalSum: number, percent: number): number {
 }
 
 /**
- * Оновлює зарплату слюсаря в рядку (async версія) - ВИПРАВЛЕНА ВЕРСІЯ 3.0
+ * Оновлює зарплату слюсаря в рядку (async версія) - ВИПРАВЛЕНА ВЕРСІЯ 4.0
  * 
  * ЛОГІКА:
- * - Якщо в історії слюсаря для цієї роботи вже є збережена зарплата > 0 → НЕ перераховуємо
- * - Якщо в історії = 0 або немає запису → перераховуємо за відсотком
- * - Це дозволяє зберегти вручну введену зарплату при зміні ціни/кількості
+ * - При ініціалізації (isInitialLoad=true): підтягує зарплату з історії слюсаря
+ * - При зміні ціни/кількості (isInitialLoad=false): ЗАВЖДИ перераховує від відсотка
+ * - Це дозволяє автоматично оновлювати зарплату при зміні суми
  */
 async function updateSlyusarSalaryInRow(
   row: HTMLTableRowElement,
@@ -370,39 +370,32 @@ async function updateSlyusarSalaryInRow(
     return;
   }
 
-  // 1. ПРІОРИТЕТ: Шукаємо в історії для ПОТОЧНОГО акту (з recordId якщо є)
-  const historySalary = getSlyusarSalaryFromHistory(
-    slyusarName,
-    workName,
-    actId,
-    rowIndex, // Передаємо індекс для точного пошуку
-    recordId  // ✅ Передаємо recordId для найточнішого пошуку
-  );
-
-  // ✅ НОВА ЛОГІКА v3.0:
-  // Якщо в історії є збережена зарплата > 0 → НЕ перераховуємо при зміні ціни/кількості
-  // Тільки при ініціалізації (isInitialLoad=true) встановлюємо значення з історії
-  if (historySalary !== null && historySalary > 0) {
-    if (isInitialLoad) {
-      // При завантаженні акту - підтягуємо зарплату з історії
-      console.log(`✅ [Ініціалізація] Встановлюємо зарплату з історії: ${historySalary}`);
-      slyusarSumCell.textContent = formatNumberWithSpaces(historySalary);
-    } else {
-      // При зміні ціни/кількості - НЕ перераховуємо, залишаємо поточне значення
-      console.log(`🔒 [Зміна ціни/к-ті] В історії є зарплата ${historySalary} > 0 - НЕ перераховуємо, залишаємо як є`);
-    }
-    return;
-  }
-
-  // 2. ВИПРАВЛЕННЯ: Якщо в історії немає І totalSum <= 0 - очищуємо
+  // 1. Якщо totalSum <= 0 - очищуємо зарплату
   if (totalSum <= 0) {
-    // console.log(`⚠️ Сума <= 0 і немає даних в історії - очищуємо`);
     slyusarSumCell.textContent = "";
     return;
   }
 
-  // 3. Якщо є сума, але в історії = 0 або немає - рахуємо від відсотка
-  console.log(`⚙️ Зарплати в історії немає (або = 0) для "${workName}", рахуємо від відсотка. rowIndex=${rowIndex}, recordId=${recordId}`);
+  // 2. ✅ НОВА ЛОГІКА v4.0: Історія використовується ТІЛЬКИ при ініціалізації
+  if (isInitialLoad) {
+    // При завантаженні акту - шукаємо в історії
+    const historySalary = getSlyusarSalaryFromHistory(
+      slyusarName,
+      workName,
+      actId,
+      rowIndex,
+      recordId
+    );
+
+    if (historySalary !== null && historySalary > 0) {
+      console.log(`✅ [Ініціалізація] Встановлюємо зарплату з історії: ${historySalary}`);
+      slyusarSumCell.textContent = formatNumberWithSpaces(historySalary);
+      return;
+    }
+  }
+
+  // 3. ✅ При зміні ціни/кількості АБО якщо в історії немає - ЗАВЖДИ рахуємо від відсотка
+  console.log(`⚙️ ${isInitialLoad ? 'Ініціалізація' : 'Зміна суми'}: рахуємо зарплату від відсотка для "${workName}". rowIndex=${rowIndex}, recordId=${recordId}`);
   const percent = await getSlyusarWorkPercent(slyusarName);
   const calculatedSalary = calculateSlyusarSum(totalSum, percent);
   console.log(`💰 Перераховуємо зарплату на ${calculatedSalary} (${percent}% від ${totalSum}) для "${workName}"`);
@@ -522,7 +515,7 @@ export async function updateAllSlyusarSumsFromHistory(): Promise<void> {
 
 /**
  * Перераховує суму в рядку і оновлює зарплату слюсаря (async)
- * ✅ isInitialLoad=false - НЕ перераховує зарплату якщо в історії слюсаря вже є збережене значення > 0
+ * ✅ isInitialLoad=false - ЗАВЖДИ перераховує зарплату при зміні ціни/кількості
  */
 export async function calculateRowSum(row: HTMLTableRowElement): Promise<void> {
   const price = parseNumber(
@@ -540,7 +533,7 @@ export async function calculateRowSum(row: HTMLTableRowElement): Promise<void> {
     sumCell.textContent =
       sum === 0 ? "" : formatNumberWithSpaces(Math.round(sum));
 
-  // ✅ isInitialLoad=false - при зміні ціни/к-ті НЕ перераховуємо якщо в історії є зарплата > 0
+  // ✅ isInitialLoad=false - при зміні ціни/к-ті ЗАВЖДИ перераховуємо зарплату від відсотка
   await updateSlyusarSalaryInRow(row, undefined, false);
   updateCalculatedSumsInFooter();
 }
