@@ -76,13 +76,13 @@ export interface SkladLiteRow {
 
 // Інтерфейс для загальних налаштувань
 export interface GeneralSettings {
-  stoName: string;       // Назва СТО (setting_id: 1)
-  address: string;       // Адреса (setting_id: 2)
-  phone: string;         // Телефон (setting_id: 3)
-  headerColor: string;   // Колір шапки акту (setting_id: 4)
-  tableColor: string;    // Колір таблиці актів (setting_id: 5)
+  stoName: string; // Назва СТО (setting_id: 1)
+  address: string; // Адреса (setting_id: 2)
+  phone: string; // Телефон (setting_id: 3)
+  headerColor: string; // Колір шапки акту (setting_id: 4)
+  tableColor: string; // Колір таблиці актів (setting_id: 5)
   printColorMode: boolean; // Режим друку: true = кольоровий, false = чорнобілий (setting_id: 6, data)
-  wallpaperMain: string;  // Шпалери основні (setting_id: 7)
+  wallpaperMain: string; // Шпалери основні (setting_id: 7)
 }
 
 export interface ActItem {
@@ -103,8 +103,8 @@ export interface GlobalDataCache {
   works: string[];
   worksWithId: Array<{ work_id: string; name: string }>;
   details: string[];
-  slyusars: Array<{ Name: string;[k: string]: any }>;
-  shops: Array<{ Name: string;[k: string]: any }>;
+  slyusars: Array<{ Name: string; [k: string]: any }>;
+  shops: Array<{ Name: string; [k: string]: any }>;
   settings: {
     showPibMagazin: boolean;
     showCatalog: boolean;
@@ -174,6 +174,7 @@ export const ZAKAZ_NARAYD_SAVE_BTN_ID = "save-act-data";
 export const EDITABLE_PROBIG_ID = "editable-probig";
 export const EDITABLE_REASON_ID = "editable-reason";
 export const EDITABLE_RECOMMENDATIONS_ID = "editable-recommendations";
+export const EDITABLE_NOTE_ID = "editable-note";
 
 // 🔹 Ключ для збереження загальних налаштувань в localStorage
 const GENERAL_SETTINGS_STORAGE_KEY = "sto_general_settings";
@@ -202,7 +203,8 @@ export function loadGeneralSettingsFromLocalStorage(): boolean {
         phone: parsed.phone || "068 931 24 38",
         headerColor: parsed.headerColor || "#164D25",
         tableColor: parsed.tableColor || "#164D25",
-        printColorMode: parsed.printColorMode !== undefined ? parsed.printColorMode : true,
+        printColorMode:
+          parsed.printColorMode !== undefined ? parsed.printColorMode : true,
         wallpaperMain: parsed.wallpaperMain || "",
       };
       console.log("✅ Загальні налаштування завантажено з localStorage");
@@ -221,22 +223,31 @@ export function saveGeneralSettingsToLocalStorage(): void {
   try {
     localStorage.setItem(
       GENERAL_SETTINGS_STORAGE_KEY,
-      JSON.stringify(globalCache.generalSettings)
+      JSON.stringify(globalCache.generalSettings),
     );
     console.log("✅ Загальні налаштування збережено в localStorage");
   } catch (e) {
-    console.warn("⚠️ Помилка збереження загальних налаштувань в localStorage:", e);
+    console.warn(
+      "⚠️ Помилка збереження загальних налаштувань в localStorage:",
+      e,
+    );
   }
 }
 
 // 🔹 Завантажує загальні налаштування з БД і зберігає в localStorage
 export async function loadGeneralSettingsFromDB(): Promise<void> {
   try {
-    const { data: generalSettingsRows } = await supabase
+    const { data: generalSettingsRows } = (await supabase
       .from("settings")
       .select("setting_id, Загальні, data")
       .in("setting_id", [1, 2, 3, 4, 5, 6, 7])
-      .order("setting_id") as { data: Array<{ setting_id: number; "Загальні": string | null; data: boolean | null }> | null };
+      .order("setting_id")) as {
+      data: Array<{
+        setting_id: number;
+        Загальні: string | null;
+        data: boolean | null;
+      }> | null;
+    };
 
     if (generalSettingsRows) {
       for (const row of generalSettingsRows) {
@@ -246,7 +257,8 @@ export async function loadGeneralSettingsFromDB(): Promise<void> {
             globalCache.generalSettings.stoName = value || "B.S.Motorservice";
             break;
           case 2:
-            globalCache.generalSettings.address = value || "вул. Корольова, 6, Вінниця";
+            globalCache.generalSettings.address =
+              value || "вул. Корольова, 6, Вінниця";
             break;
           case 3:
             globalCache.generalSettings.phone = value || "068 931 24 38";
@@ -258,7 +270,8 @@ export async function loadGeneralSettingsFromDB(): Promise<void> {
             globalCache.generalSettings.tableColor = value || "#164D25";
             break;
           case 6:
-            globalCache.generalSettings.printColorMode = (row as any).data !== false; // true якщо data не false
+            globalCache.generalSettings.printColorMode =
+              (row as any).data !== false; // true якщо data не false
             break;
           case 7:
             globalCache.generalSettings.wallpaperMain = value || "";
@@ -315,7 +328,7 @@ export function invalidateGlobalDataCache(): void {
 export function formatNumberWithSpaces(
   value: number | string | undefined | null,
   minimumFractionDigits: number = 0,
-  maximumFractionDigits: number = 2
+  maximumFractionDigits: number = 2,
 ): string {
   if (value === undefined || value === null || String(value).trim() === "")
     return "";
@@ -328,13 +341,14 @@ export function formatNumberWithSpaces(
 }
 
 function dedupeSklad<
-  T extends { part_number: string; price: number; quantity: number }
+  T extends { part_number: string; price: number; quantity: number },
 >(rows: T[]): T[] {
   const seen = new Set<string>();
   const out: T[] = [];
   for (const r of rows) {
-    const key = `${r.part_number.toLowerCase()}|${Math.round(r.price)}|${r.quantity
-      }`;
+    const key = `${r.part_number.toLowerCase()}|${Math.round(r.price)}|${
+      r.quantity
+    }`;
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(r);
@@ -350,7 +364,7 @@ function dedupeSklad<
 async function fetchAllWithPagination<T>(
   tableName: string,
   selectFields: string,
-  orderBy?: string
+  orderBy?: string,
 ): Promise<T[]> {
   const allData: T[] = [];
   let from = 0;
@@ -389,21 +403,26 @@ async function fetchAllWithPagination<T>(
   return allData;
 }
 
-export async function loadGlobalData(forceReload: boolean = false): Promise<void> {
+export async function loadGlobalData(
+  forceReload: boolean = false,
+): Promise<void> {
   // ✅ Кешування: якщо дані вже завантажені і TTL не вийшов - не перезавантажуємо
   const now = Date.now();
-  if (!forceReload && globalDataLoaded && (now - lastGlobalDataLoadTime < GLOBAL_DATA_CACHE_TTL)) {
+  if (
+    !forceReload &&
+    globalDataLoaded &&
+    now - lastGlobalDataLoadTime < GLOBAL_DATA_CACHE_TTL
+  ) {
     console.log("✅ Використовуємо кешовані глобальні дані");
     return;
   }
 
   try {
     // ✅ ВИПРАВЛЕНО: Використовуємо пагінацію для завантаження ВСІХ робіт
-    const worksData = await fetchAllWithPagination<{ work_id: number; data: string }>(
-      "works",
-      "work_id, data",
-      "work_id"
-    );
+    const worksData = await fetchAllWithPagination<{
+      work_id: number;
+      data: string;
+    }>("works", "work_id, data", "work_id");
 
     // ✅ ВИПРАВЛЕНО: Використовуємо пагінацію для завантаження ВСІХ деталей зі складу
     const skladRows = await fetchAllWithPagination<{
@@ -419,20 +438,17 @@ export async function loadGlobalData(forceReload: boolean = false): Promise<void
     }>(
       "sclad",
       "sclad_id, part_number, name, price, kilkist_on, kilkist_off, unit_measurement, shops, time_on",
-      "sclad_id"
+      "sclad_id",
     );
 
     // ✅ ВИПРАВЛЕНО: Використовуємо пагінацію для завантаження ВСІХ деталей
     const detailsData = await fetchAllWithPagination<{ data: string }>(
       "details",
       "data",
-      "detail_id"
+      "detail_id",
     );
 
-    const [
-      { data: slyusarsData },
-      { data: shopsData },
-    ] = await Promise.all([
+    const [{ data: slyusarsData }, { data: shopsData }] = await Promise.all([
       supabase.from("slyusars").select("data"),
       supabase.from("shops").select("data"),
     ]);
@@ -446,7 +462,9 @@ export async function loadGlobalData(forceReload: boolean = false): Promise<void
       console.log("✅ Загальні налаштування з localStorage (сесія активна)");
     } else {
       // Новий вхід або перезавантаження - завантажуємо з БД
-      console.log("📥 Завантаження загальних налаштувань з БД (новий вхід/перезавантаження)...");
+      console.log(
+        "📥 Завантаження загальних налаштувань з БД (новий вхід/перезавантаження)...",
+      );
       await loadGeneralSettingsFromDB();
       markGeneralSettingsAsLoaded();
     }
@@ -482,7 +500,7 @@ export async function loadGlobalData(forceReload: boolean = false): Promise<void
         .filter(Boolean) || [];
 
     console.log(
-      `✅ Завантажено - Робіт: ${globalCache.works.length}, Деталей: ${globalCache.details.length}`
+      `✅ Завантажено - Робіт: ${globalCache.works.length}, Деталей: ${globalCache.details.length}`,
     );
 
     // слюсарі: нормально парсимо, як і раніше
@@ -495,7 +513,7 @@ export async function loadGlobalData(forceReload: boolean = false): Promise<void
         .filter(Boolean) || [];
 
     // магазини: ТЕПЕР витягуємо Name і з об'єктів, і з подвійно-JSON-рядків, і з «просто рядка»
-    const shopsParsed: Array<{ Name: string;[k: string]: any }> = [];
+    const shopsParsed: Array<{ Name: string; [k: string]: any }> = [];
     for (const row of shopsData || []) {
       let raw = row?.data;
 
@@ -518,7 +536,7 @@ export async function loadGlobalData(forceReload: boolean = false): Promise<void
 
     // алфавітне сортування UA (без урахування регістру)
     globalCache.shops = shopsParsed.sort((a, b) =>
-      a.Name.localeCompare(b.Name, "uk", { sensitivity: "base" })
+      a.Name.localeCompare(b.Name, "uk", { sensitivity: "base" }),
     );
 
     globalCache.settings = {
@@ -574,11 +592,11 @@ export async function loadGlobalData(forceReload: boolean = false): Promise<void
 export async function reloadSlyusarsOnly(): Promise<void> {
   try {
     console.log("🔄 [reloadSlyusarsOnly] Перезавантаження слюсарів з БД...");
-    
+
     const { data: slyusarsData, error } = await supabase
       .from("slyusars")
       .select("data");
-    
+
     if (error) {
       console.error("❌ Помилка завантаження слюсарів:", error);
       return;
@@ -592,7 +610,9 @@ export async function reloadSlyusarsOnly(): Promise<void> {
         })
         .filter(Boolean) || [];
 
-    console.log(`✅ [reloadSlyusarsOnly] Завантажено ${globalCache.slyusars.length} слюсарів`);
+    console.log(
+      `✅ [reloadSlyusarsOnly] Завантажено ${globalCache.slyusars.length} слюсарів`,
+    );
   } catch (err) {
     console.error("❌ [reloadSlyusarsOnly] Помилка:", err);
   }
@@ -606,11 +626,7 @@ export async function loadSkladLite(): Promise<void> {
       part_number: string;
       kilkist_on: number;
       kilkist_off: number;
-    }>(
-      "sclad",
-      "sclad_id, part_number, kilkist_on, kilkist_off",
-      "sclad_id"
-    );
+    }>("sclad", "sclad_id, part_number, kilkist_on, kilkist_off", "sclad_id");
 
     globalCache.skladLite = data.map((r: any): SkladLiteRow => {
       const on = Number(r.kilkist_on ?? 0);
@@ -624,7 +640,9 @@ export async function loadSkladLite(): Promise<void> {
       };
     });
 
-    console.log(`✅ loadSkladLite: завантажено ${globalCache.skladLite.length} записів`);
+    console.log(
+      `✅ loadSkladLite: завантажено ${globalCache.skladLite.length} записів`,
+    );
   } catch (e) {
     console.error("💥 loadSkladLite(): критична помилка:", e);
     globalCache.skladLite = [];
@@ -663,13 +681,13 @@ export async function ensureSkladLoaded(): Promise<void> {
   const { data, error } = await supabase
     .from("sclad")
     .select(
-      "sclad_id, part_number, name, price, kilkist_on, kilkist_off, unit_measurement, shops, time_on, scladNomer"
+      "sclad_id, part_number, name, price, kilkist_on, kilkist_off, unit_measurement, shops, time_on, scladNomer",
     )
     .order("sclad_id", { ascending: false });
   if (error) {
     console.warn(
       "⚠️ ensureSkladLoaded(): не вдалося отримати sclad:",
-      error.message
+      error.message,
     );
     return;
   }
@@ -703,7 +721,9 @@ export async function ensureSkladLoaded(): Promise<void> {
  */
 export function initScladRealtimeSubscription() {
   if (isScladRealtimeSubscribed) {
-    console.log("⚠️ Realtime для sclad вже активний, пропускаємо ініціалізацію.");
+    console.log(
+      "⚠️ Realtime для sclad вже активний, пропускаємо ініціалізацію.",
+    );
     return;
   }
   isScladRealtimeSubscribed = true;
@@ -718,7 +738,7 @@ export function initScladRealtimeSubscription() {
       (payload) => {
         console.log(`🔔 Sclad Realtime event: ${payload.eventType}`, payload);
         handleScladChange(payload);
-      }
+      },
     )
     .subscribe((status) => {
       console.log(`📡 Sclad Realtime status: ${status}`);
@@ -732,7 +752,7 @@ function handleScladChange(payload: any) {
     // 🗑️ Видалення запису
     if (oldRecord && oldRecord.sclad_id) {
       globalCache.skladParts = globalCache.skladParts.filter(
-        (p) => p.sclad_id !== oldRecord.sclad_id
+        (p) => p.sclad_id !== oldRecord.sclad_id,
       );
       console.log(`🗑️ Видалено зі складу (ID: ${oldRecord.sclad_id})`);
     }
@@ -740,22 +760,26 @@ function handleScladChange(payload: any) {
     // ➕ Додавання запису
     if (newRecord) {
       const mapped = mapScladRecord(newRecord);
-      // Додаємо в початок або кінець? В ensureSkladLoaded order desc, але тут можна просто push, 
+      // Додаємо в початок або кінець? В ensureSkladLoaded order desc, але тут можна просто push,
       // бо автодоповнення все одно фільтрує.
       globalCache.skladParts.push(mapped);
-      console.log(`➕ Додано на склад: ${mapScladRecord.name} (ID: ${newRecord.sclad_id})`);
+      console.log(
+        `➕ Додано на склад: ${mapScladRecord.name} (ID: ${newRecord.sclad_id})`,
+      );
     }
   } else if (eventType === "UPDATE") {
     // 🔄 Оновлення запису
     if (newRecord) {
       const updated = mapScladRecord(newRecord);
       const index = globalCache.skladParts.findIndex(
-        (p) => p.sclad_id === newRecord.sclad_id
+        (p) => p.sclad_id === newRecord.sclad_id,
       );
 
       if (index !== -1) {
         globalCache.skladParts[index] = updated;
-        console.log(`🔄 Оновлено на складі: ${updated.name} (ID: ${newRecord.sclad_id})`);
+        console.log(
+          `🔄 Оновлено на складі: ${updated.name} (ID: ${newRecord.sclad_id})`,
+        );
       } else {
         // Якщо раптом немає в кеші (наприклад, було додано поки ми були офлайн?), додаємо
         globalCache.skladParts.push(updated);
