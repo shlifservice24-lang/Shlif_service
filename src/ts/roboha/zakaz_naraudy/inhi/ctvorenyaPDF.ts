@@ -180,45 +180,26 @@ export async function printModalToPdf(): Promise<void> {
   ) as HTMLTableElement | null;
 
   if (table) {
-    // Приховуємо колонки ТІЛЬКИ якщо користувач НЕ має права їх бачити
-    const columnsToHide: Array<(t: string) => boolean> = [];
-
-    // Приховуємо "ПІБ _ Магазин" тільки якщо showPibMagazin = false
-    if (!globalCache.settings.showPibMagazin) {
-      columnsToHide.push((t) => t.includes("піб") || t.includes("магазин"));
-    }
-
-    // Приховуємо "Каталог" тільки якщо showCatalog = false
-    if (!globalCache.settings.showCatalog) {
-      columnsToHide.push((t) => t.includes("каталог"));
-    }
-
-    // Приховуємо "Зарплата"/"Зар-та" тільки якщо showZarplata = false
-    if (!globalCache.settings.showZarplata) {
-      columnsToHide.push((t) => t.includes("зарплата") || t.includes("зар-та"));
-    }
-
-    // Приховуємо колонки згідно з правами доступу
-    if (columnsToHide.length > 0) {
-      collectColumnCellsToHideByHeaderText(table, columnsToHide, elementsToHide);
-    }
+    // ✅ ЗАВЖДИ приховуємо ці колонки в PDF (незалежно від прав доступу)
+    collectColumnCellsToHideByHeaderText(
+      table,
+      [
+        (t) => t.includes("піб") || t.includes("магазин"),
+        (t) => t.includes("каталог"),
+        (t) => t.includes("зарплата") || t.includes("зар-та"),
+      ],
+      elementsToHide,
+    );
 
     // 🔶 ДОДАТКОВО: Приховуємо комірки pib-magazin-cell напряму за класом
-    // (на випадок якщо заголовок стовпця не відображається)
-    // ТІЛЬКИ якщо showPibMagazin = false
-    if (!globalCache.settings.showPibMagazin) {
-      const pibMagazinCells =
-        table.querySelectorAll<HTMLElement>(".pib-magazin-cell");
-      pibMagazinCells.forEach((cell) => elementsToHide.push(cell));
-    }
+    const pibMagazinCells =
+      table.querySelectorAll<HTMLElement>(".pib-magazin-cell");
+    pibMagazinCells.forEach((cell) => elementsToHide.push(cell));
 
     // 🔶 Приховуємо комірки зарплати напряму за класом
-    // ТІЛЬКИ якщо showZarplata = false
-    if (!globalCache.settings.showZarplata) {
-      const slyusarSumCells =
-        table.querySelectorAll<HTMLElement>(".slyusar-sum-cell");
-      slyusarSumCells.forEach((cell) => elementsToHide.push(cell));
-    }
+    const slyusarSumCells =
+      table.querySelectorAll<HTMLElement>(".slyusar-sum-cell");
+    slyusarSumCells.forEach((cell) => elementsToHide.push(cell));
   }
 
   // 🔶 Приховуємо рядок знижки, якщо знижка = 0
