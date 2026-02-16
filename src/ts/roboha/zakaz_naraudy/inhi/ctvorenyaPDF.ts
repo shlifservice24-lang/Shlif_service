@@ -262,7 +262,9 @@ export async function printModalToPdf(): Promise<void> {
   // сховати керуючі елементи
   const originalDisplays = new Map<HTMLElement, string>();
   elementsToHide.forEach((el) => {
-    originalDisplays.set(el, el.style.display);
+    // Зберігаємо оригінальний display, або 'table-cell' для комірок таблиці
+    const currentDisplay = el.style.display || window.getComputedStyle(el).display;
+    originalDisplays.set(el, currentDisplay);
     el.style.display = "none";
   });
 
