@@ -1055,11 +1055,9 @@ function createClientCell(
       transition: all 0.3s ease;
     `;
 
-    // При наведенні розгортаємо текст на всю ширину комірки
+    // При наведенні розгортаємо текст (максимум 40% ширини комірки)
     noteContainer.addEventListener("mouseenter", () => {
-      noteContainer.style.left = "4px";
-      noteContainer.style.right = "4px";
-      noteContainer.style.maxWidth = "none";
+      noteContainer.style.maxWidth = "40%";
       noteContainer.style.whiteSpace = "normal";
       noteContainer.style.wordWrap = "break-word";
       noteContainer.style.maxHeight = "100px";
@@ -1070,8 +1068,6 @@ function createClientCell(
     });
 
     noteContainer.addEventListener("mouseleave", () => {
-      noteContainer.style.left = "auto";
-      noteContainer.style.right = "4px";
       noteContainer.style.maxWidth = "150px";
       noteContainer.style.whiteSpace = "nowrap";
       noteContainer.style.wordWrap = "normal";
