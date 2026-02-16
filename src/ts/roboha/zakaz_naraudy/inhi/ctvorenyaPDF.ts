@@ -241,8 +241,10 @@ export async function printModalToPdf(): Promise<void> {
   prepareTableForPrint();
 
   // сховати керуючі елементи
+  const uniqueElementsToHide = Array.from(new Set(elementsToHide));
   const originalDisplays = new Map<HTMLElement, string>();
-  elementsToHide.forEach((el) => {
+
+  uniqueElementsToHide.forEach((el) => {
     // Зберігаємо оригінальний display, або 'table-cell' для комірок таблиці
     const currentDisplay = el.style.display || window.getComputedStyle(el).display;
     originalDisplays.set(el, currentDisplay);
