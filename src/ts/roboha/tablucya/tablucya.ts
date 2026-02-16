@@ -66,7 +66,7 @@ function safeParseJSON(data: any): any {
 function formatDate(date: Date): string {
   return `${date.getDate().toString().padStart(2, "0")}.${(date.getMonth() + 1)
     .toString()
-    .padStart(2, "0")}.${date.getFullYear().toString().slice(-2)}`;
+    .padStart(2, "0")}.${date.getFullYear()}`;
 }
 
 function formatDateTime(date: Date): { date: string; time: string } {
@@ -93,7 +93,7 @@ function convertISOtoShortDate(isoDate: string | null): string | null {
 }
 
 function validateDateFormat(dateStr: string): boolean {
-  const dateRegex = /^\d{2}\.\d{2}\.(\d{2}|\d{4})$/;
+  const dateRegex = /^\d{2}\.\d{2}\.(\d{4}|\d{2})$/;
   if (!dateRegex.test(dateStr)) return false;
   const [d, m, y] = dateStr.split(".");
   const day = parseInt(d);
@@ -813,7 +813,7 @@ async function handleCallIndicatorClick(
     const minutes = String(now.getMinutes()).padStart(2, "0");
     const day = String(now.getDate()).padStart(2, "0");
     const month = String(now.getMonth() + 1).padStart(2, "0");
-    const year = String(now.getFullYear()).slice(-2);
+    const year = now.getFullYear();
     const timestamp = `${hours}:${minutes} ${day}.${month}.${year}`;
 
     if (!currentCallData || currentCallData === "") {
@@ -850,9 +850,11 @@ async function handleCallIndicatorClick(
     let displayText = newEmoji;
     if (hasCallRecord) {
       // Витягуємо дату/час з newCallData
-      const dateTimeMatch = newCallData.match(/(\d{2}:\d{2} \d{2}\.\d{2}\.(\d{2}|\d{4}))/);
+      const dateTimeMatch = newCallData.match(/(\d{2}:\d{2} \d{2}\.\d{2}\.)(\d{4}|\d{2})/);
       if (dateTimeMatch) {
-        displayText = `${newEmoji} ${dateTimeMatch[1]}`;
+        // dateTimeMatch[1] = "HH:MM DD.MM."
+        // dateTimeMatch[2] = "YYYY" або "YY"
+        displayText = `${newEmoji} ${dateTimeMatch[1]}${dateTimeMatch[2].slice(-2)}`;
       }
     }
     callIndicator.textContent = displayText;
@@ -953,9 +955,11 @@ function createClientCell(
   let callDisplayText = callEmoji;
   if (hasCallRecord) {
     // Витягуємо дату/час з callData (формат: "14:57 10.02.2026" або "14:57 10.02.2026 невзяв")
-    const dateTimeMatch = callData.match(/(\d{2}:\d{2} \d{2}\.\d{2}\.(\d{2}|\d{4}))/);
+    const dateTimeMatch = callData.match(/(\d{2}:\d{2} \d{2}\.\d{2}\.)(\d{4}|\d{2})/);
     if (dateTimeMatch) {
-      callDisplayText = `${callEmoji} ${dateTimeMatch[1]}`;
+      // dateTimeMatch[1] = "HH:MM DD.MM."
+      // dateTimeMatch[2] = "YYYY" або "YY"
+      callDisplayText = `${callEmoji} ${dateTimeMatch[1]}${dateTimeMatch[2].slice(-2)}`;
     }
   }
 
