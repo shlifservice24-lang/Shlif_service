@@ -1055,20 +1055,30 @@ function createClientCell(
       transition: all 0.3s ease;
     `;
 
-    // При наведенні розгортаємо текст
+    // При наведенні розгортаємо текст на всю ширину комірки
     noteContainer.addEventListener("mouseenter", () => {
+      noteContainer.style.left = "4px";
+      noteContainer.style.right = "4px";
+      noteContainer.style.maxWidth = "none";
       noteContainer.style.whiteSpace = "normal";
-      noteContainer.style.maxWidth = "250px";
       noteContainer.style.wordWrap = "break-word";
+      noteContainer.style.maxHeight = "100px";
+      noteContainer.style.overflowY = "auto";
       noteContainer.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
+      noteContainer.style.backgroundColor = "#e8e8e8";
       noteContainer.style.zIndex = "15";
     });
 
     noteContainer.addEventListener("mouseleave", () => {
-      noteContainer.style.whiteSpace = "nowrap";
+      noteContainer.style.left = "auto";
+      noteContainer.style.right = "4px";
       noteContainer.style.maxWidth = "150px";
+      noteContainer.style.whiteSpace = "nowrap";
       noteContainer.style.wordWrap = "normal";
+      noteContainer.style.maxHeight = "none";
+      noteContainer.style.overflowY = "hidden";
       noteContainer.style.boxShadow = "none";
+      noteContainer.style.backgroundColor = "#f0f0f0";
       noteContainer.style.zIndex = "5";
     });
 
