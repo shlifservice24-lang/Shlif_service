@@ -919,6 +919,7 @@ function createClientCell(
   act: any
 ): HTMLTableCellElement {
   const td = document.createElement("td");
+  td.style.position = "relative"; // Для позиціонування примітки
   const phones = clientInfo.phone ? [clientInfo.phone] : [];
   let pibOnly = clientInfo.pib;
 
@@ -1031,44 +1032,44 @@ function createClientCell(
     td.insertAdjacentHTML('beforeend', `<div style="margin-top: 4px; text-align: left;">${smsHtml}</div>`);
   }
 
-  // 📝 Додаємо примітку під ПІБ і телефоном, якщо вона є
+  // 📝 Додаємо примітку праворуч, якщо вона є
   if (noteData && noteData !== "—" && noteData.trim() !== "") {
     const noteContainer = document.createElement("div");
     noteContainer.className = "client-note-indicator";
     noteContainer.textContent = noteData;
     noteContainer.style.cssText = `
-      margin-top: 4px;
+      position: absolute;
+      right: 4px;
+      top: 4px;
       font-size: 0.75em;
       color: #666;
       background: #f0f0f0;
       padding: 4px 8px;
       border-radius: 4px;
-      max-height: 1.2em;
+      max-width: 150px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
       cursor: help;
+      z-index: 5;
       transition: all 0.3s ease;
-      line-height: 1.2em;
     `;
 
-    // При наведенні розгортаємо текст зі скролом
+    // При наведенні розгортаємо текст
     noteContainer.addEventListener("mouseenter", () => {
       noteContainer.style.whiteSpace = "normal";
-      noteContainer.style.maxHeight = "80px";
-      noteContainer.style.overflowY = "auto";
+      noteContainer.style.maxWidth = "250px";
       noteContainer.style.wordWrap = "break-word";
       noteContainer.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
-      noteContainer.style.backgroundColor = "#e8e8e8";
+      noteContainer.style.zIndex = "15";
     });
 
     noteContainer.addEventListener("mouseleave", () => {
       noteContainer.style.whiteSpace = "nowrap";
-      noteContainer.style.maxHeight = "1.2em";
-      noteContainer.style.overflowY = "hidden";
+      noteContainer.style.maxWidth = "150px";
       noteContainer.style.wordWrap = "normal";
       noteContainer.style.boxShadow = "none";
-      noteContainer.style.backgroundColor = "#f0f0f0";
+      noteContainer.style.zIndex = "5";
     });
 
     td.appendChild(noteContainer);
