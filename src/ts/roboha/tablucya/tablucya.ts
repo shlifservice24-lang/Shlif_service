@@ -1051,7 +1051,7 @@ function createClientCell(
       text-overflow: ellipsis;
       white-space: nowrap;
       cursor: help;
-      z-index: 5;
+      z-index: 4;
       transition: all 0.3s ease;
     `;
 
@@ -1075,7 +1075,7 @@ function createClientCell(
       noteContainer.style.overflowY = "hidden";
       noteContainer.style.boxShadow = "none";
       noteContainer.style.backgroundColor = "#f0f0f0";
-      noteContainer.style.zIndex = "5";
+      noteContainer.style.zIndex = "4";
     });
 
     td.appendChild(noteContainer);
@@ -1549,6 +1549,9 @@ function createTableHeader(
     th.textContent = header;
     th.style.backgroundColor = tableColor;
     th.style.color = "#fff";
+    th.style.position = "sticky";
+    th.style.top = "0";
+    th.style.zIndex = "20"; // ✅ Вище ніж іконки (z-index: 10) та примітки (z-index: 5)
     if (header.includes("Клієнт")) {
       th.addEventListener("click", () => {
         sortActs();
