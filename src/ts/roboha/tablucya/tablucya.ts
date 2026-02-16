@@ -1033,14 +1033,9 @@ function createClientCell(
 
   // 📝 Додаємо примітку праворуч, якщо вона є
   if (noteData && noteData !== "—" && noteData.trim() !== "") {
-    const maxNoteLength = 30;
-    const truncatedNote = noteData.length > maxNoteLength
-      ? noteData.substring(0, maxNoteLength) + "..."
-      : noteData;
-
     const noteContainer = document.createElement("div");
     noteContainer.className = "client-note-indicator";
-    noteContainer.textContent = truncatedNote;
+    noteContainer.textContent = noteData;
     noteContainer.style.cssText = `
       position: absolute;
       right: 4px;
@@ -1048,7 +1043,7 @@ function createClientCell(
       font-size: 0.75em;
       color: #666;
       background: #f0f0f0;
-      padding: 2px 6px;
+      padding: 4px 8px;
       border-radius: 4px;
       max-width: 150px;
       overflow: hidden;
@@ -1056,55 +1051,26 @@ function createClientCell(
       white-space: nowrap;
       cursor: help;
       z-index: 5;
+      transition: all 0.3s ease;
     `;
 
-    // Створюємо спливаюче вікно для повного тексту (показується ЗАВЖДИ при ховері)
-    const tooltip = document.createElement("div");
-    tooltip.className = "client-note-tooltip";
-    tooltip.textContent = noteData;
-    tooltip.style.cssText = `
-      position: absolute;
-      right: 0;
-      top: 100%;
-      margin-top: 6px;
-      background: #1e3a5f;
-      color: #ffffff;
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 0.9em;
-      white-space: pre-wrap;
-      max-width: 350px;
-      min-width: 200px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-      z-index: 1000;
-      display: none;
-      pointer-events: none;
-      border: 2px solid #3498db;
-      line-height: 1.4;
-      font-weight: normal;
-      opacity: 0;
-      transform: translateY(-5px);
-      transition: opacity 0.2s ease, transform 0.2s ease;
-    `;
-
+    // При наведенні розгортаємо текст
     noteContainer.addEventListener("mouseenter", () => {
-      tooltip.style.display = "block";
-      // Використовуємо setTimeout для плавної анімації
-      setTimeout(() => {
-        tooltip.style.opacity = "1";
-        tooltip.style.transform = "translateY(0)";
-      }, 10);
+      noteContainer.style.whiteSpace = "normal";
+      noteContainer.style.maxWidth = "250px";
+      noteContainer.style.wordWrap = "break-word";
+      noteContainer.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
+      noteContainer.style.zIndex = "15";
     });
 
     noteContainer.addEventListener("mouseleave", () => {
-      tooltip.style.opacity = "0";
-      tooltip.style.transform = "translateY(-5px)";
-      setTimeout(() => {
-        tooltip.style.display = "none";
-      }, 200);
+      noteContainer.style.whiteSpace = "nowrap";
+      noteContainer.style.maxWidth = "150px";
+      noteContainer.style.wordWrap = "normal";
+      noteContainer.style.boxShadow = "none";
+      noteContainer.style.zIndex = "5";
     });
 
-    noteContainer.appendChild(tooltip);
     td.appendChild(noteContainer);
   }
 
