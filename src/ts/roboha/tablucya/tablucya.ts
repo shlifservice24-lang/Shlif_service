@@ -1045,10 +1045,10 @@ function createClientCell(
       position: absolute;
       right: 4px;
       top: 4px;
-      font-size: 0.8em;
-      color: #2c3e50;
-      background: #FFE4B5;
-      padding: 3px 8px;
+      font-size: 0.75em;
+      color: #666;
+      background: #f0f0f0;
+      padding: 2px 6px;
       border-radius: 4px;
       max-width: 150px;
       overflow: hidden;
@@ -1056,9 +1056,6 @@ function createClientCell(
       white-space: nowrap;
       cursor: help;
       z-index: 5;
-      font-weight: 500;
-      border: 1px solid #FFA500;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     `;
 
     // Створюємо спливаюче вікно для повного тексту (показується ЗАВЖДИ при ховері)
