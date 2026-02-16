@@ -1034,8 +1034,8 @@ function createClientCell(
   // 📝 Додаємо примітку праворуч, якщо вона є
   if (noteData && noteData !== "—" && noteData.trim() !== "") {
     const maxNoteLength = 30;
-    const truncatedNote = noteData.length > maxNoteLength 
-      ? noteData.substring(0, maxNoteLength) + "..." 
+    const truncatedNote = noteData.length > maxNoteLength
+      ? noteData.substring(0, maxNoteLength) + "..."
       : noteData;
 
     const noteContainer = document.createElement("div");
@@ -1045,10 +1045,10 @@ function createClientCell(
       position: absolute;
       right: 4px;
       top: 4px;
-      font-size: 0.75em;
-      color: #666;
-      background: #f0f0f0;
-      padding: 2px 6px;
+      font-size: 0.8em;
+      color: #2c3e50;
+      background: #FFE4B5;
+      padding: 3px 8px;
       border-radius: 4px;
       max-width: 150px;
       overflow: hidden;
@@ -1056,41 +1056,58 @@ function createClientCell(
       white-space: nowrap;
       cursor: help;
       z-index: 5;
+      font-weight: 500;
+      border: 1px solid #FFA500;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     `;
 
-    // Створюємо спливаюче вікно для повного тексту
-    if (noteData.length > maxNoteLength) {
-      const tooltip = document.createElement("div");
-      tooltip.className = "client-note-tooltip";
-      tooltip.textContent = noteData;
-      tooltip.style.cssText = `
-        position: absolute;
-        right: 0;
-        top: 100%;
-        margin-top: 4px;
-        background: #333;
-        color: white;
-        padding: 8px 12px;
-        border-radius: 6px;
-        font-size: 0.85em;
-        white-space: pre-wrap;
-        max-width: 300px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        z-index: 1000;
-        display: none;
-        pointer-events: none;
-      `;
+    // Створюємо спливаюче вікно для повного тексту (показується ЗАВЖДИ при ховері)
+    const tooltip = document.createElement("div");
+    tooltip.className = "client-note-tooltip";
+    tooltip.textContent = noteData;
+    tooltip.style.cssText = `
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 6px;
+      background: #1e3a5f;
+      color: #ffffff;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.9em;
+      white-space: pre-wrap;
+      max-width: 350px;
+      min-width: 200px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      z-index: 1000;
+      display: none;
+      pointer-events: none;
+      border: 2px solid #3498db;
+      line-height: 1.4;
+      font-weight: normal;
+      opacity: 0;
+      transform: translateY(-5px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    `;
 
-      noteContainer.addEventListener("mouseenter", () => {
-        tooltip.style.display = "block";
-      });
-      noteContainer.addEventListener("mouseleave", () => {
+    noteContainer.addEventListener("mouseenter", () => {
+      tooltip.style.display = "block";
+      // Використовуємо setTimeout для плавної анімації
+      setTimeout(() => {
+        tooltip.style.opacity = "1";
+        tooltip.style.transform = "translateY(0)";
+      }, 10);
+    });
+
+    noteContainer.addEventListener("mouseleave", () => {
+      tooltip.style.opacity = "0";
+      tooltip.style.transform = "translateY(-5px)";
+      setTimeout(() => {
         tooltip.style.display = "none";
-      });
+      }, 200);
+    });
 
-      noteContainer.appendChild(tooltip);
-    }
-
+    noteContainer.appendChild(tooltip);
     td.appendChild(noteContainer);
   }
 
