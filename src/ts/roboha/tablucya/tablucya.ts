@@ -66,7 +66,7 @@ function safeParseJSON(data: any): any {
 function formatDate(date: Date): string {
   return `${date.getDate().toString().padStart(2, "0")}.${(date.getMonth() + 1)
     .toString()
-    .padStart(2, "0")}.${date.getFullYear()}`;
+    .padStart(2, "0")}.${date.getFullYear().toString().slice(-2)}`;
 }
 
 function formatDateTime(date: Date): { date: string; time: string } {
@@ -93,12 +93,14 @@ function convertISOtoShortDate(isoDate: string | null): string | null {
 }
 
 function validateDateFormat(dateStr: string): boolean {
-  const dateRegex = /^\d{2}\.\d{2}\.\d{4}$/;
+  const dateRegex = /^\d{2}\.\d{2}\.(\d{2}|\d{4})$/;
   if (!dateRegex.test(dateStr)) return false;
   const [d, m, y] = dateStr.split(".");
   const day = parseInt(d);
   const month = parseInt(m);
-  const year = parseInt(y);
+  let year = parseInt(y);
+  if (year < 100) year += 2000;
+
   return (
     day >= 1 &&
     day <= 31 &&
@@ -811,7 +813,7 @@ async function handleCallIndicatorClick(
     const minutes = String(now.getMinutes()).padStart(2, "0");
     const day = String(now.getDate()).padStart(2, "0");
     const month = String(now.getMonth() + 1).padStart(2, "0");
-    const year = now.getFullYear();
+    const year = String(now.getFullYear()).slice(-2);
     const timestamp = `${hours}:${minutes} ${day}.${month}.${year}`;
 
     if (!currentCallData || currentCallData === "") {
@@ -848,7 +850,7 @@ async function handleCallIndicatorClick(
     let displayText = newEmoji;
     if (hasCallRecord) {
       // Витягуємо дату/час з newCallData
-      const dateTimeMatch = newCallData.match(/(\d{2}:\d{2} \d{2}\.\d{2}\.\d{4})/);
+      const dateTimeMatch = newCallData.match(/(\d{2}:\d{2} \d{2}\.\d{2}\.(\d{2}|\d{4}))/);
       if (dateTimeMatch) {
         displayText = `${newEmoji} ${dateTimeMatch[1]}`;
       }
@@ -951,7 +953,7 @@ function createClientCell(
   let callDisplayText = callEmoji;
   if (hasCallRecord) {
     // Витягуємо дату/час з callData (формат: "14:57 10.02.2026" або "14:57 10.02.2026 невзяв")
-    const dateTimeMatch = callData.match(/(\d{2}:\d{2} \d{2}\.\d{2}\.\d{4})/);
+    const dateTimeMatch = callData.match(/(\d{2}:\d{2} \d{2}\.\d{2}\.(\d{2}|\d{4}))/);
     if (dateTimeMatch) {
       callDisplayText = `${callEmoji} ${dateTimeMatch[1]}`;
     }
@@ -1395,7 +1397,9 @@ function getDateRange(): { dateFrom: string; dateTo: string } | null {
   try {
     const [dateFrom, dateTo] = [startStr, endStr].map((str, i) => {
       const [d, m, y] = str.split(".");
-      const full = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+      let yearFull = y;
+      if (y.length === 2) yearFull = "20" + y;
+      const full = `${yearFull}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
       return i === 0 ? `${full} 00:00:00` : `${full} 23:59:59`;
     });
     return { dateFrom, dateTo };
