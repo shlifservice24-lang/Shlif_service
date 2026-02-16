@@ -919,9 +919,9 @@ function createClientCell(
   act: any
 ): HTMLTableCellElement {
   const td = document.createElement("td");
-  td.style.position = "relative"; // Для позиціонування примітки
   const phones = clientInfo.phone ? [clientInfo.phone] : [];
   let pibOnly = clientInfo.pib;
+
 
   // Отримуємо дані про дзвінок з акту
   const actData = safeParseJSON(act.info || act.data || act.details);
@@ -1031,44 +1031,44 @@ function createClientCell(
     td.insertAdjacentHTML('beforeend', `<div style="margin-top: 4px; text-align: left;">${smsHtml}</div>`);
   }
 
-  // 📝 Додаємо примітку праворуч, якщо вона є
+  // 📝 Додаємо примітку під ПІБ і телефоном, якщо вона є
   if (noteData && noteData !== "—" && noteData.trim() !== "") {
     const noteContainer = document.createElement("div");
     noteContainer.className = "client-note-indicator";
     noteContainer.textContent = noteData;
     noteContainer.style.cssText = `
-      position: absolute;
-      right: 4px;
-      top: 4px;
+      margin-top: 4px;
       font-size: 0.75em;
       color: #666;
       background: #f0f0f0;
       padding: 4px 8px;
       border-radius: 4px;
-      max-width: 150px;
+      max-height: 1.2em;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
       cursor: help;
-      z-index: 5;
       transition: all 0.3s ease;
+      line-height: 1.2em;
     `;
 
-    // При наведенні розгортаємо текст
+    // При наведенні розгортаємо текст зі скролом
     noteContainer.addEventListener("mouseenter", () => {
       noteContainer.style.whiteSpace = "normal";
-      noteContainer.style.maxWidth = "250px";
+      noteContainer.style.maxHeight = "80px";
+      noteContainer.style.overflowY = "auto";
       noteContainer.style.wordWrap = "break-word";
       noteContainer.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
-      noteContainer.style.zIndex = "15";
+      noteContainer.style.backgroundColor = "#e8e8e8";
     });
 
     noteContainer.addEventListener("mouseleave", () => {
       noteContainer.style.whiteSpace = "nowrap";
-      noteContainer.style.maxWidth = "150px";
+      noteContainer.style.maxHeight = "1.2em";
+      noteContainer.style.overflowY = "hidden";
       noteContainer.style.wordWrap = "normal";
       noteContainer.style.boxShadow = "none";
-      noteContainer.style.zIndex = "5";
+      noteContainer.style.backgroundColor = "#f0f0f0";
     });
 
     td.appendChild(noteContainer);
