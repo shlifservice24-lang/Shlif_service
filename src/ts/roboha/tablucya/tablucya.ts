@@ -919,12 +919,14 @@ function createClientCell(
   act: any
 ): HTMLTableCellElement {
   const td = document.createElement("td");
+  td.style.position = "relative"; // Для позиціонування примітки
   const phones = clientInfo.phone ? [clientInfo.phone] : [];
   let pibOnly = clientInfo.pib;
 
   // Отримуємо дані про дзвінок з акту
   const actData = safeParseJSON(act.info || act.data || act.details);
   const callData = actData?.["Дзвінок"] || "";
+  const noteData = actData?.["Примітка"] || "";
 
   // Визначаємо емодзі для дзвінка
   let callEmoji = "⏳"; // За замовчуванням - очікування
@@ -1027,6 +1029,69 @@ function createClientCell(
   } else if (smsHtml) {
     // Якщо телефонів немає, але є SMS
     td.insertAdjacentHTML('beforeend', `<div style="margin-top: 4px; text-align: left;">${smsHtml}</div>`);
+  }
+
+  // 📝 Додаємо примітку праворуч, якщо вона є
+  if (noteData && noteData !== "—" && noteData.trim() !== "") {
+    const maxNoteLength = 30;
+    const truncatedNote = noteData.length > maxNoteLength 
+      ? noteData.substring(0, maxNoteLength) + "..." 
+      : noteData;
+
+    const noteContainer = document.createElement("div");
+    noteContainer.className = "client-note-indicator";
+    noteContainer.textContent = truncatedNote;
+    noteContainer.style.cssText = `
+      position: absolute;
+      right: 4px;
+      top: 4px;
+      font-size: 0.75em;
+      color: #666;
+      background: #f0f0f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      cursor: help;
+      z-index: 5;
+    `;
+
+    // Створюємо спливаюче вікно для повного тексту
+    if (noteData.length > maxNoteLength) {
+      const tooltip = document.createElement("div");
+      tooltip.className = "client-note-tooltip";
+      tooltip.textContent = noteData;
+      tooltip.style.cssText = `
+        position: absolute;
+        right: 0;
+        top: 100%;
+        margin-top: 4px;
+        background: #333;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.85em;
+        white-space: pre-wrap;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 1000;
+        display: none;
+        pointer-events: none;
+      `;
+
+      noteContainer.addEventListener("mouseenter", () => {
+        tooltip.style.display = "block";
+      });
+      noteContainer.addEventListener("mouseleave", () => {
+        tooltip.style.display = "none";
+      });
+
+      noteContainer.appendChild(tooltip);
+    }
+
+    td.appendChild(noteContainer);
   }
 
   // Показуємо емодзі при наведенні на комірку (тільки якщо немає запису)
