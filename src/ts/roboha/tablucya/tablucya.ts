@@ -1136,10 +1136,41 @@ function createCarCell(
 
 function createDateCell(act: any, actId: number): HTMLTableCellElement {
   const td = document.createElement("td");
-  const actDate = getActDateAsDate(act);
-  if (actDate) {
-    const { date, time } = formatDateTime(actDate);
-    td.innerHTML = `<div>${date}</div><div style="color: #0400ffff; font-size: 0.85em;">${time}</div>`;
+
+  // Дата відкриття (date_on)
+  const actDateOpen = getActDateAsDate(act);
+
+  // Дата закриття (date_off)
+  const actDateClose = act.date_off ? new Date(act.date_off) : null;
+
+  if (actDateOpen) {
+    const { date: dateOpen, time: timeOpen } = formatDateTime(actDateOpen);
+
+    // Форматуємо дату без "20" в році (17.02.2026 → 17.02.26)
+    const dateOpenShort = dateOpen.replace(/\.(\d{2})(\d{2})$/, '.$2');
+
+    if (actDateClose && !isNaN(actDateClose.getTime())) {
+      // Акт закритий - показуємо обидві дати
+      const { date: dateClose, time: timeClose } = formatDateTime(actDateClose);
+      const dateCloseShort = dateClose.replace(/\.(\d{2})(\d{2})$/, '.$2');
+
+      td.innerHTML = `
+        <div style="display: flex; justify-content: space-around; align-items: center; gap: 4px;">
+          <div style="text-align: center;">
+            <div style="font-size: 0.9em;">${dateOpenShort}</div>
+            <div style="color: #0400ffff; font-size: 0.75em;">${timeOpen}</div>
+          </div>
+          <div style="font-size: 0.85em; color: #666;">/</div>
+          <div style="text-align: center;">
+            <div style="font-size: 0.9em;">${dateCloseShort}</div>
+            <div style="color: #0400ffff; font-size: 0.75em;">${timeClose}</div>
+          </div>
+        </div>
+      `;
+    } else {
+      // Акт відкритий - показуємо тільки дату відкриття
+      td.innerHTML = `<div>${dateOpen}</div><div style="color: #0400ffff; font-size: 0.85em;">${timeOpen}</div>`;
+    }
   } else {
     td.innerHTML = `<div>-</div>`;
   }
