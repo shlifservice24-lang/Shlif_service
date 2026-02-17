@@ -1029,7 +1029,7 @@ export function initStatusLockDelegation(): void {
         globalCache.isActClosed = false;
         await loadGlobalData();
 
-        await showModal(actId);
+        await showModal(actId, 'client');
 
         refreshActsTable();
         showNotification("Акт успішно відкрито", "success");
@@ -1170,7 +1170,7 @@ export function initStatusLockDelegation(): void {
         globalCache.isActClosed = true;
         await loadGlobalData();
 
-        await showModal(actId);
+        await showModal(actId, 'client');
 
         refreshActsTable();
         showNotification("Акт успішно закрито", "success");
