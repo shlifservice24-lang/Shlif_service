@@ -307,10 +307,22 @@ async function trackGlobalActPresence(actId: number): Promise<void> {
  */
 async function untrackGlobalActPresence(): Promise<void> {
     if (globalPresenceChannel) {
-        await globalPresenceChannel.untrack();
-        await supabase.removeChannel(globalPresenceChannel);
-        globalPresenceChannel = null;
-        console.log("✏️ [GlobalPresence] Untracked and removed channel");
+        try {
+            // Спочатку відписуємося від присутності
+            await globalPresenceChannel.untrack();
+
+            // Перевіряємо чи канал ще існує перед видаленням
+            if (globalPresenceChannel) {
+                await supabase.removeChannel(globalPresenceChannel);
+            }
+
+            console.log("✏️ [GlobalPresence] Untracked and removed channel");
+        } catch (err) {
+            console.warn("⚠️ [GlobalPresence] Помилка при видаленні каналу:", err);
+        } finally {
+            // Завжди очищаємо посилання на канал
+            globalPresenceChannel = null;
+        }
     }
 }
 
@@ -319,10 +331,22 @@ async function untrackGlobalActPresence(): Promise<void> {
  */
 export async function unsubscribeFromActPresence(): Promise<void> {
     if (presenceChannel) {
-        await presenceChannel.untrack();
-        await supabase.removeChannel(presenceChannel);
-        presenceChannel = null;
-        console.log("✅ Unsubscribed from act presence");
+        try {
+            // Спочатку відписуємося від присутності
+            await presenceChannel.untrack();
+
+            // Перевіряємо чи канал ще існує перед видаленням
+            if (presenceChannel) {
+                await supabase.removeChannel(presenceChannel);
+            }
+
+            console.log("✅ Unsubscribed from act presence");
+        } catch (err) {
+            console.warn("⚠️ Помилка при відписці від act presence:", err);
+        } finally {
+            // Завжди очищаємо посилання на канал
+            presenceChannel = null;
+        }
     }
 
     // 🔐 Очищаємо зафіксований час відкриття
