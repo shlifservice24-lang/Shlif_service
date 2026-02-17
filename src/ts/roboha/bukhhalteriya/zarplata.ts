@@ -552,7 +552,7 @@ async function autoSearchPodlegleFromInputs(): Promise<void> {
   }
   // ▲▲▲ Кінець блоку змін ▲▲▲
 
-  searchDataInDatabase(dateOpen, dateClose, selectedName);
+  await searchDataInDatabase(dateOpen, dateClose, selectedName);
 
   allPodlegleData = [...podlegleData];
   hasPodlegleDataLoaded = true;
@@ -929,7 +929,7 @@ export function createNameSelect(): void {
       select.appendChild(option);
     });
 
-    select.addEventListener("change", (event) => {
+    select.addEventListener("change", async (event) => {
       const selectedName = (event.target as HTMLSelectElement).value;
 
       // 🔥 БАГ-ФІКС: Викликаємо пошук якщо є збережені дати (не тільки якщо hasDataForAllEmployees)
@@ -938,7 +938,7 @@ export function createNameSelect(): void {
           `🔄 Автоматичне фільтрування по співробітнику: ${selectedName || "всі"}`
         );
 
-        searchDataInDatabase(
+        await searchDataInDatabase(
           lastSearchDateOpen,
           lastSearchDateClose,
           selectedName
@@ -1248,11 +1248,11 @@ function inRangeByIso(
 }
 
 // ЗАМІНИТИ ПОВНІСТЮ функцію searchDataInDatabase:
-export function searchDataInDatabase(
+export async function searchDataInDatabase(
   dateOpen: string,
   dateClose: string,
   selectedName: string
-): void {
+): Promise<void> {
   podlegleData = [];
   if (!dateOpen && !dateClose) {
     dateOpen = "01.01.2020"; // ✅ ВИПРАВЛЕНО: використовуємо більш ранню дату за замовчуванням
@@ -1274,6 +1274,33 @@ export function searchDataInDatabase(
 
   console.log(`🔍 Пошук в базі slyusars:`);
 
+  // 🔥 ЗАВАНТАЖЕННЯ ДАТ ЗАКРИТТЯ З ТАБЛИЦІ ACTS
+  try {
+    console.log("📊 Завантаження дат закриття з таблиці acts...");
+    const { data: actsData, error: actsError } = await supabase
+      .from("acts")
+      .select("act_id, date_off");
+
+    if (actsError) {
+      console.error("❌ Помилка завантаження acts:", actsError.message);
+    } else if (actsData && actsData.length > 0) {
+      // Очищуємо стару мапу
+      actsDateOffMap.clear();
+
+      // Заповнюємо мапу новими даними
+      for (const act of actsData) {
+        const actId = String(act.act_id);
+        const dateOff = toISODateOnly(act.date_off);
+        if (dateOff) {
+          actsDateOffMap.set(actId, dateOff);
+        }
+      }
+      console.log(`✅ Завантажено ${actsDateOffMap.size} дат закриття з acts`);
+    }
+  } catch (error) {
+    console.error("❌ Помилка завантаження дат з acts:", error);
+  }
+
   // 🔥 Допоміжна функція: отримати дату закриття з acts (пріоритет) або з slyusars (fallback)
   const getActDateClose = (actId: string, fallback: string | null): string => {
     return actsDateOffMap.get(String(actId)) || fallback || "";
@@ -1281,6 +1308,17 @@ export function searchDataInDatabase(
   const isActClosed = (actId: string, fallback: string | null): boolean => {
     return !!(actsDateOffMap.get(String(actId)) || fallback);
   };
+
+  // Функція для конвертації timestamp в YYYY-MM-DD
+  function toISODateOnly(dt: string | Date | null | undefined): string | null {
+    if (!dt) return null;
+    const d = new Date(dt);
+    if (isNaN(+d)) return null;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${dd}`;
+  }
 
   slyusarsData.forEach((slyusar) => {
     if (selectedName && slyusar.Name !== selectedName) return;
@@ -1920,7 +1958,7 @@ export async function handlepodlegleAddRecord(): Promise<void> {
   }
   // ▲▲▲ Кінець блоку змін ▲▲▲
 
-  searchDataInDatabase(dateOpen, dateClose, selectedName); // <--- Тепер ця функція шукає по свіжих даних
+  await searchDataInDatabase(dateOpen, dateClose, selectedName); // <--- Тепер ця функція шукає по свіжих даних
 
   allPodlegleData = [...podlegleData];
   hasPodlegleDataLoaded = true;
@@ -2244,14 +2282,14 @@ export async function runMassPaymentCalculation(): Promise<void> {
           else if (actRecord.Записи) {
             // 🔥 БАГ-ФІКС: Шукаємо спочатку по recordId, потім по workIndex, потім по роботі
             let workEntry = null;
-            
+
             // Спочатку шукаємо по recordId (найточніший пошук)
             if (record.recordId) {
               workEntry = actRecord.Записи.find(
                 (e) => e.recordId === record.recordId && !e.Розраховано
               );
             }
-            
+
             // Якщо не знайдено по recordId, шукаємо по workIndex
             if (!workEntry && record.workIndex !== undefined) {
               const entryByIndex = actRecord.Записи[record.workIndex];
@@ -2259,7 +2297,7 @@ export async function runMassPaymentCalculation(): Promise<void> {
                 workEntry = entryByIndex;
               }
             }
-            
+
             // Fallback: шукаємо по назві роботи
             if (!workEntry) {
               workEntry = actRecord.Записи.find(
