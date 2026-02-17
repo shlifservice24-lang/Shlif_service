@@ -368,7 +368,7 @@ function validateAllFieldsForSlusar(): {
   // Перевіряємо видимість стовпців
   const catalogHeader = document.querySelector(`#${ACT_ITEMS_TABLE_CONTAINER_ID} thead th[data-col="catalog"], #${ACT_ITEMS_TABLE_CONTAINER_ID} thead th:has([data-name="catalog"])`) as HTMLElement | null;
   const isCatalogVisible = catalogHeader ? catalogHeader.offsetParent !== null : false;
-  
+
   const zarplataCell = document.querySelector(
     `#${ACT_ITEMS_TABLE_CONTAINER_ID} tbody tr [data-name="slyusar_sum"]`
   ) as HTMLElement | null;
@@ -382,10 +382,10 @@ function validateAllFieldsForSlusar(): {
   let rowIndex = 0;
   tableRows.forEach((tr) => {
     rowIndex++;
-    
+
     const nameCell = tr.querySelector('[data-name="name"]') as HTMLElement | null;
     const name = cleanText(nameCell?.textContent);
-    
+
     // Пропускаємо пусті рядки (без найменування)
     if (!name) return;
 
@@ -635,27 +635,18 @@ async function syncSlyusarsHistoryForAct(params: {
         continue;
       }
 
-      // Перевіряємо чи це приймальник
+      // Оновлюємо ДатаЗакриття для ВСІХ користувачів (і слюсарів, і приймальників)
       const access = slyusarData["Доступ"] || "";
-      const normalizedAccess = access.toLowerCase().normalize("NFKC").trim();
-
-      if (normalizedAccess !== "приймальник") {
-        console.log(
-          `⏭️ Пропускаємо ${slyusarData["Name"] || "Невідомий"
-          } - роль: ${access}`
-        );
-        continue;
-      }
 
       receiverCount++;
-      console.log(`👤 Знайдено приймальника: ${slyusarData["Name"]}`);
+      console.log(`👤 Обробка користувача: ${slyusarData["Name"]} (роль: ${access})`);
 
       // Перевіряємо наявність історії
       if (
         !slyusarData["Історія"] ||
         typeof slyusarData["Історія"] !== "object"
       ) {
-        console.log(`⚠️ У приймальника ${slyusarData["Name"]} немає історії`);
+        console.log(`⚠️ У користувача ${slyusarData["Name"]} немає історії`);
         continue;
       }
 
@@ -722,18 +713,18 @@ async function syncSlyusarsHistoryForAct(params: {
         } else {
           updatedCount++;
           console.log(
-            `✅ Оновлено ДатаЗакриття="${params.dateClose}" для акту ${params.actId} у приймальника ${slyusarData["Name"]} (дата: ${foundInDate})`
+            `✅ Оновлено ДатаЗакриття="${params.dateClose}" для акту ${params.actId} у користувача ${slyusarData["Name"]} (дата: ${foundInDate})`
           );
         }
       } else {
         console.log(
-          `⚠️ Акт ${params.actId} не знайдено в історії приймальника ${slyusarData["Name"]}`
+          `⚠️ Акт ${params.actId} не знайдено в історії користувача ${slyusarData["Name"]}`
         );
       }
     }
 
     console.log(
-      `📊 Підсумок: знайдено ${receiverCount} приймальників, оновлено ${updatedCount}`
+      `📊 Підсумок: оброблено ${receiverCount} користувачів, оновлено ${updatedCount}`
     );
 
     if (updatedCount > 0) {
@@ -741,23 +732,23 @@ async function syncSlyusarsHistoryForAct(params: {
         `✅ Оновлено ${updatedCount} записів у slyusars для акту ${params.actId}`
       );
       showNotification(
-        `✅ Історія приймальника оновлена (${updatedCount})`,
+        `✅ Історія оновлена для ${updatedCount} користувачів`,
         "success",
         2000
       );
     } else {
       console.warn(
-        `⚠️ Акт ${params.actId} не знайдено в історії жодного приймальника`
+        `⚠️ Акт ${params.actId} не знайдено в історії жодного користувача`
       );
       showNotification(
-        `⚠️ Акт ${params.actId} не знайдено у приймальників`,
+        `⚠️ Акт ${params.actId} не знайдено в історії користувачів`,
         "info",
         3000
       );
     }
   } catch (err) {
     console.error("❌ Помилка синхронізації slyusars:", err);
-    showNotification("❌ Помилка синхронізації історії приймальника", "error");
+    showNotification("❌ Помилка синхронізації історії користувачів", "error");
   }
 }
 
@@ -849,12 +840,12 @@ export function initStatusLockDelegation(): void {
           const maxErrors = 5; // Показуємо перші 5 помилок
           const errorsToShow = validation.emptyFields.slice(0, maxErrors);
           const remainingErrors = validation.emptyFields.length - maxErrors;
-          
+
           let errorMessage = "❌ Заповніть всі поля:\n" + errorsToShow.join("\n");
           if (remainingErrors > 0) {
             errorMessage += `\n... та ще ${remainingErrors} пустих полів`;
           }
-          
+
           showNotification(errorMessage, "warning", 6000);
           btn.disabled = false;
           return;

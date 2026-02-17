@@ -79,6 +79,8 @@ export function formatNumber(value: number): string {
 export function formatDate(dateString: string): string {
   if (!dateString) return "-";
   const date = new Date(dateString);
+  // Перевірка на валідність дати
+  if (isNaN(date.getTime())) return "-";
   const day = date.getDate().toString().padStart(2, "0");
   const month = (date.getMonth() + 1).toString().padStart(2, "0");
   const year = date.getFullYear();
@@ -285,7 +287,7 @@ export async function addRecord(e?: Event): Promise<void> {
     null;
 
   setSearchButtonLoadingEl(btn, true);
-  
+
   // 🔐 Перевіряємо доступ до сторінки перед оновленням даних
   const hasAccess = await checkCurrentPageAccess();
   if (!hasAccess) {
@@ -294,7 +296,7 @@ export async function addRecord(e?: Event): Promise<void> {
     redirectToIndex();
     return;
   }
-  
+
   try {
     if (currentTab === "podlegle") {
       handlepodlegleAddRecord();
@@ -1050,7 +1052,7 @@ window.addEventListener("load", async function () {
     console.log("ℹ️ Не сторінка бухгалтерії - пропускаємо ініціалізацію");
     return;
   }
-  
+
   console.log("🚀 Початок ініціалізації бухгалтерії...");
 
   // Перевірка наявності XLSX
