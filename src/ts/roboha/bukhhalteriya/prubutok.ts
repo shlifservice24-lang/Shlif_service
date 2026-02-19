@@ -1511,6 +1511,11 @@ export function updatevutratuDisplayedSums(): void {
   let totalNetFullWork = 0;
   let totalDiscountSum = 0;
 
+  // Визначаємо поточний фільтр типу операцій (з правильного елементу)
+  // В HTML: 0 = Прибуток, 1 = Витрати, 2 = Всі
+  const typeFilterToggle = byId<HTMLInputElement>("vutratu-type-filter-toggle");
+  const currentFilterType = typeFilterToggle ? typeFilterToggle.value : "2"; // Default to "both"
+
   filteredvutratuData.forEach((expense) => {
     // 1. Витрати (від'ємні суми)
     if (expense.amount < 0) {
@@ -1586,55 +1591,102 @@ export function updatevutratuDisplayedSums(): void {
   const finalSumProfit =
     totalNetDetailsProfit + totalNetWorkProfit + totalNegativeSum;
 
-  totalSumElement.innerHTML = `
-    <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 1.1em;">
-      <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px;">
-        <span>Каса</span>
-        <span><strong style="color: #1E90FF;">⚙️ ${formatNumber(
-    totalNetFullDetails
-  )}</strong></span>
-        <span style="color: #666;">+</span>
-        <span><strong style="color: #FF8C00;">🛠️ ${formatNumber(
-    totalNetFullWork
-  )}</strong></span>
-        <span style="color: #666;">+</span>
-        <span><strong style="color: #000;">💰 ${formatNumber(
-    totalAvansSum
-  )}</strong></span>
-        <span style="color: #666;">-</span>
-        <span><strong style="color: #8B0000;">💶 -${formatNumber(
-    Math.abs(totalNegativeSum)
-  )}</strong></span>
-        <span style="color: #666;">=</span>
-        <span><strong style="color: ${finalSumCasa >= 0 ? "#006400" : "#8B0000"
-    };">📈 ${formatNumber(finalSumCasa)}</strong> грн</span>
+  let htmlContent = '';
+
+  // typeToggle: 0 = тільки Прибуток (акти), 1 = тільки Витрати, 2 = Всі
+  if (currentFilterType === "1") { // Only expenses (vitrat)
+    const absExpenses = Math.abs(totalNegativeSum);
+    htmlContent = `
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 1.1em;">
+        <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px;">
+          <span>Витрати</span>
+          <span><strong style="color: #8B0000;">💶 -${formatNumber(absExpenses)}</strong> грн</span>
+        </div>
       </div>
-      <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px;">
-        <span>Прибуток</span>
-        <span><strong style="color: #1E90FF;">⚙️ ${formatNumber(
-      totalNetDetailsProfit
+    `;
+  } else if (currentFilterType === "0") { // Only income (prybutok)
+    htmlContent = `
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 1.1em;">
+        <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px;">
+          <span>Каса</span>
+          <span><strong style="color: #1E90FF;">⚙️ ${formatNumber(totalNetFullDetails)}</strong></span>
+          <span style="color: #666;">+</span>
+          <span><strong style="color: #FF8C00;">🛠️ ${formatNumber(totalNetFullWork)}</strong></span>
+          <span style="color: #666;">+</span>
+          <span><strong style="color: #000;">💰 ${formatNumber(totalAvansSum)}</strong></span>
+          <span style="color: #666;">=</span>
+          <span><strong style="color: ${finalSumCasa >= 0 ? "#006400" : "#8B0000"
+      };">📈 ${formatNumber(finalSumCasa)}</strong> грн</span>
+        </div>
+        <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px;">
+          <span>Прибуток</span>
+          <span><strong style="color: #1E90FF;">⚙️ ${formatNumber(totalNetDetailsProfit)}</strong></span>
+          <span style="color: #666;">+</span>
+          <span><strong style="color: #FF8C00;">🛠️ ${formatNumber(totalNetWorkProfit)}</strong></span>
+          <span style="color: #666;">=</span>
+          <span><strong style="color: ${finalSumProfit >= 0 ? "#006400" : "#8B0000"
+      };">📈 ${formatNumber(finalSumProfit)}</strong> грн</span>
+          
+          <span style="color: #ccc; margin-left: 10px;">|</span>
+          
+          <span>Знижки</span>
+          <span><strong style="color: #c62828;">🏷️ ${formatNumber(totalDiscountSum)}</strong> грн</span>
+        </div>
+      </div>
+    `;
+  } else { // Both expenses and income, or default
+    htmlContent = `
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 1.1em;">
+        <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px;">
+          <span>Каса</span>
+          <span><strong style="color: #1E90FF;">⚙️ ${formatNumber(
+      totalNetFullDetails
     )}</strong></span>
-        <span style="color: #666;">+</span>
-        <span><strong style="color: #FF8C00;">🛠️ ${formatNumber(
-      totalNetWorkProfit
+          <span style="color: #666;">+</span>
+          <span><strong style="color: #FF8C00;">🛠️ ${formatNumber(
+      totalNetFullWork
     )}</strong></span>
-        <span style="color: #666;">-</span>
-        <span><strong style="color: #8B0000;">💶 -${formatNumber(
+          <span style="color: #666;">+</span>
+          <span><strong style="color: #000;">💰 ${formatNumber(
+      totalAvansSum
+    )}</strong></span>
+          <span style="color: #666;">-</span>
+          <span><strong style="color: #8B0000;">💶 -${formatNumber(
       Math.abs(totalNegativeSum)
     )}</strong></span>
-        <span style="color: #666;">=</span>
-        <span><strong style="color: ${finalSumProfit >= 0 ? "#006400" : "#8B0000"
-    };">📈 ${formatNumber(finalSumProfit)}</strong> грн</span>
-        
-        <span style="color: #ccc; margin-left: 10px;">|</span>
-        
-        <span>Знижки</span>
-        <span><strong style="color: #c62828;">🏷️ ${formatNumber(
-      totalDiscountSum
-    )}</strong> грн</span>
+          <span style="color: #666;">=</span>
+          <span><strong style="color: ${finalSumCasa >= 0 ? "#006400" : "#8B0000"
+      };">📈 ${formatNumber(finalSumCasa)}</strong> грн</span>
+        </div>
+        <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px;">
+          <span>Прибуток</span>
+          <span><strong style="color: #1E90FF;">⚙️ ${formatNumber(
+        totalNetDetailsProfit
+      )}</strong></span>
+          <span style="color: #666;">+</span>
+          <span><strong style="color: #FF8C00;">🛠️ ${formatNumber(
+        totalNetWorkProfit
+      )}</strong></span>
+          <span style="color: #666;">-</span>
+          <span><strong style="color: #8B0000;">💶 -${formatNumber(
+        Math.abs(totalNegativeSum)
+      )}</strong></span>
+          <span style="color: #666;">=</span>
+          <span><strong style="color: ${finalSumProfit >= 0 ? "#006400" : "#8B0000"
+      };">📈 ${formatNumber(finalSumProfit)}</strong> грн</span>
+          
+          <span style="color: #ccc; margin-left: 10px;">|</span>
+          
+          <span>Знижки</span>
+          <span><strong style="color: #c62828;">🏷️ ${formatNumber(
+        totalDiscountSum
+      )}</strong> грн</span>
+        </div>
       </div>
-    </div>
-  `;
+    `;
+  }
+
+  totalSumElement.innerHTML = htmlContent;
 }
 
 // ==================== CRUD ОПЕРАЦІЇ ====================
