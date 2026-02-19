@@ -1553,6 +1553,18 @@ export function updatevutratuDisplayedSums(): void {
         let detailsProfit = expense.detailsAmount || 0;
         let workProfit = expense.workAmount || 0;
 
+        // Від'ємні прибутки (збитки через знижку, де зарплата > виручка) —
+        // переносимо у витрати, щоб вони відображались у колонці 💶
+        // і НЕ зменшували колонки ⚙️ та 🛠️
+        if (detailsProfit < 0) {
+          totalNegativeSum += detailsProfit;
+          detailsProfit = 0;
+        }
+        if (workProfit < 0) {
+          totalNegativeSum += workProfit;
+          workProfit = 0;
+        }
+
         totalNetDetailsProfit += detailsProfit;
         totalNetWorkProfit += workProfit;
 
