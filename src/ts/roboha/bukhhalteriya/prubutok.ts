@@ -1104,10 +1104,19 @@ export function filtervutratuData(): void {
       if (dateTo && expense.date > dateTo) return false;
     } else if (vutratuDateFilterMode === "close") {
       // Фільтруємо по даті закриття (paymentDate)
-      // Якщо немає дати закриття - виключаємо
-      if (!expense.paymentDate) return false;
-      if (dateFrom && expense.paymentDate < dateFrom) return false;
-      if (dateTo && expense.paymentDate > dateTo) return false;
+      // Для АКТІВ: якщо немає дати закриття - виключаємо
+      // Для ВИТРАТ (vutratu): немає поняття "закриття", тому фільтруємо по даті відкриття (expense.date)
+      const isFromAct = expense.category === "💰 Прибуток";
+      if (isFromAct) {
+        // Акти без дати закриття — виключаємо
+        if (!expense.paymentDate) return false;
+        if (dateFrom && expense.paymentDate < dateFrom) return false;
+        if (dateTo && expense.paymentDate > dateTo) return false;
+      } else {
+        // Витрати (vutratu) — фільтруємо по даті відкриття
+        if (dateFrom && expense.date < dateFrom) return false;
+        if (dateTo && expense.date > dateTo) return false;
+      }
     } else if (vutratuDateFilterMode === "paid") {
       // Фільтруємо по даті розрахунку (rosraxovanoDate)
       // Якщо немає дати розрахунку - виключаємо
