@@ -1542,8 +1542,6 @@ export function updatevutratuDisplayedSums(): void {
           ? Number(expense.paymentMethod)
           : 0;
 
-      // Накопичуємо загальну суму авансів (з усіх актів: закритих і відкритих)
-      totalAvansSum += avans;
 
       if (isClosed) {
         const discountVal = expense.discountAmount || 0;
@@ -1586,28 +1584,20 @@ export function updatevutratuDisplayedSums(): void {
           }
         }
 
-        // Віднімаємо аванс, щоб не дублювати його (бо він додається окремо в totalAvansSum)
-        if (avans > 0) {
-          const posDetailsFull = Math.max(0, fullDetails);
-          const posWorkFull = Math.max(0, fullWork);
-          const totalPosFull = posDetailsFull + posWorkFull;
-
-          if (totalPosFull > 0) {
-            const aPartDetails = (posDetailsFull / totalPosFull) * avans;
-            const aPartWork = (posWorkFull / totalPosFull) * avans;
-            fullDetails -= aPartDetails;
-            fullWork -= aPartWork;
-          }
-        }
-
+        // Аванс НЕ виключаємо з повної суми закритих актів —
+        // він вже входить у fullDetailsAmount/fullWorkAmount.
+        // Колонка 💰 показується ТІЛЬКИ для відкритих актів.
         totalNetFullDetails += fullDetails;
         totalNetFullWork += fullWork;
+      } else {
+        // Відкритий акт — тільки аванс йде в касу (💰)
+        totalAvansSum += avans;
       }
     }
   });
 
   // Фінальні суми
-  // Каса = (Залишок Деталі + Залишок Робота + Всі Аванси) - Витрати
+  // Каса = (Повна сума закритих актів) + (Аванси відкритих актів) - (Реальні витрати)
   const finalSumCasa =
     totalNetFullDetails + totalNetFullWork + totalAvansSum + totalNegativeSum;
 
