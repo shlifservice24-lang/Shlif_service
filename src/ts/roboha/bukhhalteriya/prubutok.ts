@@ -1527,8 +1527,10 @@ export function updatevutratuDisplayedSums(): void {
   const currentFilterType = typeFilterToggle ? typeFilterToggle.value : "2"; // Default to "both"
 
   filteredvutratuData.forEach((expense) => {
-    // 1. Витрати (від'ємні суми)
-    if (expense.amount < 0) {
+    // 1. Витрати (від'ємні суми) — ТІЛЬКИ реальні витрати з таблиці vutratu
+    // Акти (💰 Прибуток) з від'ємним amount (наприклад через знижку) НЕ рахуємо тут —
+    // вони вже враховані в totalNetWorkProfit / totalNetDetailsProfit
+    if (expense.amount < 0 && expense.category !== "💰 Прибуток") {
       totalNegativeSum += expense.amount;
     }
 
