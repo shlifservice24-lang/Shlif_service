@@ -1296,13 +1296,14 @@ export function updatevutratuTable(): void {
 
     // 📅 Закриття
     const dateCloseCell = row.insertCell();
-    // Для витрат не показуємо дату закриття, тільки для актів
     if (isFromAct) {
+      // Для актів — показуємо дату закриття (або "-" якщо відкритий)
       dateCloseCell.textContent = expense.paymentDate
         ? formatDate(expense.paymentDate)
         : "-";
     } else {
-      dateCloseCell.textContent = "-";
+      // Для витрат (vutratu) — показуємо дату відкриття (бо окремої дати закриття немає)
+      dateCloseCell.textContent = formatDate(expense.date);
     }
     // 📂 Категорія
     const categoryCell = row.insertCell();
