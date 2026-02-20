@@ -1573,18 +1573,9 @@ export function updatevutratuDisplayedSums(): void {
         let fullDetails = expense.fullDetailsAmount || 0;
         let fullWork = expense.fullWorkAmount || 0;
 
-        // Віднімаємо знижку
+        // ✅ ВИПРАВЛЕНО: Знижка віднімається ТІЛЬКИ від робіт, а не від деталей
         if (discountVal > 0) {
-          const posDetailsFull = Math.max(0, fullDetails);
-          const posWorkFull = Math.max(0, fullWork);
-          const totalPosFull = posDetailsFull + posWorkFull;
-
-          if (totalPosFull > 0) {
-            const dPartFull = (posDetailsFull / totalPosFull) * discountVal;
-            const wPartFull = (posWorkFull / totalPosFull) * discountVal;
-            fullDetails -= dPartFull;
-            fullWork -= wPartFull;
-          }
+          fullWork -= discountVal;
         }
 
         // Аванс НЕ виключаємо з повної суми закритих актів —
