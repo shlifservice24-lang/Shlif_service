@@ -1664,7 +1664,7 @@ export function updatevutratuDisplayedSums(): void {
             totalAvansSum,
           )}</strong></span>
           <span style="color: #666;">-</span>
-          <span><strong style="color: #8B0000;">💶 -${formatNumber(
+          <span><strong style="color: #8B0000;">💶 ${formatNumber(
             Math.abs(totalNegativeSum),
           )}</strong></span>
           <span style="color: #666;">=</span>
@@ -1682,7 +1682,7 @@ export function updatevutratuDisplayedSums(): void {
             totalNetWorkProfit,
           )}</strong></span>
           <span style="color: #666;">-</span>
-          <span><strong style="color: #8B0000;">💶 -${formatNumber(
+          <span><strong style="color: #8B0000;">💶 ${formatNumber(
             Math.abs(totalNegativeSum),
           )}</strong></span>
           <span style="color: #666;">=</span>
