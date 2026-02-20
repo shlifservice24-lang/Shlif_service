@@ -82,16 +82,18 @@ function findSlyusarWorkRecord(
   workName: string,
   actId: number | null,
   rowIndex?: number,
-  recordId?: string
+  recordId?: string,
 ): SlyusarWorkRecord | null {
   if (!slyusarName || !workName || !actId) return null;
 
   const slyusar = globalCache.slyusars.find(
-    (s) => s.Name?.toLowerCase() === slyusarName.toLowerCase()
+    (s) => s.Name?.toLowerCase() === slyusarName.toLowerCase(),
   );
 
   if (!slyusar?.["Історія"]) {
-    console.log(`❌ findSlyusarWorkRecord: Історія не знайдена для слюсаря "${slyusarName}"`);
+    console.log(
+      `❌ findSlyusarWorkRecord: Історія не знайдена для слюсаря "${slyusarName}"`,
+    );
     return null;
   }
 
@@ -101,7 +103,9 @@ function findSlyusarWorkRecord(
   const workNameLower = workName.toLowerCase();
   const fullWorkNameLower = fullWorkName.toLowerCase();
 
-  console.log(`🔍 findSlyusarWorkRecord: шукаємо "${workName}" для "${slyusarName}", акт ${actId}, rowIndex=${rowIndex}, recordId=${recordId}`);
+  console.log(
+    `🔍 findSlyusarWorkRecord: шукаємо "${workName}" для "${slyusarName}", акт ${actId}, rowIndex=${rowIndex}, recordId=${recordId}`,
+  );
 
   for (const dateKey in history) {
     const dayBucket = history[dateKey];
@@ -113,13 +117,21 @@ function findSlyusarWorkRecord(
       const zapisi = actEntry?.["Записи"];
       if (!Array.isArray(zapisi)) continue;
 
-      console.log(`📋 Знайдено записи для акту ${actId}:`, zapisi.map((z: any, i: number) => `[${i}] ${z.Робота} - Зарплата:${z.Зарплата} (recordId: ${z.recordId})`));
+      console.log(
+        `📋 Знайдено записи для акту ${actId}:`,
+        zapisi.map(
+          (z: any, i: number) =>
+            `[${i}] ${z.Робота} - Зарплата:${z.Зарплата} (recordId: ${z.recordId})`,
+        ),
+      );
 
       // ✅ 0. ПРІОРИТЕТ: Пошук за recordId (найточніший спосіб)
       if (recordId) {
         const recordById = zapisi.find((z: any) => z.recordId === recordId);
         if (recordById) {
-          console.log(`✅ Знайдено за recordId: ${recordId}, Зарплата: ${recordById.Зарплата}`);
+          console.log(
+            `✅ Знайдено за recordId: ${recordId}, Зарплата: ${recordById.Зарплата}`,
+          );
           return recordById as SlyusarWorkRecord;
         }
         console.log(`⚠️ recordId "${recordId}" не знайдено в записах!`);
@@ -127,16 +139,27 @@ function findSlyusarWorkRecord(
 
       // ✅ 1. ВАЖЛИВО: Пошук за rowIndex (індекс запису в масиві Записи)
       // rowIndex відповідає порядку робіт слюсаря в акті
-      if (typeof rowIndex === "number" && rowIndex >= 0 && rowIndex < zapisi.length) {
+      if (
+        typeof rowIndex === "number" &&
+        rowIndex >= 0 &&
+        rowIndex < zapisi.length
+      ) {
         const record = zapisi[rowIndex];
         const recordWorkLower = (record?.Робота?.trim() || "").toLowerCase();
 
         // Перевіряємо співпадіння назви роботи
-        if (recordWorkLower === workNameLower || recordWorkLower === fullWorkNameLower) {
-          console.log(`✅ Знайдено за rowIndex ${rowIndex}: ${record.Робота}, Зарплата: ${record.Зарплата}`);
+        if (
+          recordWorkLower === workNameLower ||
+          recordWorkLower === fullWorkNameLower
+        ) {
+          console.log(
+            `✅ Знайдено за rowIndex ${rowIndex}: ${record.Робота}, Зарплата: ${record.Зарплата}`,
+          );
           return record as SlyusarWorkRecord;
         }
-        console.log(`⚠️ За rowIndex ${rowIndex} назва не співпала: "${record?.Робота}" != "${workName}"`);
+        console.log(
+          `⚠️ За rowIndex ${rowIndex} назва не співпала: "${record?.Робота}" != "${workName}"`,
+        );
       }
 
       // ❌ ВИДАЛЕНО FALLBACK ЗА НАЗВОЮ - він повертає неправильний запис при однакових назвах!
@@ -163,12 +186,12 @@ export function getRecordIdFromHistory(
   slyusarName: string,
   workName: string,
   actId: number | null,
-  workIndex: number
+  workIndex: number,
 ): string | undefined {
   if (!slyusarName || !actId) return undefined;
 
   const slyusar = globalCache.slyusars.find(
-    (s) => s.Name?.toLowerCase() === slyusarName.toLowerCase()
+    (s) => s.Name?.toLowerCase() === slyusarName.toLowerCase(),
   );
 
   if (!slyusar?.["Історія"]) return undefined;
@@ -195,7 +218,10 @@ export function getRecordIdFromHistory(
         const recordWorkLower = (record?.Робота?.trim() || "").toLowerCase();
 
         // Перевіряємо що назва співпадає (для надійності)
-        if (recordWorkLower === workNameLower || recordWorkLower === fullWorkNameLower) {
+        if (
+          recordWorkLower === workNameLower ||
+          recordWorkLower === fullWorkNameLower
+        ) {
           return record?.recordId;
         }
       }
@@ -204,7 +230,10 @@ export function getRecordIdFromHistory(
       // (для старих записів без recordId)
       for (const record of zapisi) {
         const recordWorkLower = (record?.Робота?.trim() || "").toLowerCase();
-        if (recordWorkLower === workNameLower || recordWorkLower === fullWorkNameLower) {
+        if (
+          recordWorkLower === workNameLower ||
+          recordWorkLower === fullWorkNameLower
+        ) {
           return record?.recordId;
         }
       }
@@ -228,19 +257,29 @@ export function getSlyusarSalaryFromHistory(
   workName: string,
   actId: number | null,
   rowIndex?: number,
-  recordId?: string
+  recordId?: string,
 ): number | null {
-  const record = findSlyusarWorkRecord(slyusarName, workName, actId, rowIndex, recordId);
+  const record = findSlyusarWorkRecord(
+    slyusarName,
+    workName,
+    actId,
+    rowIndex,
+    recordId,
+  );
 
   // ✅ ВИПРАВЛЕНО: Якщо зарплата = 0 — ігноруємо і повертаємо null
   // Тоді буде перерахунок від відсотка
   if (record && typeof record.Зарплата === "number" && record.Зарплата > 0) {
-    console.log(`💰 Знайдено зарплату для "${workName}" [idx:${rowIndex}${recordId ? `, id:${recordId}` : ''}]: ${record.Зарплата}`);
+    console.log(
+      `💰 Знайдено зарплату для "${workName}" [idx:${rowIndex}${recordId ? `, id:${recordId}` : ""}]: ${record.Зарплата}`,
+    );
     return record.Зарплата;
   }
 
   if (record && record.Зарплата === 0) {
-    console.log(`⚠️ Зарплата в історії = 0 для "${workName}" — ігноруємо, буде перерахунок від відсотка`);
+    console.log(
+      `⚠️ Зарплата в історії = 0 для "${workName}" — ігноруємо, буде перерахунок від відсотка`,
+    );
   }
 
   return null;
@@ -250,13 +289,13 @@ export function getSlyusarSalaryFromHistory(
  * Отримує відсоток роботи слюсаря з бази даних або кешу
  */
 export async function getSlyusarWorkPercent(
-  slyusarName: string
+  slyusarName: string,
 ): Promise<number> {
   if (!slyusarName) return 0;
 
   // Спочатку шукаємо в кеші
   const cached = globalCache.slyusars.find(
-    (s) => s.Name?.toLowerCase() === slyusarName.toLowerCase()
+    (s) => s.Name?.toLowerCase() === slyusarName.toLowerCase(),
   );
 
   if (cached && typeof cached.ПроцентРоботи === "number") {
@@ -285,7 +324,7 @@ export async function getSlyusarWorkPercent(
 
     // Оновлюємо кеш
     const existingIndex = globalCache.slyusars.findIndex(
-      (s) => s.Name?.toLowerCase() === slyusarName.toLowerCase()
+      (s) => s.Name?.toLowerCase() === slyusarName.toLowerCase(),
     );
 
     if (existingIndex !== -1) {
@@ -311,7 +350,7 @@ export function calculateSlyusarSum(totalSum: number, percent: number): number {
 
 /**
  * Оновлює зарплату слюсаря в рядку (async версія) - ВИПРАВЛЕНА ВЕРСІЯ 4.0
- * 
+ *
  * ЛОГІКА:
  * - При ініціалізації (isInitialLoad=true): підтягує зарплату з історії слюсаря
  * - При зміні ціни/кількості (isInitialLoad=false): ЗАВЖДИ перераховує від відсотка
@@ -320,7 +359,7 @@ export function calculateSlyusarSum(totalSum: number, percent: number): number {
 async function updateSlyusarSalaryInRow(
   row: HTMLTableRowElement,
   rowIndex?: number, // Індекс рядка для точного пошуку при однакових роботах
-  isInitialLoad: boolean = false // ✅ НОВИЙ параметр: true = ініціалізація при завантаженні
+  isInitialLoad: boolean = false, // ✅ НОВИЙ параметр: true = ініціалізація при завантаженні
 ): Promise<void> {
   // ✅ ВИПРАВЛЕНО: Зарплата розраховується ЗАВЖДИ, навіть якщо стовпець прихований
   // Це потрібно для коректного розрахунку прибутку приймальника
@@ -337,7 +376,7 @@ async function updateSlyusarSalaryInRow(
 
   if (typeFromCell !== "works") {
     const slyusarSumCell = row.querySelector(
-      '[data-name="slyusar_sum"]'
+      '[data-name="slyusar_sum"]',
     ) as HTMLElement;
     if (slyusarSumCell) slyusarSumCell.textContent = "";
     return;
@@ -352,7 +391,7 @@ async function updateSlyusarSalaryInRow(
   const pibCell = row.querySelector('[data-name="pib_magazin"]') as HTMLElement;
   const slyusarName = pibCell?.textContent?.trim();
   const slyusarSumCell = row.querySelector(
-    '[data-name="slyusar_sum"]'
+    '[data-name="slyusar_sum"]',
   ) as HTMLElement;
 
   if (!workName || !slyusarName || !slyusarSumCell) return;
@@ -384,21 +423,27 @@ async function updateSlyusarSalaryInRow(
       workName,
       actId,
       rowIndex,
-      recordId
+      recordId,
     );
 
     if (historySalary !== null && historySalary > 0) {
-      console.log(`✅ [Ініціалізація] Встановлюємо зарплату з історії: ${historySalary}`);
+      console.log(
+        `✅ [Ініціалізація] Встановлюємо зарплату з історії: ${historySalary}`,
+      );
       slyusarSumCell.textContent = formatNumberWithSpaces(historySalary);
       return;
     }
   }
 
   // 3. ✅ При зміні ціни/кількості АБО якщо в історії немає - ЗАВЖДИ рахуємо від відсотка
-  console.log(`⚙️ ${isInitialLoad ? 'Ініціалізація' : 'Зміна суми'}: рахуємо зарплату від відсотка для "${workName}". rowIndex=${rowIndex}, recordId=${recordId}`);
+  console.log(
+    `⚙️ ${isInitialLoad ? "Ініціалізація" : "Зміна суми"}: рахуємо зарплату від відсотка для "${workName}". rowIndex=${rowIndex}, recordId=${recordId}`,
+  );
   const percent = await getSlyusarWorkPercent(slyusarName);
   const calculatedSalary = calculateSlyusarSum(totalSum, percent);
-  console.log(`💰 Перераховуємо зарплату на ${calculatedSalary} (${percent}% від ${totalSum}) для "${workName}"`);
+  console.log(
+    `💰 Перераховуємо зарплату на ${calculatedSalary} (${percent}% від ${totalSum}) для "${workName}"`,
+  );
   slyusarSumCell.textContent = formatNumberWithSpaces(calculatedSalary);
 }
 
@@ -410,7 +455,7 @@ export async function initializeSlyusarSalaries(): Promise<void> {
   // Це потрібно для коректного збереження даних в базу
 
   const tableBody = document.querySelector<HTMLTableSectionElement>(
-    `#${ACT_ITEMS_TABLE_CONTAINER_ID} tbody`
+    `#${ACT_ITEMS_TABLE_CONTAINER_ID} tbody`,
   );
   if (!tableBody) return;
 
@@ -424,32 +469,43 @@ export async function initializeSlyusarSalaries(): Promise<void> {
   console.log(`🚀 Ініціалізація зарплат для акту ${actId}`);
 
   // Використовуємо спільну функцію для обходу рядків з індексами
-  await processWorkRowsWithIndex(tableBody, async (row, slyusarName, workName, currentIndex) => {
-    const slyusarSumCell = row.querySelector('[data-name="slyusar_sum"]') as HTMLElement;
-    if (!slyusarSumCell) return;
+  await processWorkRowsWithIndex(
+    tableBody,
+    async (row, slyusarName, workName, currentIndex) => {
+      const slyusarSumCell = row.querySelector(
+        '[data-name="slyusar_sum"]',
+      ) as HTMLElement;
+      if (!slyusarSumCell) return;
 
-    const sumCell = row.querySelector('[data-name="sum"]') as HTMLElement;
-    const totalSum = parseNumber(sumCell?.textContent);
+      const sumCell = row.querySelector('[data-name="sum"]') as HTMLElement;
+      const totalSum = parseNumber(sumCell?.textContent);
 
-    // ✅ Зчитуємо recordId з атрибута рядка
-    const recordId = row.getAttribute("data-record-id") || undefined;
+      // ✅ Зчитуємо recordId з атрибута рядка
+      const recordId = row.getAttribute("data-record-id") || undefined;
 
-    // КРИТИЧНО: Завжди шукаємо в історії ПЕРШИМ, передаємо індекс та recordId
-    const historySalary = getSlyusarSalaryFromHistory(slyusarName, workName, actId, currentIndex, recordId);
+      // КРИТИЧНО: Завжди шукаємо в історії ПЕРШИМ, передаємо індекс та recordId
+      const historySalary = getSlyusarSalaryFromHistory(
+        slyusarName,
+        workName,
+        actId,
+        currentIndex,
+        recordId,
+      );
 
-    if (historySalary !== null) {
-      slyusarSumCell.textContent = formatNumberWithSpaces(historySalary);
-      return;
-    }
+      if (historySalary !== null) {
+        slyusarSumCell.textContent = formatNumberWithSpaces(historySalary);
+        return;
+      }
 
-    // Якщо немає в історії і сума <= 0 - пропускаємо
-    if (totalSum <= 0) return;
+      // Якщо немає в історії і сума <= 0 - пропускаємо
+      if (totalSum <= 0) return;
 
-    // Якщо немає в історії, але є сума - рахуємо від відсотка
-    const percent = await getSlyusarWorkPercent(slyusarName);
-    const calculatedSalary = calculateSlyusarSum(totalSum, percent);
-    slyusarSumCell.textContent = formatNumberWithSpaces(calculatedSalary);
-  });
+      // Якщо немає в історії, але є сума - рахуємо від відсотка
+      const percent = await getSlyusarWorkPercent(slyusarName);
+      const calculatedSalary = calculateSlyusarSum(totalSum, percent);
+      slyusarSumCell.textContent = formatNumberWithSpaces(calculatedSalary);
+    },
+  );
 
   console.log(`✅ Ініціалізація зарплат завершена для акту ${actId}`);
 }
@@ -465,10 +521,12 @@ async function processWorkRowsWithIndex(
     row: HTMLTableRowElement,
     slyusarName: string,
     workName: string,
-    slyusarWorkIndex: number
-  ) => void | Promise<void>
+    slyusarWorkIndex: number,
+  ) => void | Promise<void>,
 ): Promise<void> {
-  const rows = Array.from(tableBody.querySelectorAll<HTMLTableRowElement>("tr"));
+  const rows = Array.from(
+    tableBody.querySelectorAll<HTMLTableRowElement>("tr"),
+  );
   const slyusarWorkIndexMap = new Map<string, number>();
 
   for (const row of rows) {
@@ -478,8 +536,13 @@ async function processWorkRowsWithIndex(
     const typeFromCell = nameCell.getAttribute("data-type");
     if (typeFromCell !== "works") continue;
 
-    const workName = nameCell.getAttribute("data-full-name") || nameCell.textContent?.trim() || "";
-    const pibCell = row.querySelector('[data-name="pib_magazin"]') as HTMLElement;
+    const workName =
+      nameCell.getAttribute("data-full-name") ||
+      nameCell.textContent?.trim() ||
+      "";
+    const pibCell = row.querySelector(
+      '[data-name="pib_magazin"]',
+    ) as HTMLElement;
     const slyusarName = pibCell?.textContent?.trim() || "";
 
     if (!workName || !slyusarName) continue;
@@ -502,15 +565,18 @@ export async function updateAllSlyusarSumsFromHistory(): Promise<void> {
   // ✅ ВИПРАВЛЕНО: Зарплата оновлюється ЗАВЖДИ, навіть якщо стовпець прихований
   // Це потрібно для коректного збереження даних в базу
   const tableBody = document.querySelector<HTMLTableSectionElement>(
-    `#${ACT_ITEMS_TABLE_CONTAINER_ID} tbody`
+    `#${ACT_ITEMS_TABLE_CONTAINER_ID} tbody`,
   );
   if (!tableBody) return;
 
   // ✅ ВИПРАВЛЕНО: тепер чекаємо завершення всіх async операцій
   // ✅ isInitialLoad=true - при ініціалізації підтягуємо зарплату з історії
-  await processWorkRowsWithIndex(tableBody, async (row, _slyusarName, _workName, currentIndex) => {
-    await updateSlyusarSalaryInRow(row, currentIndex, true);
-  });
+  await processWorkRowsWithIndex(
+    tableBody,
+    async (row, _slyusarName, _workName, currentIndex) => {
+      await updateSlyusarSalaryInRow(row, currentIndex, true);
+    },
+  );
 }
 
 /**
@@ -519,15 +585,15 @@ export async function updateAllSlyusarSumsFromHistory(): Promise<void> {
  */
 export async function calculateRowSum(row: HTMLTableRowElement): Promise<void> {
   const price = parseNumber(
-    (row.querySelector('[data-name="price"]') as HTMLElement)?.textContent
+    (row.querySelector('[data-name="price"]') as HTMLElement)?.textContent,
   );
   const quantity = parseNumber(
-    (row.querySelector('[data-name="id_count"]') as HTMLElement)?.textContent
+    (row.querySelector('[data-name="id_count"]') as HTMLElement)?.textContent,
   );
   const sum = price * quantity;
 
   const sumCell = row.querySelector(
-    '[data-name="sum"]'
+    '[data-name="sum"]',
   ) as HTMLTableCellElement;
   if (sumCell)
     sumCell.textContent =
@@ -543,7 +609,9 @@ export async function calculateRowSum(row: HTMLTableRowElement): Promise<void> {
  * Використовується коли слюсар змінюється в ПІБ_Магазин - ігнорує історію!
  * @param row - рядок таблиці
  */
-export async function forceRecalculateSlyusarSalary(row: HTMLTableRowElement): Promise<void> {
+export async function forceRecalculateSlyusarSalary(
+  row: HTMLTableRowElement,
+): Promise<void> {
   // ✅ ВИПРАВЛЕНО: Зарплата перераховується ЗАВЖДИ, навіть якщо стовпець прихований
   // Це потрібно для коректного збереження даних в базу
 
@@ -552,14 +620,18 @@ export async function forceRecalculateSlyusarSalary(row: HTMLTableRowElement): P
 
   // Тільки для робіт
   if (typeFromCell !== "works") {
-    const slyusarSumCell = row.querySelector('[data-name="slyusar_sum"]') as HTMLElement;
+    const slyusarSumCell = row.querySelector(
+      '[data-name="slyusar_sum"]',
+    ) as HTMLElement;
     if (slyusarSumCell) slyusarSumCell.textContent = "";
     return;
   }
 
   const pibCell = row.querySelector('[data-name="pib_magazin"]') as HTMLElement;
   const slyusarName = pibCell?.textContent?.trim();
-  const slyusarSumCell = row.querySelector('[data-name="slyusar_sum"]') as HTMLElement;
+  const slyusarSumCell = row.querySelector(
+    '[data-name="slyusar_sum"]',
+  ) as HTMLElement;
   const sumCell = row.querySelector('[data-name="sum"]') as HTMLElement;
 
   if (!slyusarName || !slyusarSumCell) {
@@ -575,10 +647,14 @@ export async function forceRecalculateSlyusarSalary(row: HTMLTableRowElement): P
   }
 
   // ✅ ПРИМУСОВО рахуємо від відсотка нового слюсаря, ігноруючи історію
-  console.log(`🔄 Примусовий перерахунок зарплати для нового слюсаря "${slyusarName}"`);
+  console.log(
+    `🔄 Примусовий перерахунок зарплати для нового слюсаря "${slyusarName}"`,
+  );
   const percent = await getSlyusarWorkPercent(slyusarName);
   const calculatedSalary = calculateSlyusarSum(totalSum, percent);
-  console.log(`💰 Нова зарплата: ${calculatedSalary} (${percent}% від ${totalSum})`);
+  console.log(
+    `💰 Нова зарплата: ${calculatedSalary} (${percent}% від ${totalSum})`,
+  );
   slyusarSumCell.textContent = formatNumberWithSpaces(calculatedSalary);
 
   updateCalculatedSumsInFooter();
@@ -593,7 +669,7 @@ export function checkSlyusarSalaryWarnings(): void {
   if (!container) return;
 
   const rows = Array.from(
-    container.querySelectorAll<HTMLTableRowElement>("tbody tr")
+    container.querySelectorAll<HTMLTableRowElement>("tbody tr"),
   );
   let hasWarnings = false;
 
@@ -605,7 +681,7 @@ export function checkSlyusarSalaryWarnings(): void {
 
     const sumCell = row.querySelector('[data-name="sum"]') as HTMLElement;
     const slyusarSumCell = row.querySelector(
-      '[data-name="slyusar_sum"]'
+      '[data-name="slyusar_sum"]',
     ) as HTMLElement;
 
     if (!sumCell || !slyusarSumCell) continue;
@@ -626,7 +702,7 @@ export function checkSlyusarSalaryWarnings(): void {
   if (hasWarnings) {
     showNotification(
       "⚠️ Увага: Зарплата більша ніж сума роботи у деяких рядках",
-      "warning"
+      "warning",
     );
   }
 }
@@ -636,7 +712,7 @@ function createRowHtml(
   index: number,
   showPibMagazin: boolean,
   showCatalog: boolean,
-  canDelete: boolean = true // <--- НОВИЙ ПАРАМЕТР
+  canDelete: boolean = true, // <--- НОВИЙ ПАРАМЕТР
 ): string {
   const isActClosed = globalCache.isActClosed;
 
@@ -706,8 +782,9 @@ function createRowHtml(
     : "";
 
   const pibMagazinCellHTML = showPibMagazin
-    ? `<td contenteditable="${isPibMagazinEditable}" class="editable-autocomplete pib-magazin-cell" data-name="pib_magazin" data-type="${item ? pibMagazinType : ""
-    }" data-prev-value="${displayPibMagazinValue}">${displayPibMagazinValue}</td>`
+    ? `<td contenteditable="${isPibMagazinEditable}" class="editable-autocomplete pib-magazin-cell" data-name="pib_magazin" data-type="${
+        item ? pibMagazinType : ""
+      }" data-prev-value="${displayPibMagazinValue}">${displayPibMagazinValue}</td>`
     : "";
 
   /* ===== ЗМІНИ: відображення пустоти замість 0 ===== */
@@ -734,7 +811,7 @@ function createRowHtml(
   const zarplataCellHTML = `<td contenteditable="${canEditZarplata}"
         class="text-right editable-number slyusar-sum-cell"
         data-name="slyusar_sum"
-        ${!showZarplata ? 'style="display: none;"' : ''}>
+        ${!showZarplata ? 'style="display: none;"' : ""}>
        ${slyusarSumValue}
      </td>`;
 
@@ -754,30 +831,35 @@ function createRowHtml(
   const rowAttrs: string[] = [];
   if (isWorkRowWithEmptyPib) rowAttrs.push('data-partial-edit="true"');
   if (item?.recordId) rowAttrs.push(`data-record-id="${item.recordId}"`);
-  const rowAttrsStr = rowAttrs.length > 0 ? ' ' + rowAttrs.join(' ') : '';
+  const rowAttrsStr = rowAttrs.length > 0 ? " " + rowAttrs.join(" ") : "";
 
   return `
     <tr${rowAttrsStr}>
-      <td class="row-index" style="${item?.type === "work" && showCatalog && !catalogValue
-      ? "cursor: pointer;"
-      : ""
-    }">${item?.type === "work"
-      ? `🛠️ ${index + 1}`
-      : item?.type === "detail"
-        ? `⚙️ ${index + 1}`
-        : `${index + 1}`
-    }</td>
+      <td class="row-index" style="${
+        item?.type === "work" && showCatalog && !catalogValue
+          ? "cursor: pointer;"
+          : ""
+      }">${
+        item?.type === "work"
+          ? `🛠️ ${index + 1}`
+          : item?.type === "detail"
+            ? `⚙️ ${index + 1}`
+            : `${index + 1}`
+      }</td>
       <td style="position: relative; padding-right: 30px;" class="name-cell">
-        <div contenteditable="${isNameEditable}" class="editable-autocomplete" data-name="name" data-type="${dataTypeForName}"${hasShortened ? ` data-full-name="${fullName.replace(/"/g, '&quot;')}"` : ''} style="display: inline-block; width: 100%; outline: none; min-width: 50px;">${displayName
-    }</div>
-        ${showDeleteBtn
-      ? `<button class="delete-row-btn" style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 18px; padding: 0; margin: 0; z-index: 10; pointer-events: auto; line-height: 1; opacity: 0.6; transition: opacity 0.2s;" title="Видалити рядок">🗑️</button>`
-      : ""
-    }
+        <div contenteditable="${isNameEditable}" class="editable-autocomplete" data-name="name" data-type="${dataTypeForName}"${hasShortened ? ` data-full-name="${fullName.replace(/"/g, "&quot;")}"` : ""} style="display: inline-block; width: 100%; outline: none; min-width: 50px;">${
+          displayName
+        }</div>
+        ${
+          showDeleteBtn
+            ? `<button class="delete-row-btn" style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 18px; padding: 0; margin: 0; z-index: 10; pointer-events: auto; line-height: 1; opacity: 0.6; transition: opacity 0.2s;" title="Видалити рядок">🗑️</button>`
+            : ""
+        }
       </td>
       ${catalogCellHTML}
-      <td contenteditable="${isQtyEditable}" class="text-right editable-autocomplete qty-cell" data-name="id_count">${item && item.quantity ? formatNumberWithSpaces(item.quantity) : ""
-    }</td>
+      <td contenteditable="${isQtyEditable}" class="text-right editable-autocomplete qty-cell" data-name="id_count">${
+        item && item.quantity ? formatNumberWithSpaces(item.quantity) : ""
+      }</td>
       ${priceCellHTML}
       ${sumCellHTML}
       ${zarplataCellHTML}
@@ -788,7 +870,7 @@ function createRowHtml(
 export function generateTableHTML(
   allItems: any[],
   showPibMagazin: boolean,
-  canAddRow: boolean = true
+  canAddRow: boolean = true,
 ): string {
   const showCatalog = globalCache.settings.showCatalog;
   const showZarplata = globalCache.settings.showZarplata;
@@ -805,11 +887,17 @@ export function generateTableHTML(
   const actItemsHtml =
     allItems.length > 0
       ? allItems
-        .map(
-          (item, index) =>
-            createRowHtml(item, index, showPibMagazin, showCatalog, canAddRow) // <--- ПЕРЕДАЄМО canAddRow
-        )
-        .join("")
+          .map(
+            (item, index) =>
+              createRowHtml(
+                item,
+                index,
+                showPibMagazin,
+                showCatalog,
+                canAddRow,
+              ), // <--- ПЕРЕДАЄМО canAddRow
+          )
+          .join("")
       : createRowHtml(null, 0, showPibMagazin, showCatalog, canAddRow); // <--- ПЕРЕДАЄМО canAddRow
 
   const sumsFooter = isRestricted
@@ -829,10 +917,10 @@ export function generateTableHTML(
       <span class="sum-currency">грн</span>
     </p>
     <p><strong>За роботу:</strong> <span class="zakaz_narayd-sums-footer-sum" id="total-works-sum">${formatNumberWithSpaces(
-      0
+      0,
     )}</span> грн</p>
     <p><strong>За деталі:</strong> <span class="zakaz_narayd-sums-footer-sum" id="total-details-sum">${formatNumberWithSpaces(
-      0
+      0,
     )}</span> грн</p>
     <p class="sum-row">
       <span class="sum-label">Знижка:</span>
@@ -847,7 +935,7 @@ export function generateTableHTML(
       <span class="sum-currency">%</span>
     </p>
     <p id="overall-sum-line"><strong>Загальна сума:</strong> <span class="zakaz_narayd-sums-footer-total" id="total-overall-sum">${formatNumberWithSpaces(
-      0
+      0,
     )}</span> грн<span id="avans-subtract-display" class="avans-subtract-display" style="display: none;"></span><span id="final-sum-display" class="final-sum-display" style="display: none;"></span></p>
   </div>`;
 
@@ -855,8 +943,9 @@ export function generateTableHTML(
     globalCache.isActClosed || !canAddRow
       ? ""
       : `
-    <div class="zakaz_narayd-buttons-container${isRestricted ? " obmesheniy" : ""
-      }">
+    <div class="zakaz_narayd-buttons-container${
+      isRestricted ? " obmesheniy" : ""
+    }">
       <button id="add-row-button" class="action-button add-row-button">➕ Додати рядок</button>
       <button id="save-act-data" class="zakaz_narayd-save-button" style="padding: 0.5rem 1rem;"> 💾 Зберегти зміни</button>
     </div>`;
@@ -884,10 +973,10 @@ export function generateTableHTML(
 
   setTimeout(() => {
     const avans = document.getElementById(
-      "editable-avans"
+      "editable-avans",
     ) as HTMLInputElement | null;
     const discount = document.getElementById(
-      "editable-discount"
+      "editable-discount",
     ) as HTMLInputElement | null;
 
     if (!avans && !discount) return;
@@ -908,7 +997,7 @@ export function generateTableHTML(
       const onInputAvans = () => {
         const selEndBefore = avans.selectionEnd ?? avans.value.length;
         const digitsBefore = unformat(
-          avans.value.slice(0, selEndBefore)
+          avans.value.slice(0, selEndBefore),
         ).length;
 
         const numValue = parseInt(unformat(avans.value) || "0");
@@ -1058,7 +1147,7 @@ export async function toggleAddRowButtonVisibility(): Promise<void> {
         saveButton.style.display = "none";
       }
       console.log(
-        "🚫 Кнопки 'Додати рядок' та 'Зберегти зміни' приховано (немає прав доступу)"
+        "🚫 Кнопки 'Додати рядок' та 'Зберегти зміни' приховано (немає прав доступу)",
       );
     } else {
       // Показуємо обидві кнопки
@@ -1084,7 +1173,7 @@ export async function toggleAddRowButtonVisibility(): Promise<void> {
 
 export function addNewRow(containerId: string): void {
   const tableBody = document.querySelector<HTMLTableSectionElement>(
-    `#${containerId} tbody`
+    `#${containerId} tbody`,
   );
   if (!tableBody) return;
 
@@ -1099,7 +1188,7 @@ export function addNewRow(containerId: string): void {
     rowCount,
     showPibMagazin,
     showCatalog,
-    true
+    true,
   );
   tableBody.insertAdjacentHTML("beforeend", newRowHTML);
 
@@ -1107,7 +1196,7 @@ export function addNewRow(containerId: string): void {
   const lastRow = tableBody.lastElementChild as HTMLElement;
   if (lastRow) {
     const nameInput = lastRow.querySelector(
-      '[data-name="name"]'
+      '[data-name="name"]',
     ) as HTMLElement;
     if (nameInput) {
       nameInput.focus();
@@ -1121,12 +1210,12 @@ export function updateCalculatedSumsInFooter(): void {
   if (userAccessLevel === "Слюсар") return;
 
   const tableBody = document.querySelector<HTMLTableSectionElement>(
-    `#${ACT_ITEMS_TABLE_CONTAINER_ID} tbody`
+    `#${ACT_ITEMS_TABLE_CONTAINER_ID} tbody`,
   );
   if (!tableBody) return;
 
   const { totalWorksSum, totalDetailsSum } = Array.from(
-    tableBody.querySelectorAll("tr")
+    tableBody.querySelectorAll("tr"),
   ).reduce(
     (sums, row, index) => {
       const nameCell = row.querySelector('[data-name="name"]') as HTMLElement;
@@ -1176,7 +1265,7 @@ export function updateCalculatedSumsInFooter(): void {
 
       return sums;
     },
-    { totalWorksSum: 0, totalDetailsSum: 0 }
+    { totalWorksSum: 0, totalDetailsSum: 0 },
   );
 
   const totalOverallSum = totalWorksSum + totalDetailsSum;
@@ -1213,24 +1302,21 @@ export function resetDiscountCache() {
   discountDataCache.purchasePrices.clear();
 }
 
-function calculateDiscountBase(overallSum: number): number {
-  // Знижка діє на ВЕСЬ чек (загальну суму), а не на маржу
-  return overallSum;
-}
-
 function updateFinalSumWithAvans(): void {
   const avansInput = document.getElementById(
-    "editable-avans"
+    "editable-avans",
   ) as HTMLInputElement;
   const discountInput = document.getElementById(
-    "editable-discount"
+    "editable-discount",
   ) as HTMLInputElement;
   const discountAmountInput = document.getElementById(
-    "editable-discount-amount"
+    "editable-discount-amount",
   ) as HTMLInputElement;
   const overallSumSpan = document.getElementById("total-overall-sum");
+  const worksSumSpan = document.getElementById("total-works-sum");
+  const detailsSumSpan = document.getElementById("total-details-sum");
   const avansSubtractDisplay = document.getElementById(
-    "avans-subtract-display"
+    "avans-subtract-display",
   );
   const finalSumDisplay = document.getElementById("final-sum-display");
 
@@ -1238,16 +1324,16 @@ function updateFinalSumWithAvans(): void {
     !avansInput ||
     !overallSumSpan ||
     !avansSubtractDisplay ||
-    !finalSumDisplay
+    !finalSumDisplay ||
+    !worksSumSpan ||
+    !detailsSumSpan
   )
     return;
 
   const avans = parseNumber(avansInput.value);
   const discountPercent = parseNumber(discountInput?.value || "0");
-  const overallSum = parseNumber(overallSumSpan.textContent);
-
-  // Розраховуємо БАЗУ для знижки (Загальна - Слюсар - Приймальник - Закупка)
-  const discountBase = calculateDiscountBase(overallSum);
+  const worksSum = parseNumber(worksSumSpan.textContent);
+  const detailsSum = parseNumber(detailsSumSpan.textContent);
 
   // Визначаємо реальну суму знижки
   let actualDiscountAmount: number;
@@ -1256,8 +1342,8 @@ function updateFinalSumWithAvans(): void {
     // Якщо користувач вводив суму вручну - використовуємо її значення
     actualDiscountAmount = parseNumber(discountAmountInput.value);
   } else {
-    // Інакше розраховуємо з процента ВІД НОВОЇ БАЗИ
-    actualDiscountAmount = (discountBase * discountPercent) / 100;
+    // Інакше розраховуємо з процента ВІД РОБІТ (не від загальної суми)
+    actualDiscountAmount = (worksSum * discountPercent) / 100;
     // Округлюємо математично (319.6 → 320, 319.4 → 319)
     actualDiscountAmount = Math.round(actualDiscountAmount);
     // Оновлюємо поле суми знижки
@@ -1266,7 +1352,10 @@ function updateFinalSumWithAvans(): void {
     }
   }
 
-  const sumAfterDiscount = overallSum - actualDiscountAmount;
+  // ✅ ВИПРАВЛЕНО: Знижка віднімається тільки від робіт
+  // Фінальна сума = (Роботи - Знижка) + Запчастини - Аванс
+  const worksSumAfterDiscount = worksSum - actualDiscountAmount;
+  const sumAfterDiscount = worksSumAfterDiscount + detailsSum;
   const finalSum = sumAfterDiscount - avans;
 
   let displayText = "";
@@ -1274,13 +1363,13 @@ function updateFinalSumWithAvans(): void {
   // Спочатку знижка (червона), потім аванс (зелений)
   if (discountPercent > 0 || actualDiscountAmount > 0) {
     displayText += ` - <input type="text" id="editable-discount-amount" class="editable-discount-amount" value="${formatNumberWithSpaces(
-      Math.round(actualDiscountAmount)
+      Math.round(actualDiscountAmount),
     )}" style="color: #d32f2f; font-weight: 700; border: none; background: transparent; width: auto; padding: 0; margin: 0; font-size: inherit;" /> <span style="color: #d32f2f; font-weight: 700;">грн (знижка)</span>`;
   }
 
   if (avans > 0) {
     displayText += ` - <span style="color: #2e7d32; font-weight: 700;">${formatNumberWithSpaces(
-      Math.round(avans)
+      Math.round(avans),
     )} грн (аванс)</span>`;
   }
 
@@ -1291,7 +1380,7 @@ function updateFinalSumWithAvans(): void {
     // Додаємо обробник для редагування суми знижки
     if (discountPercent > 0) {
       const discountAmountInput = avansSubtractDisplay.querySelector(
-        "#editable-discount-amount"
+        "#editable-discount-amount",
       ) as HTMLInputElement | null;
       if (discountAmountInput) {
         // Встановлюємо ширину input в залежності від значення
@@ -1310,9 +1399,9 @@ function updateFinalSumWithAvans(): void {
         const onBlurDiscount = () => {
           let numValue = parseInt(unformat(discountAmountInput.value) || "0");
 
-          // Перевіряємо не більша ли сума від загальної суми
-          if (numValue > overallSum) {
-            numValue = overallSum;
+          // ✅ ВИПРАВЛЕНО: Перевіряємо що знижка не більша за суму робіт (не від загальної суми)
+          if (numValue > worksSum) {
+            numValue = Math.round(worksSum);
           }
 
           // Форматуємо число з пробілами
@@ -1320,18 +1409,12 @@ function updateFinalSumWithAvans(): void {
           autoFitInput();
 
           const discountInputEl = document.getElementById(
-            "editable-discount"
+            "editable-discount",
           ) as HTMLInputElement;
 
-          if (discountInputEl && overallSum > 0) {
-            // Розраховуємо БАЗУ для зворотного розрахунку
-            const currentDiscountBase = calculateDiscountBase(overallSum);
-
-            // Розраховуємо ТОЧНИЙ відсоток від бази (якщо база > 0)
-            const exactPercent =
-              currentDiscountBase > 0
-                ? (numValue / currentDiscountBase) * 100
-                : 0;
+          if (discountInputEl && worksSum > 0) {
+            // ✅ ВИПРАВЛЕНО: Розраховуємо ТОЧНИЙ відсоток від РОБІТ (не від загальної суми)
+            const exactPercent = (numValue / worksSum) * 100;
 
             // Встановлюємо ТОЧНИЙ відсоток (БЕЗ округлення) - він збережеться в БД
             // Але для відображення показуємо тільки 2 знаки після коми
@@ -1371,7 +1454,7 @@ function updateFinalSumWithAvans(): void {
     }
 
     finalSumDisplay.textContent = ` = ${formatNumberWithSpaces(
-      Math.round(finalSum)
+      Math.round(finalSum),
     )} грн`;
     finalSumDisplay.style.color = "#1a73e8";
     finalSumDisplay.style.display = "inline";
@@ -1384,10 +1467,11 @@ function updateFinalSumWithAvans(): void {
 export function createTableRow(
   label: string,
   value: string,
-  className: string = ""
+  className: string = "",
 ): string {
-  return `<tr><td>${label}</td><td${className ? ` class="${className}"` : ""
-    }>${value}</td></tr>`;
+  return `<tr><td>${label}</td><td${
+    className ? ` class="${className}"` : ""
+  }>${value}</td></tr>`;
 }
 
 export function createModal(): void {
@@ -1405,7 +1489,9 @@ export function createModal(): void {
   document.body.appendChild(newModalOverlay);
 
   // Обробник для закриття по кліку на хрестик
-  const closeBtn = newModalOverlay.querySelector<HTMLButtonElement>("#zakaz-narayd-close-btn");
+  const closeBtn = newModalOverlay.querySelector<HTMLButtonElement>(
+    "#zakaz-narayd-close-btn",
+  );
   closeBtn?.addEventListener("click", () => closeZakazNaraydModal());
 
   // 🔶 ВИМКНЕНО: Закриття по кліку на overlay (по запиту користувача)
@@ -1421,14 +1507,12 @@ export function createModal(): void {
 export function closeZakazNaraydModal(): void {
   const modalOverlay = document.getElementById(ZAKAZ_NARAYD_MODAL_ID);
   if (modalOverlay) {
-
-
     modalOverlay.classList.add("hidden");
     globalCache.currentActId = null;
     // ✅ Очищуємо приймальника з localStorage при закритті модального вікна
     localStorage.removeItem("current_act_pruimalnyk");
     console.log(
-      "🗑️ Очищено приймальника з localStorage при закритті модального вікна"
+      "🗑️ Очищено приймальника з localStorage при закритті модального вікна",
     );
     // 🧹 Очищуємо Realtime підписку на slusarsOn
     cleanupSlusarsOnSubscription();
@@ -1436,7 +1520,7 @@ export function closeZakazNaraydModal(): void {
     resetDiscountCache();
     // 🔐 Відписуємося від Presence API
     unsubscribeFromActPresence().catch((err: unknown) =>
-      console.error("Помилка при відписці від Presence:", err)
+      console.error("Помилка при відписці від Presence:", err),
     );
   }
 }
@@ -1448,7 +1532,7 @@ if (!(window as any).__otherBasesHandlerBound__) {
     if (container) {
       setupAutocompleteForEditableCells(
         ACT_ITEMS_TABLE_CONTAINER_ID,
-        globalCache
+        globalCache,
       );
       await refreshQtyWarningsIn(ACT_ITEMS_TABLE_CONTAINER_ID);
       updateCalculatedSumsInFooter();

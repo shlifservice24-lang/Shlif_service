@@ -101,21 +101,21 @@ function removeEmoji(text: string): string {
   return text
     .replace(
       /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu,
-      ""
+      "",
     )
     .trim();
 }
 
 function addEmojiToCategory(categoryName: string): string {
   const found = EXPENSE_CATEGORIES.find(
-    (cat) => removeEmoji(cat) === categoryName
+    (cat) => removeEmoji(cat) === categoryName,
   );
   return found || categoryName;
 }
 
 function addEmojiToPaymentMethod(methodName: string): string {
   const found = PAYMENT_METHODS.find(
-    (method) => removeEmoji(method) === methodName
+    (method) => removeEmoji(method) === methodName,
   );
   return found || methodName;
 }
@@ -141,7 +141,7 @@ export function setExpenseMode(mode: ExpenseMode): void {
   const title = byId<HTMLHeadingElement>("expense-modal-title");
   if (title) title.textContent = config.title;
   const saveBtn = document.querySelector(
-    ".expense-modal-footer button"
+    ".expense-modal-footer button",
   ) as HTMLButtonElement;
   if (saveBtn) {
     saveBtn.textContent = config.buttonText;
@@ -193,7 +193,7 @@ function getCurrentUkrainianTime(): string {
   const now = new Date();
   // Час у Києві як Date, побудований із рядка (без прив'язки до UTC)
   const kyivNow = new Date(
-    now.toLocaleString("en-US", { timeZone: "Europe/Kyiv", hour12: false })
+    now.toLocaleString("en-US", { timeZone: "Europe/Kyiv", hour12: false }),
   );
 
   const y = kyivNow.getFullYear();
@@ -245,7 +245,7 @@ export function formatDateKyiv(iso?: string | null): string {
 }
 
 function createPasswordConfirmationModal(
-  action: "pay" | "unpay"
+  action: "pay" | "unpay",
 ): Promise<boolean> {
   return new Promise((resolve) => {
     const modal = document.createElement("div");
@@ -364,7 +364,7 @@ function createPasswordConfirmationModal(
 // Функції для керування станом кнопки збереження
 function setSaveButtonLoading(isLoading: boolean): void {
   const saveBtn = document.querySelector(
-    ".expense-modal-footer button"
+    ".expense-modal-footer button",
   ) as HTMLButtonElement;
 
   if (!saveBtn) return;
@@ -480,7 +480,7 @@ async function loadReceipterSalaries(): Promise<void> {
               // Додаткове логування для дебагу
               if (actId === 34) {
                 console.log(
-                  `🔍 [DEBUG] Акт 34: СумаРоботи=${record.СуммаРоботи}, ЗарплатаРоботи=${salaryWork}, СумаЗапчастин=${record.СуммаЗапчастин}, ЗарплатаЗапчастин=${salaryParts}`
+                  `🔍 [DEBUG] Акт 34: СумаРоботи=${record.СуммаРоботи}, ЗарплатаРоботи=${salaryWork}, СумаЗапчастин=${record.СуммаЗапчастин}, ЗарплатаЗапчастин=${salaryParts}`,
                 );
               }
             }
@@ -490,7 +490,7 @@ async function loadReceipterSalaries(): Promise<void> {
     }
 
     console.log(
-      `✅ Завантажено зарплати приймальника для ${receipterSalaryCache.size} актів`
+      `✅ Завантажено зарплати приймальника для ${receipterSalaryCache.size} актів`,
     );
   } catch (err: any) {
     console.error("❌ Помилка завантаження зарплат приймальника:", err);
@@ -506,7 +506,7 @@ function getReceipterSalaryForAct(actId: number): {
 
   if (salary) {
     console.log(
-      `💰 Акт ${actId}: Приймальник - Деталі: ${salary.salaryParts}, Робота: ${salary.salaryWork}`
+      `💰 Акт ${actId}: Приймальник - Деталі: ${salary.salaryParts}, Робота: ${salary.salaryWork}`,
     );
     return salary;
   }
@@ -518,7 +518,7 @@ function getReceipterSalaryForAct(actId: number): {
 // Віднімає зарплату приймальника щоб показати чистий прибуток компанії
 function calculateDetailsMarginFromAct(
   actData: ActData,
-  actId: number
+  actId: number,
 ): number {
   // Використовуємо збережене значення з акту (вже враховано закупівельні ціни і розраховано маржу)
   let totalMargin = Number(actData["Прибуток за деталі"]) || 0;
@@ -527,7 +527,7 @@ function calculateDetailsMarginFromAct(
   const receipterSalary = getReceipterSalaryForAct(actId);
   totalMargin -= receipterSalary.salaryParts;
   console.log(
-    `📊 Акт ${actId}: Маржа деталей (збережена: ${actData["Прибуток за деталі"]}) після відрахування зарплати приймальника (${receipterSalary.salaryParts}): ${totalMargin}`
+    `📊 Акт ${actId}: Маржа деталей (збережена: ${actData["Прибуток за деталі"]}) після відрахування зарплати приймальника (${receipterSalary.salaryParts}): ${totalMargin}`,
   );
 
   return Number(totalMargin.toFixed(2));
@@ -544,7 +544,7 @@ function calculateWorkProfitFromAct(actData: ActData, actId: number): number {
   profit -= receipterSalary.salaryWork;
 
   console.log(
-    `📊 Акт ${actId}: Прибуток робіт (збережений: ${actData["Прибуток за роботу"]}) після відрахування зарплати приймальника (${receipterSalary.salaryWork}): ${profit}`
+    `📊 Акт ${actId}: Прибуток робіт (збережений: ${actData["Прибуток за роботу"]}) після відрахування зарплати приймальника (${receipterSalary.salaryWork}): ${profit}`,
   );
   return Number(profit.toFixed(2));
 }
@@ -639,7 +639,7 @@ let vutratuDateFilterMode: "open" | "close" | "paid" = "open";
 // Функція для ініціалізації перемикача фільтрації дат для витрат
 function initvutratuDateFilterToggle(): void {
   const toggleContainer = document.querySelector(
-    "#Bukhhalter-vutratu-section .Bukhhalter-date-filter-toggle"
+    "#Bukhhalter-vutratu-section .Bukhhalter-date-filter-toggle",
   );
   if (!toggleContainer) return;
 
@@ -657,7 +657,7 @@ function initvutratuDateFilterToggle(): void {
       vutratuDateFilterMode = this.dataset.filter as "open" | "close" | "paid";
 
       console.log(
-        `🔄 Витрати: змінено режим фільтрації дат на "${vutratuDateFilterMode}"`
+        `🔄 Витрати: змінено режим фільтрації дат на "${vutratuDateFilterMode}"`,
       );
 
       // ЗМІНЕНО: Просто фільтруємо вже завантажені дані, НЕ перезавантажуємо з бази
@@ -703,7 +703,7 @@ async function loadvutratuFromDatabase(): Promise<void> {
     let queryVutratu = supabase
       .from("vutratu")
       .select(
-        "vutratu_id,dataOnn,dataOff,kategoria,act,opys_vytraty,suma,sposob_oplaty,prymitky,xto_zapusav"
+        "vutratu_id,dataOnn,dataOff,kategoria,act,opys_vytraty,suma,sposob_oplaty,prymitky,xto_zapusav",
       )
       .lt("suma", 0)
       .is("act", null); // Виключаємо записи з номером акту (щоб уникнути дублювання)
@@ -714,9 +714,10 @@ async function loadvutratuFromDatabase(): Promise<void> {
       if (dateFrom) queryVutratu = queryVutratu.gte("dataOnn", dateFrom);
       if (dateTo) queryVutratu = queryVutratu.lte("dataOnn", dateTo);
     } else if (vutratuDateFilterMode === "close") {
-      // Фільтр по даті закриття (dataOff)
-      if (dateFrom) queryVutratu = queryVutratu.gte("dataOff", dateFrom);
-      if (dateTo) queryVutratu = queryVutratu.lte("dataOff", dateTo);
+      // ✅ ВИПРАВЛЕНО: Для витрат використовуємо dataOnn (бо витрати не мають dataOff)
+      // Фільтрація по статусу закритих/відкритих актів відбудеться на клієнті
+      if (dateFrom) queryVutratu = queryVutratu.gte("dataOnn", dateFrom);
+      if (dateTo) queryVutratu = queryVutratu.lte("dataOnn", dateTo);
     } else if (vutratuDateFilterMode === "paid") {
       // Фільтр по даті розрахунку (для витрат це dataOnn, бо витрати не мають dataOff)
       if (dateFrom) queryVutratu = queryVutratu.gte("dataOnn", dateFrom);
@@ -740,7 +741,7 @@ async function loadvutratuFromDatabase(): Promise<void> {
     let queryActs = supabase
       .from("acts")
       .select(
-        "act_id,date_on,date_off,rosraxovano,data,xto_rozraxuvav,client_id,cars_id,avans,tupOplatu"
+        "act_id,date_on,date_off,rosraxovano,data,xto_rozraxuvav,client_id,cars_id,avans,tupOplatu",
       );
 
     // Застосовуємо фільтр по датах залежно від режиму
@@ -783,7 +784,9 @@ async function loadvutratuFromDatabase(): Promise<void> {
         actNumber: item.act ?? undefined,
         description: item.opys_vytraty,
         amount: Number(item.suma || 0),
-        paymentMethod: addEmojiToPaymentMethod(String(item.sposob_oplaty || "")),
+        paymentMethod: addEmojiToPaymentMethod(
+          String(item.sposob_oplaty || ""),
+        ),
         notes: item.prymitky || undefined,
         isPaid: !!item.dataOff,
         createdBy: item.xto_zapusav || undefined,
@@ -804,7 +807,7 @@ async function loadvutratuFromDatabase(): Promise<void> {
             actData = JSON.parse(actItem.data);
           } catch (e) {
             console.warn(
-              `⚠️ Не вдалося розпарсити data для акту ${actItem.act_id}`
+              `⚠️ Не вдалося розпарсити data для акту ${actItem.act_id}`,
             );
           }
         } else if (typeof actItem.data === "object" && actItem.data !== null) {
@@ -815,7 +818,7 @@ async function loadvutratuFromDatabase(): Promise<void> {
         // Враховуємо зарплату приймальника (тепер синхронно)
         const detailsAmount = calculateDetailsMarginFromAct(
           actData,
-          actItem.act_id
+          actItem.act_id,
         );
         const workAmount = calculateWorkProfitFromAct(actData, actItem.act_id);
         const totalAmount = detailsAmount + workAmount;
@@ -837,10 +840,10 @@ async function loadvutratuFromDatabase(): Promise<void> {
         const fullAmount = fullDetailsAmount + fullWorkAmount;
 
         const discountPercent = Number(actData["Знижка"]) || 0;
-        // Розраховуємо суму знижки з відсотка та повної суми
+        // ✅ ВИПРАВЛЕНО: Розраховуємо суму знижки ТІЛЬКИ від робіт (не від загальної суми)
         const discountAmountValue =
           discountPercent > 0
-            ? Math.round((fullAmount * discountPercent) / 100)
+            ? Math.round((fullWorkAmount * discountPercent) / 100)
             : 0;
 
         vutratuData.push({
@@ -880,12 +883,12 @@ async function loadvutratuFromDatabase(): Promise<void> {
     };
 
     console.log(
-      `✅ Завантажено ${vutratuData.length} записів (фільтр по даті ${modeLabels[vutratuDateFilterMode]})`
+      `✅ Завантажено ${vutratuData.length} записів (фільтр по даті ${modeLabels[vutratuDateFilterMode]})`,
     );
     showNotification(
       `📊 Знайдено ${vutratuData.length} записів (${modeLabels[vutratuDateFilterMode]})`,
       "success",
-      2000
+      2000,
     );
 
     filteredvutratuData = [...vutratuData];
@@ -895,7 +898,7 @@ async function loadvutratuFromDatabase(): Promise<void> {
     showNotification(
       "⚠️ Не вдалося завантажити дані з бази даних",
       "error",
-      5000
+      5000,
     );
     vutratuData = [];
     filteredvutratuData = [];
@@ -905,7 +908,7 @@ async function loadvutratuFromDatabase(): Promise<void> {
 
 async function saveExpenseToDatabase(
   expense: ExpenseRecordLocal,
-  isNew: boolean = true
+  isNew: boolean = true,
 ): Promise<boolean> {
   try {
     const currentUser = getCurrentUserName();
@@ -976,7 +979,7 @@ export async function initializevutratuData(): Promise<void> {
   // Додати слухачі для всіх фільтрів
   const categorySelect = byId<HTMLSelectElement>("Bukhhalter-vutratu-category");
   const paymentMethodSelect = byId<HTMLSelectElement>(
-    "Bukhhalter-vutratu-payment-method"
+    "Bukhhalter-vutratu-payment-method",
   );
 
   const dateFromInput = byId<HTMLInputElement>("Bukhhalter-vutratu-date-from");
@@ -1138,7 +1141,7 @@ export function filtervutratuData(): void {
         if (
           !expense.tupOplatu ||
           !expense.tupOplatu.includes(
-            paymentMethod.replace(/💵 |💳 |🏦 |📱 /g, "")
+            paymentMethod.replace(/💵 |💳 |🏦 |📱 /g, ""),
           )
         ) {
           return false;
@@ -1314,8 +1317,9 @@ export function updatevutratuTable(): void {
     if (isFromAct && expense.actNumber) {
       actCell.innerHTML = `
         <button class="Bukhhalter-act-btn"
-                onclick="event.stopPropagation(); openActModalWithClient(${Number(expense.actNumber) || 0
-        })"
+                onclick="event.stopPropagation(); openActModalWithClient(${
+                  Number(expense.actNumber) || 0
+                })"
                 title="Відкрити акт №${expense.actNumber}">
           📋 ${expense.actNumber}
         </button>
@@ -1381,7 +1385,7 @@ export function updatevutratuTable(): void {
             : "#999";
       const sign = expense.amount > 0 ? "+" : "";
       amountCell.innerHTML = `<span style="color: ${color}; font-size: 0.95em; font-weight: 500;">${sign}${formatNumber(
-        expense.amount
+        expense.amount,
       )}</span>`;
     }
 
@@ -1444,8 +1448,8 @@ export function updatevutratuTable(): void {
       const avansInfo =
         expense.paymentMethod && Number(expense.paymentMethod) > 0
           ? `<br><span style="color: #000; font-weight: 600; font-size: 0.95em;">💰 ${formatNumber(
-            Number(expense.paymentMethod)
-          )}</span>`
+              Number(expense.paymentMethod),
+            )}</span>`
           : "";
       methodCell.innerHTML = `
         <span style="font-size: 0.95em;">
@@ -1542,7 +1546,6 @@ export function updatevutratuDisplayedSums(): void {
           ? Number(expense.paymentMethod)
           : 0;
 
-
       if (isClosed) {
         const discountVal = expense.discountAmount || 0;
         totalDiscountSum += discountVal;
@@ -1605,10 +1608,11 @@ export function updatevutratuDisplayedSums(): void {
   const finalSumProfit =
     totalNetDetailsProfit + totalNetWorkProfit + totalNegativeSum;
 
-  let htmlContent = '';
+  let htmlContent = "";
 
   // typeToggle: 0 = тільки Прибуток (акти), 1 = тільки Витрати, 2 = Всі
-  if (currentFilterType === "1") { // Only expenses (vitrat)
+  if (currentFilterType === "1") {
+    // Only expenses (vitrat)
     const absExpenses = Math.abs(totalNegativeSum);
     htmlContent = `
       <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 1.1em;">
@@ -1618,7 +1622,8 @@ export function updatevutratuDisplayedSums(): void {
         </div>
       </div>
     `;
-  } else if (currentFilterType === "0") { // Only income (prybutok)
+  } else if (currentFilterType === "0") {
+    // Only income (prybutok)
     htmlContent = `
       <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 1.1em;">
         <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px;">
@@ -1629,8 +1634,9 @@ export function updatevutratuDisplayedSums(): void {
           <span style="color: #666;">+</span>
           <span><strong style="color: #000;">💰 ${formatNumber(totalAvansSum)}</strong></span>
           <span style="color: #666;">=</span>
-          <span><strong style="color: ${finalSumCasa >= 0 ? "#006400" : "#8B0000"
-      };">📈 ${formatNumber(finalSumCasa)}</strong> грн</span>
+          <span><strong style="color: ${
+            finalSumCasa >= 0 ? "#006400" : "#8B0000"
+          };">📈 ${formatNumber(finalSumCasa)}</strong> грн</span>
         </div>
         <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px;">
           <span>Прибуток</span>
@@ -1638,8 +1644,9 @@ export function updatevutratuDisplayedSums(): void {
           <span style="color: #666;">+</span>
           <span><strong style="color: #FF8C00;">🛠️ ${formatNumber(totalNetWorkProfit)}</strong></span>
           <span style="color: #666;">=</span>
-          <span><strong style="color: ${finalSumProfit >= 0 ? "#006400" : "#8B0000"
-      };">📈 ${formatNumber(finalSumProfit)}</strong> грн</span>
+          <span><strong style="color: ${
+            finalSumProfit >= 0 ? "#006400" : "#8B0000"
+          };">📈 ${formatNumber(finalSumProfit)}</strong> грн</span>
           
           <span style="color: #ccc; margin-left: 10px;">|</span>
           
@@ -1648,53 +1655,56 @@ export function updatevutratuDisplayedSums(): void {
         </div>
       </div>
     `;
-  } else { // Both expenses and income, or default
+  } else {
+    // Both expenses and income, or default
     htmlContent = `
       <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 1.1em;">
         <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px;">
           <span>Каса</span>
           <span><strong style="color: #1E90FF;">⚙️ ${formatNumber(
-      totalNetFullDetails
-    )}</strong></span>
+            totalNetFullDetails,
+          )}</strong></span>
           <span style="color: #666;">+</span>
           <span><strong style="color: #FF8C00;">🛠️ ${formatNumber(
-      totalNetFullWork
-    )}</strong></span>
+            totalNetFullWork,
+          )}</strong></span>
           <span style="color: #666;">+</span>
           <span><strong style="color: #000;">💰 ${formatNumber(
-      totalAvansSum
-    )}</strong></span>
+            totalAvansSum,
+          )}</strong></span>
           <span style="color: #666;">-</span>
           <span><strong style="color: #8B0000;">💶 -${formatNumber(
-      Math.abs(totalNegativeSum)
-    )}</strong></span>
+            Math.abs(totalNegativeSum),
+          )}</strong></span>
           <span style="color: #666;">=</span>
-          <span><strong style="color: ${finalSumCasa >= 0 ? "#006400" : "#8B0000"
-      };">📈 ${formatNumber(finalSumCasa)}</strong> грн</span>
+          <span><strong style="color: ${
+            finalSumCasa >= 0 ? "#006400" : "#8B0000"
+          };">📈 ${formatNumber(finalSumCasa)}</strong> грн</span>
         </div>
         <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px;">
           <span>Прибуток</span>
           <span><strong style="color: #1E90FF;">⚙️ ${formatNumber(
-        totalNetDetailsProfit
-      )}</strong></span>
+            totalNetDetailsProfit,
+          )}</strong></span>
           <span style="color: #666;">+</span>
           <span><strong style="color: #FF8C00;">🛠️ ${formatNumber(
-        totalNetWorkProfit
-      )}</strong></span>
+            totalNetWorkProfit,
+          )}</strong></span>
           <span style="color: #666;">-</span>
           <span><strong style="color: #8B0000;">💶 -${formatNumber(
-        Math.abs(totalNegativeSum)
-      )}</strong></span>
+            Math.abs(totalNegativeSum),
+          )}</strong></span>
           <span style="color: #666;">=</span>
-          <span><strong style="color: ${finalSumProfit >= 0 ? "#006400" : "#8B0000"
-      };">📈 ${formatNumber(finalSumProfit)}</strong> грн</span>
+          <span><strong style="color: ${
+            finalSumProfit >= 0 ? "#006400" : "#8B0000"
+          };">📈 ${formatNumber(finalSumProfit)}</strong> грн</span>
           
           <span style="color: #ccc; margin-left: 10px;">|</span>
           
           <span>Знижки</span>
           <span><strong style="color: #c62828;">🏷️ ${formatNumber(
-        totalDiscountSum
-      )}</strong> грн</span>
+            totalDiscountSum,
+          )}</strong> грн</span>
         </div>
       </div>
     `;
@@ -1711,7 +1721,7 @@ async function handleAddExpense(
   description: string,
   amount: number,
   paymentMethod: string,
-  notes: string
+  notes: string,
 ): Promise<void> {
   setSaveButtonLoading(true);
 
@@ -1746,7 +1756,7 @@ async function handleEditExpense(
   description: string,
   amount: number,
   paymentMethod: string,
-  notes: string
+  notes: string,
 ): Promise<void> {
   if (selectedExpenseId === null) {
     showNotification("⚠️ Витрата для редагування не вибрана", "warning");
@@ -1850,12 +1860,12 @@ function selectExpenseRow(index: number, event?: MouseEvent): void {
 
   if (expense.amount >= 0) {
     console.log(
-      "⚠️ Редагування доступне тільки для витрат (від'ємні значення)"
+      "⚠️ Редагування доступне тільки для витрат (від'ємні значення)",
     );
     showNotification(
       "⚠️ Редагування доступне тільки для витрат",
       "warning",
-      2000
+      2000,
     );
     return;
   }
@@ -1872,7 +1882,7 @@ function selectExpenseRow(index: number, event?: MouseEvent): void {
   byId<HTMLSelectElement>("expense-modal-payment-method").value =
     expense.paymentMethod;
   byId<HTMLInputElement>("expense-modal-amount").value = Math.abs(
-    expense.amount
+    expense.amount,
   ).toString();
   byId<HTMLTextAreaElement>("expense-modal-description").value =
     expense.description;
@@ -1942,7 +1952,7 @@ export async function runMassPaymentCalculationForvutratu(): Promise<void> {
   filtervutratuData();
   showNotification(
     `✅ Позначено ${successCount} записів як оплачені`,
-    "success"
+    "success",
   );
 }
 
@@ -2057,7 +2067,7 @@ export async function saveExpenseFromModal(): Promise<void> {
         description,
         amount,
         paymentMethod,
-        notes
+        notes,
       );
       break;
     case "edit":
@@ -2067,7 +2077,7 @@ export async function saveExpenseFromModal(): Promise<void> {
         description,
         amount,
         paymentMethod,
-        notes
+        notes,
       );
       break;
     case "delete":

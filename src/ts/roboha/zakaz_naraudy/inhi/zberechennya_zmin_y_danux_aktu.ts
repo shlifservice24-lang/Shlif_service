@@ -1369,18 +1369,18 @@ async function syncPruimalnikHistory(
   }
 
   // --- РОЗРАХУНОК БАЗ ТА ЗАРПЛАТ ---
-  // Враховуємо дисконт (знижку)
+  // ✅ ВИПРАВЛЕНО: Знижка застосовується ТІЛЬКИ до робіт, а НЕ до запчастин
   const discountMultiplier =
     discountPercent > 0 ? 1 - discountPercent / 100 : 1;
 
   // 1. Робота: (Сума Продажу * множник дисконту - Зарплата Слюсаря)
-  // Дисконт застосовується до суми продажу, а потім віднімаємо зарплату слюсаря
+  // Дисконт застосовується до суми продажу робіт
   const workSaleAfterDiscount = worksTotalSale * discountMultiplier;
   const baseWorkProfit = workSaleAfterDiscount - worksTotalSlusarSalary;
 
-  // 2. Запчастини: (Сума Продажу * множник дисконту - Сума Закупки)
-  // Дисконт застосовується до суми продажу, а потім віднімаємо собівартість
-  const partsSaleAfterDiscount = partsTotalSale * discountMultiplier;
+  // 2. Запчастини: (Сума Продажу БЕЗ дисконту - Сума Закупки)
+  // ✅ ВИПРАВЛЕНО: Дисконт НЕ застосовується до запчастин
+  const partsSaleAfterDiscount = partsTotalSale; // БЕЗ знижки
   const basePartsProfit = partsSaleAfterDiscount - partsTotalBuy;
 
   // --- ОТРИМАННЯ ДАНИХ ПРИЙМАЛЬНИКА З БД ---
@@ -1782,32 +1782,30 @@ async function saveActData(actId: number, originalActData: any): Promise<void> {
     ? parseFloat(discountAmountInput.value.replace(/\s/g, "") || "0")
     : 0;
 
-  // 🔥 Розраховуємо ТОЧНИЙ відсоток знижки від загальної суми
-  // Щоб при зворотному розрахунку вийшла ТОЧНО та сама сума
+  // 🔥 Розраховуємо ТОЧНИЙ відсоток знижки тільки від РОБІТ (не від загальної суми)
+  // Знижка застосовується ЛИШЕ до робіт, запчастини виводяться без знижки
   const exactDiscountPercent =
-    grandTotalSum > 0 ? (discountAmountValue / grandTotalSum) * 100 : 0;
+    totalWorksSum > 0 ? (discountAmountValue / totalWorksSum) * 100 : 0;
 
-  // Розраховуємо знижку від ВАЛУ (загальної суми), а НЕ від маржі
-  // Знижка застосовується до загальної суми продажу
+  // Розраховуємо знижку - застосовується ТІЛЬКИ до робіт
   const discountMultiplier = discountValue > 0 ? 1 - discountValue / 100 : 1;
 
   // Сума продажу після знижки
-  const detailsSaleAfterDiscount = totalDetailsSum * discountMultiplier;
-  const worksSaleAfterDiscount = totalWorksSum * discountMultiplier;
+  // ✅ ВИПРАВЛЕНО: Знижка НЕ застосовується до запчастин
+  const detailsSaleAfterDiscount = totalDetailsSum; // БЕЗ знижки
+  const worksSaleAfterDiscount = totalWorksSum * discountMultiplier; // ЗІ знижкою
 
-  // Маржа = сума продажу після знижки - собівартість (для деталей вже врахована в totalDetailsMargin)
+  // Маржа для деталей = сума продажу - собівартість (БЕЗ знижки)
   // Для деталей: маржа = (продажна ціна - вхідна ціна) * кількість
-  // Після знижки: маржа = продажна ціна * (1 - знижка%) - вхідна ціна * кількість
-  // Це еквівалентно: (totalDetailsSum * discountMultiplier) - totalPurchasePrice
-  // Де totalPurchasePrice = totalDetailsSum - totalDetailsMargin
+  // НЕ застосовуємо знижку до запчастин
 
   const totalPurchasePrice = totalDetailsSum - (totalDetailsMargin || 0);
-  const finalDetailsProfit = detailsSaleAfterDiscount - totalPurchasePrice;
+  const finalDetailsProfit = detailsSaleAfterDiscount - totalPurchasePrice; // БЕЗ знижки
 
   // Для робіт: прибуток = сума продажу після знижки - зарплата слюсаря
   // totalWorksProfit = totalWorksSum - зарплата слюсаря, тому зарплата = totalWorksSum - totalWorksProfit
   const totalSlyusarSalary = totalWorksSum - (totalWorksProfit || 0);
-  const finalWorksProfit = worksSaleAfterDiscount - totalSlyusarSalary;
+  const finalWorksProfit = worksSaleAfterDiscount - totalSlyusarSalary; // ЗІ знижкою
 
   const updatedActData = {
     ...(originalActData || {}),

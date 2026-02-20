@@ -31,7 +31,7 @@ function ensureWarningStyles() {
       color: #fff; background: #ff9800;
       clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
       border-radius: 2px; pointer-events: none; user-select: none;
-      z-index: 10;
+      z-index: 4;
     }
     
     .qty-cell[data-warn="1"],

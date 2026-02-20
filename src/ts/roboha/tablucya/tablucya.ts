@@ -2,7 +2,13 @@
 
 import { supabase } from "../../vxid/supabaseClient";
 import { showModal } from "../zakaz_naraudy/modalMain";
-import { globalCache, loadGeneralSettingsFromDB, loadGeneralSettingsFromLocalStorage, isGeneralSettingsLoadedThisSession, markGeneralSettingsAsLoaded } from "../zakaz_naraudy/globalCache";
+import {
+  globalCache,
+  loadGeneralSettingsFromDB,
+  loadGeneralSettingsFromLocalStorage,
+  isGeneralSettingsLoadedThisSession,
+  markGeneralSettingsAsLoaded,
+} from "../zakaz_naraudy/globalCache";
 import {
   showLoginModalBeforeTable,
   isUserAuthenticated,
@@ -229,7 +235,7 @@ function subscribeToActNotifications() {
       (payload) => {
         console.log(
           "📡 [Realtime INSERT] Отримано нове повідомлення:",
-          payload.new
+          payload.new,
         );
         const newNotification = payload.new;
 
@@ -261,7 +267,7 @@ function subscribeToActNotifications() {
             pruimalnyk: newNotification.pruimalnyk, // ✅ Приймальник
           });
         }
-      }
+      },
     )
     .subscribe();
 
@@ -283,7 +289,7 @@ function subscribeToSlusarNotifications() {
     return;
 
   console.log(
-    `📡 [slusarsOn] Підключення до Realtime для ${userAccessLevel}...`
+    `📡 [slusarsOn] Підключення до Realtime для ${userAccessLevel}...`,
   );
 
   // 🔥 ПІДПИСКА БЕЗПОСЕРЕДНЬО НА ЗМІНИ В ТАБЛИЦІ acts
@@ -311,7 +317,7 @@ function subscribeToSlusarNotifications() {
         const pruimalnyk = updatedAct.pruimalnyk;
 
         console.log(
-          `📡 [slusarsOn] Акт #${actId}: slusarsOn=${newSlusarsOn}, closed=${isClosed}, pruimalnyk=${pruimalnyk}`
+          `📡 [slusarsOn] Акт #${actId}: slusarsOn=${newSlusarsOn}, closed=${isClosed}, pruimalnyk=${pruimalnyk}`,
         );
 
         // ✅ БЕЗ ФІЛЬТРАЦІЇ - Приймальник бачить ВСІ закінчення робіт
@@ -326,7 +332,7 @@ function subscribeToSlusarNotifications() {
             (window as any).showNotification(message, "success", 3000);
           }
         }
-      }
+      },
     )
     .subscribe((status) => {
       console.log(`📡 [slusarsOn] Статус підписки:`, status);
@@ -338,16 +344,24 @@ function subscribeToSlusarNotifications() {
  * Показує ПІБ редактора в комірці клієнта
  */
 function subscribeToGlobalActPresence() {
-  console.log("📡 [GlobalPresence] Підключення до глобального каналу присутності...");
+  console.log(
+    "📡 [GlobalPresence] Підключення до глобального каналу присутності...",
+  );
 
   // Відписуємося від попереднього каналу, якщо він існує
   if (globalPresenceChannel) {
     try {
       supabase.removeChannel(globalPresenceChannel).catch((err: unknown) => {
-        console.warn("⚠️ [GlobalPresence] Помилка при видаленні попереднього каналу:", err);
+        console.warn(
+          "⚠️ [GlobalPresence] Помилка при видаленні попереднього каналу:",
+          err,
+        );
       });
     } catch (err) {
-      console.warn("⚠️ [GlobalPresence] Синхронна помилка при видаленні каналу:", err);
+      console.warn(
+        "⚠️ [GlobalPresence] Синхронна помилка при видаленні каналу:",
+        err,
+      );
     } finally {
       globalPresenceChannel = null;
     }
@@ -386,7 +400,10 @@ function subscribeToGlobalActPresence() {
     });
 
     // Порівнюємо зі старою мапою та оновлюємо DOM
-    const allActIds = new Set([...actEditorsMap.keys(), ...newEditorsMap.keys()]);
+    const allActIds = new Set([
+      ...actEditorsMap.keys(),
+      ...newEditorsMap.keys(),
+    ]);
 
     allActIds.forEach((actId) => {
       const oldEditor = actEditorsMap.get(actId);
@@ -406,12 +423,20 @@ function subscribeToGlobalActPresence() {
   // Підписуємося на події присутності
   globalPresenceChannel
     .on("presence", { event: "sync" }, handlePresenceSync)
-    .on("presence", { event: "join" }, ({ key, newPresences }: { key: string; newPresences: any }) => {
-      console.log("👋 [GlobalPresence] User joined:", key, newPresences);
-    })
-    .on("presence", { event: "leave" }, ({ key, leftPresences }: { key: string; leftPresences: any }) => {
-      console.log("👋 [GlobalPresence] User left:", key, leftPresences);
-    })
+    .on(
+      "presence",
+      { event: "join" },
+      ({ key, newPresences }: { key: string; newPresences: any }) => {
+        console.log("👋 [GlobalPresence] User joined:", key, newPresences);
+      },
+    )
+    .on(
+      "presence",
+      { event: "leave" },
+      ({ key, leftPresences }: { key: string; leftPresences: any }) => {
+        console.log("👋 [GlobalPresence] User left:", key, leftPresences);
+      },
+    )
     .subscribe((status: string) => {
       console.log(`📡 [GlobalPresence] Статус підписки:`, status);
     });
@@ -421,7 +446,9 @@ function subscribeToGlobalActPresence() {
  * ✏️ Оновлює інформацію про редактора в DOM для конкретного акту
  */
 function updateEditorInfoInDom(actId: number, editorName: string | null): void {
-  const table = document.querySelector("#table-container-modal-sakaz_narad table");
+  const table = document.querySelector(
+    "#table-container-modal-sakaz_narad table",
+  );
   if (!table) return;
 
   const rows = table.querySelectorAll("tbody tr");
@@ -438,7 +465,9 @@ function updateEditorInfoInDom(actId: number, editorName: string | null): void {
     if (!clientCell) return;
 
     // Знаходимо span для редактора
-    let editorSpan = clientCell.querySelector(".act-editor-info") as HTMLElement;
+    let editorSpan = clientCell.querySelector(
+      ".act-editor-info",
+    ) as HTMLElement;
 
     if (editorName) {
       // Показуємо інформацію про редактора
@@ -464,12 +493,12 @@ function updateSlusarsOnRowInDom(
   actId: number,
   slusarsOn: boolean,
   isClosed: boolean,
-  pruimalnyk?: string
+  pruimalnyk?: string,
 ): void {
   console.log(`🎨 [updateSlusarsOn] Шукаємо рядок для акту #${actId}...`);
 
   const table = document.querySelector(
-    "#table-container-modal-sakaz_narad table"
+    "#table-container-modal-sakaz_narad table",
   );
   if (!table) {
     console.warn("⚠️ [updateSlusarsOn] Таблиця не знайдена");
@@ -504,7 +533,7 @@ function updateSlusarsOnRowInDom(
               isClosed,
               pruimalnyk,
               currentUserName,
-              actId
+              actId,
             );
           }
         }
@@ -517,7 +546,7 @@ function updateSlusarsOnRowInDom(
         isClosed,
         pruimalnyk,
         currentUserName,
-        actId
+        actId,
       );
     }
   });
@@ -536,7 +565,7 @@ function applyClassToRow(
   isClosed: boolean,
   _pruimalnyk: string | undefined, // ✅ Не використовується, але залишаємо для сумісності
   _currentUserName: string | undefined, // ✅ Не використовується, але залишаємо для сумісності
-  actId: number
+  actId: number,
 ): void {
   const shouldShowSlusarsOn =
     slusarsOn &&
@@ -581,10 +610,12 @@ function getActIdFromCell(cell: HTMLElement): number {
  * Знаходить рядок в таблиці і додає клас підсвітки (Синя ручка)
  */
 function highlightRowInDom(actId: number) {
-  console.log(`🚀 [Tablucya v2.1] highlightRowInDom: Шукаємо рядок для акту #${actId}`);
+  console.log(
+    `🚀 [Tablucya v2.1] highlightRowInDom: Шукаємо рядок для акту #${actId}`,
+  );
 
   const table = document.querySelector(
-    "#table-container-modal-sakaz_narad table"
+    "#table-container-modal-sakaz_narad table",
   );
   if (!table) {
     console.warn(`⚠️ [highlightRowInDom] Таблиця не знайдена`);
@@ -607,7 +638,9 @@ function highlightRowInDom(actId: number) {
       }
 
       if (cellActId === actId) {
-        console.log(`✅ [highlightRowInDom] Знайдено рядок для акту #${actId}, додаємо клас`);
+        console.log(
+          `✅ [highlightRowInDom] Знайдено рядок для акту #${actId}, додаємо клас`,
+        );
         row.classList.add("act-modified-blue-pen");
         found = true;
       }
@@ -623,10 +656,12 @@ function highlightRowInDom(actId: number) {
  * Оновлює бейдж з кількістю повідомлень в комірці з номером акту
  */
 export function updateNotificationBadgeInDom(actId: number, count: number) {
-  console.log(`🔔 [updateBadge] Оновлюємо бейдж для акту #${actId}, кількість: ${count}`);
+  console.log(
+    `🔔 [updateBadge] Оновлюємо бейдж для акту #${actId}, кількість: ${count}`,
+  );
 
   const table = document.querySelector(
-    "#table-container-modal-sakaz_narad table"
+    "#table-container-modal-sakaz_narad table",
   );
   if (!table) {
     console.warn(`⚠️ [updateBadge] Таблиця не знайдена`);
@@ -647,7 +682,9 @@ export function updateNotificationBadgeInDom(actId: number, count: number) {
         console.log(`✅ [updateBadge] Знайдено рядок для акту #${actId}`);
 
         // Шукаємо існуючий бейдж
-        let badge = firstCell.querySelector(".notification-count-badge") as HTMLElement;
+        let badge = firstCell.querySelector(
+          ".notification-count-badge",
+        ) as HTMLElement;
 
         if (count > 0) {
           // Якщо бейджа немає - створюємо
@@ -693,8 +730,13 @@ export function decrementNotificationCount(actId: number) {
  * @param actId - ID акту
  * @param removeToasts - чи видаляти тости (за замовчуванням false)
  */
-export async function clearNotificationVisualOnly(actId: number, removeToasts: boolean = false) {
-  console.log(`🧹 [clearNotificationVisualOnly] Очищення візуальної підсвітки для акту #${actId}`);
+export async function clearNotificationVisualOnly(
+  actId: number,
+  removeToasts: boolean = false,
+) {
+  console.log(
+    `🧹 [clearNotificationVisualOnly] Очищення візуальної підсвітки для акту #${actId}`,
+  );
 
   // ✅ Працює для Адміністратора та Приймальника
   if (userAccessLevel !== "Адміністратор" && userAccessLevel !== "Приймальник")
@@ -709,7 +751,7 @@ export async function clearNotificationVisualOnly(actId: number, removeToasts: b
 
   // Знімаємо синю підсвітку (ЗАВЖДИ)
   const table = document.querySelector(
-    "#table-container-modal-sakaz_narad table"
+    "#table-container-modal-sakaz_narad table",
   );
   if (table) {
     const rows = table.querySelectorAll("tbody tr");
@@ -721,7 +763,9 @@ export async function clearNotificationVisualOnly(actId: number, removeToasts: b
 
         if (cellActId === actId) {
           row.classList.remove("act-modified-blue-pen");
-          console.log(`✅ [clearNotificationVisualOnly] Знято синю підсвітку з акту #${actId}`);
+          console.log(
+            `✅ [clearNotificationVisualOnly] Знято синю підсвітку з акту #${actId}`,
+          );
         }
       }
     });
@@ -739,7 +783,7 @@ export async function clearNotificationVisualOnly(actId: number, removeToasts: b
 
 function getClientInfo(
   act: any,
-  clients: any[]
+  clients: any[],
 ): { pib: string; phone: string } {
   const client = clients?.find((c) => c.client_id === act.client_id);
   const clientData = safeParseJSON(client?.data);
@@ -804,7 +848,7 @@ function isActClosed(act: any): boolean {
 async function handleCallIndicatorClick(
   actId: number,
   act: any,
-  callIndicator: HTMLElement
+  callIndicator: HTMLElement,
 ): Promise<void> {
   try {
     // Отримуємо поточні дані акту
@@ -857,7 +901,9 @@ async function handleCallIndicatorClick(
     let displayText = newEmoji;
     if (hasCallRecord) {
       // Витягуємо дату/час з newCallData
-      const dateTimeMatch = newCallData.match(/(\d{2}:\d{2} \d{2}\.\d{2}\.)(\d{4}|\d{2})/);
+      const dateTimeMatch = newCallData.match(
+        /(\d{2}:\d{2} \d{2}\.\d{2}\.)(\d{4}|\d{2})/,
+      );
       if (dateTimeMatch) {
         // dateTimeMatch[1] = "HH:MM DD.MM."
         // dateTimeMatch[2] = "YYYY" або "YY"
@@ -927,13 +973,12 @@ function showNotificationMessage(message: string, color: string): void {
 function createClientCell(
   clientInfo: { pib: string; phone: string },
   actId: number,
-  act: any
+  act: any,
 ): HTMLTableCellElement {
   const td = document.createElement("td");
   td.style.position = "relative"; // Для позиціонування примітки
   const phones = clientInfo.phone ? [clientInfo.phone] : [];
   let pibOnly = clientInfo.pib;
-
 
   // Отримуємо дані про дзвінок з акту
   const actData = safeParseJSON(act.info || act.data || act.details);
@@ -962,7 +1007,9 @@ function createClientCell(
   let callDisplayText = callEmoji;
   if (hasCallRecord) {
     // Витягуємо дату/час з callData (формат: "14:57 10.02.2026" або "14:57 10.02.2026 невзяв")
-    const dateTimeMatch = callData.match(/(\d{2}:\d{2} \d{2}\.\d{2}\.)(\d{4}|\d{2})/);
+    const dateTimeMatch = callData.match(
+      /(\d{2}:\d{2} \d{2}\.\d{2}\.)(\d{4}|\d{2})/,
+    );
     if (dateTimeMatch) {
       // dateTimeMatch[1] = "HH:MM DD.MM."
       // dateTimeMatch[2] = "YYYY" або "YY"
@@ -973,7 +1020,9 @@ function createClientCell(
   // Додаємо емодзі дзвінка з датою
   const callIndicator = document.createElement("span");
   // Додаємо клас залежно від стану: pending (⏳) або result (📞/📵)
-  const statusClass = hasCallRecord ? "call-indicator-result" : "call-indicator-pending";
+  const statusClass = hasCallRecord
+    ? "call-indicator-result"
+    : "call-indicator-pending";
   callIndicator.className = `call-indicator ${statusClass}`;
   callIndicator.textContent = callDisplayText;
   callIndicator.style.cssText = `
@@ -1028,21 +1077,30 @@ function createClientCell(
     phones.forEach((p) => {
       if (smsHtml) {
         // Для збереження центрування телефону використовуємо position: relative
-        td.insertAdjacentHTML('beforeend', `
+        td.insertAdjacentHTML(
+          "beforeend",
+          `
            <div style="position: relative; width: 100%; margin-top: 4px; min-height: 1.2em;">
              <div style="position: absolute; left: 0; top: 0; white-space: nowrap;">${smsHtml}</div>
              <div class="phone-blue-italic" style="text-align: center; width: 100%;">${p}</div>
-           </div>`);
+           </div>`,
+        );
         // Очищаємо smsHtml щоб не дублювати
         smsHtml = "";
       } else {
         // ✏️ Телефон і редактор на одній лінії
-        td.insertAdjacentHTML('beforeend', `<div class="phone-editor-row"><span class="phone-blue-italic">${p}</span>${editorHtml}</div>`);
+        td.insertAdjacentHTML(
+          "beforeend",
+          `<div class="phone-editor-row"><span class="phone-blue-italic">${p}</span>${editorHtml}</div>`,
+        );
       }
     });
   } else if (smsHtml) {
     // Якщо телефонів немає, але є SMS
-    td.insertAdjacentHTML('beforeend', `<div style="margin-top: 4px; text-align: left;">${smsHtml}</div>`);
+    td.insertAdjacentHTML(
+      "beforeend",
+      `<div style="margin-top: 4px; text-align: left;">${smsHtml}</div>`,
+    );
   }
 
   // 📝 Додаємо примітку праворуч, якщо вона є
@@ -1109,7 +1167,7 @@ function createClientCell(
     const canOpen = await canUserOpenActs();
     if (canOpen) {
       clearNotificationVisualOnly(actId, true);
-      showModal(actId, 'client');
+      showModal(actId, "client");
     } else {
       showNoAccessNotification();
     }
@@ -1120,7 +1178,7 @@ function createClientCell(
 
 function createCarCell(
   carInfo: { number: string; name: string },
-  actId: number
+  actId: number,
 ): HTMLTableCellElement {
   const td = document.createElement("td");
   td.innerHTML = `<div style="word-wrap: break-word; word-break: break-word; white-space: normal;">${carInfo.name}</div>`;
@@ -1132,7 +1190,7 @@ function createCarCell(
     const canOpen = await canUserOpenActs();
     if (canOpen) {
       clearNotificationVisualOnly(actId, true);
-      showModal(actId, 'other');
+      showModal(actId, "other");
     } else {
       showNoAccessNotification();
     }
@@ -1154,12 +1212,12 @@ function createDateCell(act: any, actId: number): HTMLTableCellElement {
     const { date: dateOpen, time: timeOpen } = formatDateTime(actDateOpen);
 
     // Форматуємо дату без "20" в році (17.02.2026 → 17.02.26)
-    const dateOpenShort = dateOpen.replace(/\.(\d{2})(\d{2})$/, '.$2');
+    const dateOpenShort = dateOpen.replace(/\.(\d{2})(\d{2})$/, ".$2");
 
     if (actDateClose && !isNaN(actDateClose.getTime())) {
       // Акт закритий - показуємо обидві дати
       const { date: dateClose, time: timeClose } = formatDateTime(actDateClose);
-      const dateCloseShort = dateClose.replace(/\.(\d{2})(\d{2})$/, '.$2');
+      const dateCloseShort = dateClose.replace(/\.(\d{2})(\d{2})$/, ".$2");
 
       td.innerHTML = `
         <div style="display: flex; justify-content: space-around; align-items: center; gap: 4px;">
@@ -1186,7 +1244,7 @@ function createDateCell(act: any, actId: number): HTMLTableCellElement {
     const canOpen = await canUserOpenActs();
     if (canOpen) {
       clearNotificationVisualOnly(actId, true);
-      showModal(actId, 'other');
+      showModal(actId, "other");
     } else {
       showNoAccessNotification();
     }
@@ -1203,13 +1261,21 @@ function createSumCell(act: any, actId: number): HTMLTableCellElement {
   const discountPercent = getActDiscount(act); // Відсоток знижки
   const fullAmount = getActFullAmount(act); // Повна сума ДО знижки (За деталі + За роботу)
 
+  // ✅ ВИПРАВЛЕНО: Отримуємо суму робіт та деталей окремо
+  const actData = safeParseJSON(act.info || act.data || act.details);
+  const detailsSum = Number(actData?.["За деталі"]) || 0;
+  const workSum = Number(actData?.["За роботу"]) || 0;
+
   if (discountPercent > 0 && fullAmount > 0) {
-    // Обчислюємо суму після знижки: 315 - 10% = 284
-    const discountedAmount = Math.round(fullAmount * (1 - discountPercent / 100));
+    // ✅ ВИПРАВЛЕНО: Знижка застосовується ТІЛЬКИ до робіт
+    const workSumAfterDiscount = Math.round(
+      workSum * (1 - discountPercent / 100),
+    );
+    const discountedAmount = workSumAfterDiscount + detailsSum;
 
     // Є знижка - показуємо в два рядки
     // Верхній: повна сума (315) з відсотком (-10%)
-    // Нижній: сума після знижки (284 грн)
+    // Нижній: сума після знижки (297 грн) - знижка тільки від робіт
     td.innerHTML = `
       <div class="sum-full-price">
         ${fullAmount.toLocaleString("uk-UA")}<sup class="discount-percent">-${Math.round(discountPercent)}%</sup>
@@ -1225,7 +1291,7 @@ function createSumCell(act: any, actId: number): HTMLTableCellElement {
     const canOpen = await canUserOpenActs();
     if (canOpen) {
       clearNotificationVisualOnly(actId, true);
-      showModal(actId, 'other');
+      showModal(actId, "other");
     } else {
       showNoAccessNotification();
     }
@@ -1238,7 +1304,7 @@ function createStandardCell(
   content: string,
   act: any,
   actId: number,
-  isActNumberCell: boolean = false
+  isActNumberCell: boolean = false,
 ): HTMLTableCellElement {
   const td = document.createElement("td");
   td.classList.add("act-table-cell");
@@ -1269,7 +1335,7 @@ function createStandardCell(
     if (act.contrAgent_raxunok && act.contrAgent_raxunok_data) {
       const raxunokNum = act.contrAgent_raxunok;
       const raxunokDateFormatted = convertISOtoShortDate(
-        act.contrAgent_raxunok_data
+        act.contrAgent_raxunok_data,
       );
 
       if (raxunokDateFormatted) {
@@ -1296,7 +1362,7 @@ function createStandardCell(
     const canOpen = await canUserOpenActs();
     if (canOpen) {
       clearNotificationVisualOnly(actId, true);
-      showModal(actId, 'other');
+      showModal(actId, "other");
     } else {
       showNoAccessNotification();
     }
@@ -1336,7 +1402,7 @@ function renderActsRows(
   tbody: HTMLTableSectionElement,
   _accessLevel: string | null,
   modifiedActIds: Set<number>,
-  showSumaColumn: boolean = true
+  showSumaColumn: boolean = true,
 ): void {
   tbody.innerHTML = "";
 
@@ -1373,8 +1439,8 @@ function renderActsRows(
         `${lockIcon} ${act.act_id?.toString() || "N/A"}`,
         act,
         act.act_id,
-        true
-      )
+        true,
+      ),
     );
     row.appendChild(createDateCell(act, act.act_id));
     row.appendChild(createClientCell(clientInfo, act.act_id, act));
@@ -1407,7 +1473,7 @@ function sortActs(): void {
     actsGlobal.sort(
       (a, b) =>
         (getActDateAsDate(b)?.getTime() || 0) -
-        (getActDateAsDate(a)?.getTime() || 0)
+        (getActDateAsDate(a)?.getTime() || 0),
     );
     sortByDateStep = 0;
   }
@@ -1418,7 +1484,7 @@ function getDefaultDateRange(): string {
   const lastMonth = new Date(
     today.getFullYear(),
     today.getMonth() - 1,
-    today.getDate()
+    today.getDate(),
   );
   return `${formatDate(lastMonth)} - ${formatDate(today)}`;
 }
@@ -1454,7 +1520,7 @@ function filterActs(
   acts: any[],
   searchTerm: string,
   clients: any[],
-  cars: any[]
+  cars: any[],
 ): any[] {
   if (!searchTerm) return acts;
   const filters = parseSearchTerm(searchTerm);
@@ -1533,7 +1599,7 @@ function parseSearchTerm(searchTerm: string): { key: string; value: string }[] {
 async function loadActsFromDB(
   dateFrom: string | null,
   dateTo: string | null,
-  filterType: "open" | "closed" | null = null
+  filterType: "open" | "closed" | null = null,
 ): Promise<any[] | null> {
   let query = supabase.from("acts").select("*");
   if (filterType === "open") query = query.is("date_off", null);
@@ -1579,7 +1645,7 @@ async function loadCarsFromDB(): Promise<any[] | null> {
 
 function createTableHeader(
   _accessLevel: string | null,
-  showSumaColumn: boolean = true
+  showSumaColumn: boolean = true,
 ): HTMLTableSectionElement {
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
@@ -1612,13 +1678,15 @@ function createTableHeader(
 
 function updateTableBody(): void {
   const table = document.querySelector(
-    "#table-container-modal-sakaz_narad table"
+    "#table-container-modal-sakaz_narad table",
   );
   if (!table) return;
 
   // ✅ Перевіряємо чи є стовпець "Сума" в заголовку таблиці
   const headers = table.querySelectorAll("thead th");
-  const showSumaColumn = Array.from(headers).some(th => th.textContent?.includes("Сума"));
+  const showSumaColumn = Array.from(headers).some((th) =>
+    th.textContent?.includes("Сума"),
+  );
 
   const newTbody = document.createElement("tbody");
   renderActsRows(
@@ -1628,13 +1696,16 @@ function updateTableBody(): void {
     newTbody,
     userAccessLevel,
     modifiedActIdsGlobal,
-    showSumaColumn
+    showSumaColumn,
   );
   const oldTbody = table.querySelector("tbody");
   if (oldTbody) oldTbody.replaceWith(newTbody);
 }
 
-function createTable(accessLevel: string | null, showSumaColumn: boolean = true): HTMLTableElement {
+function createTable(
+  accessLevel: string | null,
+  showSumaColumn: boolean = true,
+): HTMLTableElement {
   const table = document.createElement("table");
   table.style.width = "100%";
   table.style.borderCollapse = "collapse";
@@ -1647,7 +1718,7 @@ function createTable(accessLevel: string | null, showSumaColumn: boolean = true)
     tbody,
     accessLevel,
     modifiedActIdsGlobal,
-    showSumaColumn
+    showSumaColumn,
   );
   table.appendChild(thead);
   table.appendChild(tbody);
@@ -1656,7 +1727,7 @@ function createTable(accessLevel: string | null, showSumaColumn: boolean = true)
 
 function showNoDataMessage(message: string): void {
   const container = document.getElementById(
-    "table-container-modal-sakaz_narad"
+    "table-container-modal-sakaz_narad",
   );
   if (container)
     container.innerHTML = `<div style="text-align: center; padding: 20px; color: #666;">${message}</div>`;
@@ -1664,7 +1735,7 @@ function showNoDataMessage(message: string): void {
 
 function showAuthRequiredMessage(): void {
   const container = document.getElementById(
-    "table-container-modal-sakaz_narad"
+    "table-container-modal-sakaz_narad",
   );
   if (container) {
     container.innerHTML = `<div style="text-align: center; padding: 40px; color: #666;">
@@ -1681,7 +1752,7 @@ function showAuthRequiredMessage(): void {
 
 function showNoViewAccessMessage(): void {
   const container = document.getElementById(
-    "table-container-modal-sakaz_narad"
+    "table-container-modal-sakaz_narad",
   );
   if (container) {
     container.innerHTML = `<div style="text-align: center; padding: 40px; color: #666;">
@@ -1702,7 +1773,7 @@ export async function loadActsTable(
   dateFrom: string | null = null,
   dateTo: string | null = null,
   filterType: "open" | "closed" | null = null,
-  searchTerm: string | null = null
+  searchTerm: string | null = null,
 ): Promise<void> {
   if (!isUserAuthenticated()) {
     const accessLevel = await showLoginModalBeforeTable();
@@ -1723,7 +1794,7 @@ export async function loadActsTable(
     let finalDateTo: string | null = null;
     let finalFilterType: "open" | "closed" | null = filterType || null;
     const dateRangePicker = document.getElementById(
-      "dateRangePicker"
+      "dateRangePicker",
     ) as HTMLInputElement;
 
     if (finalFilterType === "open" || finalFilterType === "closed") {
@@ -1749,11 +1820,11 @@ export async function loadActsTable(
             const [d2, m2, y2] = endStr.split(".");
             finalDateFrom = `${y1}-${m1.padStart(2, "0")}-${d1.padStart(
               2,
-              "0"
+              "0",
             )} 00:00:00`;
             finalDateTo = `${y2}-${m2.padStart(2, "0")}-${d2.padStart(
               2,
-              "0"
+              "0",
             )} 23:59:59`;
             if (dateRangePicker) dateRangePicker.value = defaultRange;
           }
@@ -1762,13 +1833,14 @@ export async function loadActsTable(
     }
 
     // ✅ Завантажуємо акти, клієнтів, машини + СПОВІЩЕННЯ + КІЛЬКІСТЬ ПОВІДОМЛЕНЬ
-    const [acts, clients, cars, modifiedIds, notificationCounts] = await Promise.all([
-      loadActsFromDB(finalDateFrom, finalDateTo, finalFilterType),
-      loadClientsFromDB(),
-      loadCarsFromDB(),
-      fetchModifiedActIds(), // <-- Завантажуємо існуючі підсвітки
-      fetchActNotificationCounts(), // <-- Завантажуємо кількість повідомлень
-    ]);
+    const [acts, clients, cars, modifiedIds, notificationCounts] =
+      await Promise.all([
+        loadActsFromDB(finalDateFrom, finalDateTo, finalFilterType),
+        loadClientsFromDB(),
+        loadCarsFromDB(),
+        fetchModifiedActIds(), // <-- Завантажуємо існуючі підсвітки
+        fetchActNotificationCounts(), // <-- Завантажуємо кількість повідомлень
+      ]);
 
     if (acts === null || clients === null || cars === null) return;
 
@@ -1788,7 +1860,7 @@ export async function loadActsTable(
     const showSumaColumn = await canUserSeePriceColumns();
     const table = createTable(userAccessLevel, showSumaColumn);
     const container = document.getElementById(
-      "table-container-modal-sakaz_narad"
+      "table-container-modal-sakaz_narad",
     );
     if (!container) return;
     container.innerHTML = "";
@@ -1801,11 +1873,11 @@ export async function loadActsTable(
 export async function refreshActsTable(): Promise<void> {
   if (!isUserAuthenticated()) return;
   const searchInput = document.getElementById(
-    "searchInput"
+    "searchInput",
   ) as HTMLInputElement;
   const currentSearchTerm = searchInput?.value?.trim() || "";
   const dateRangePicker = document.getElementById(
-    "dateRangePicker"
+    "dateRangePicker",
   ) as HTMLInputElement;
   const currentValue = dateRangePicker?.value?.trim() || "";
 
@@ -1826,7 +1898,7 @@ export async function refreshActsTable(): Promise<void> {
     currentDateFrom,
     currentDateTo,
     currentFilterType,
-    currentSearchTerm
+    currentSearchTerm,
   );
 }
 
@@ -1854,7 +1926,7 @@ function resizeInput(input: HTMLInputElement): void {
 
 function watchDateRangeChanges(): void {
   const dateRangePicker = document.getElementById(
-    "dateRangePicker"
+    "dateRangePicker",
   ) as HTMLInputElement;
   if (!dateRangePicker) return;
 
@@ -1871,7 +1943,7 @@ function watchDateRangeChanges(): void {
       resizeInput(dateRangePicker);
 
       const searchInput = document.getElementById(
-        "searchInput"
+        "searchInput",
       ) as HTMLInputElement;
       const currentSearchTerm = searchInput?.value?.trim() || "";
       loadActsTable(undefined, undefined, undefined, currentSearchTerm);
@@ -1888,7 +1960,7 @@ function watchDateRangeChanges(): void {
   // Додаткові слухачі подій для кращої реактивності
   dateRangePicker.addEventListener("input", () => resizeInput(dateRangePicker));
   dateRangePicker.addEventListener("change", () =>
-    resizeInput(dateRangePicker)
+    resizeInput(dateRangePicker),
   );
 
   window.addEventListener("beforeunload", () => observer.disconnect());
@@ -1904,7 +1976,9 @@ export async function initializeActsSystem(): Promise<void> {
       loadGeneralSettingsFromLocalStorage();
       console.log("✅ Загальні налаштування з localStorage (сесія активна)");
     } else {
-      console.log("📥 Завантаження загальних налаштувань з БД (новий вхід/перезавантаження)...");
+      console.log(
+        "📥 Завантаження загальних налаштувань з БД (новий вхід/перезавантаження)...",
+      );
       await loadGeneralSettingsFromDB();
       markGeneralSettingsAsLoaded();
     }
@@ -1932,15 +2006,15 @@ export async function initializeActsSystem(): Promise<void> {
     console.log(`🔍 [initializeActsSystem] accessLevel = "${accessLevel}"`);
     if (accessLevel === "Адміністратор" || accessLevel === "Приймальник") {
       console.log(
-        "📥 [initializeActsSystem] Викликаємо loadAndShowExistingNotifications..."
+        "📥 [initializeActsSystem] Викликаємо loadAndShowExistingNotifications...",
       );
       await loadAndShowExistingNotifications();
       console.log(
-        "✅ [initializeActsSystem] loadAndShowExistingNotifications завершено"
+        "✅ [initializeActsSystem] loadAndShowExistingNotifications завершено",
       );
     } else {
       console.log(
-        `⏭️ [initializeActsSystem] Пропускаємо loadAndShowExistingNotifications (accessLevel = "${accessLevel}")`
+        `⏭️ [initializeActsSystem] Пропускаємо loadAndShowExistingNotifications (accessLevel = "${accessLevel}")`,
       );
     }
 
