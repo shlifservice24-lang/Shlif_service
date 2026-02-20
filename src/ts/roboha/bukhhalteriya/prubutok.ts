@@ -1530,12 +1530,16 @@ export function updatevutratuDisplayedSums(): void {
   const typeFilterToggle = byId<HTMLInputElement>("vutratu-type-filter-toggle");
   const currentFilterType = typeFilterToggle ? typeFilterToggle.value : "2"; // Default to "both"
 
+  // Окремо рахуємо витрати ТІЛЬКИ для прибутку (не для каси)
+  let totalNegativeSumForProfit = 0;
+
   filteredvutratuData.forEach((expense) => {
     // 1. Витрати (від'ємні суми) — ТІЛЬКИ реальні витрати з таблиці vutratu
     // Акти (💰 Прибуток) з від'ємним amount (наприклад через знижку) НЕ рахуємо тут —
     // вони вже враховані в totalNetWorkProfit / totalNetDetailsProfit
     if (expense.amount < 0 && expense.category !== "💰 Прибуток") {
       totalNegativeSum += expense.amount;
+      totalNegativeSumForProfit += expense.amount;
     }
 
     // 2. Акти (Прибуток)
@@ -1555,14 +1559,15 @@ export function updatevutratuDisplayedSums(): void {
         let workProfit = expense.workAmount || 0;
 
         // Від'ємні прибутки (збитки через знижку, де зарплата > виручка) —
-        // переносимо у витрати, щоб вони відображались у колонці 💶
+        // переносимо у витрати ТІЛЬКИ ДЛЯ ПРИБУТКУ, щоб вони відображались у колонці 💶
         // і НЕ зменшували колонки ⚙️ та 🛠️
+        // ⚠️ Але НЕ впливали на розрахунок КАСИ (бо каса = фактичні гроші від клієнта)
         if (detailsProfit < 0) {
-          totalNegativeSum += detailsProfit;
+          totalNegativeSumForProfit += detailsProfit;
           detailsProfit = 0;
         }
         if (workProfit < 0) {
-          totalNegativeSum += workProfit;
+          totalNegativeSumForProfit += workProfit;
           workProfit = 0;
         }
 
@@ -1592,12 +1597,13 @@ export function updatevutratuDisplayedSums(): void {
 
   // Фінальні суми
   // Каса = (Повна сума закритих актів) + (Аванси відкритих актів) - (Реальні витрати)
+  // ⚠️ Для каси використовуємо ТІЛЬКИ реальні витрати (не від'ємні прибутки від знижок)
   const finalSumCasa =
     totalNetFullDetails + totalNetFullWork + totalAvansSum + totalNegativeSum;
 
-  // Прибуток = (Чиста Маржа Деталі + Чиста Маржа Робота) - Витрати
+  // Прибуток = (Чиста Маржа Деталі + Чиста Маржа Робота) - Витрати (включно з від'ємними прибутками)
   const finalSumProfit =
-    totalNetDetailsProfit + totalNetWorkProfit + totalNegativeSum;
+    totalNetDetailsProfit + totalNetWorkProfit + totalNegativeSumForProfit;
 
   let htmlContent = "";
 
@@ -1662,11 +1668,15 @@ export function updatevutratuDisplayedSums(): void {
           <span style="color: #666;">+</span>
           <span><strong style="color: #000;">💰 ${formatNumber(
             totalAvansSum,
-          )}</strong></span>
+          )}</strong></span>${
+            totalNegativeSum < 0
+              ? `
           <span style="color: #666;">-</span>
           <span><strong style="color: #8B0000;">💶 ${formatNumber(
             Math.abs(totalNegativeSum),
-          )}</strong></span>
+          )}</strong></span>`
+              : ""
+          }
           <span style="color: #666;">=</span>
           <span><strong style="color: ${
             finalSumCasa >= 0 ? "#006400" : "#8B0000"
@@ -1680,11 +1690,15 @@ export function updatevutratuDisplayedSums(): void {
           <span style="color: #666;">+</span>
           <span><strong style="color: #FF8C00;">🛠️ ${formatNumber(
             totalNetWorkProfit,
-          )}</strong></span>
+          )}</strong></span>${
+            totalNegativeSumForProfit < 0
+              ? `
           <span style="color: #666;">-</span>
           <span><strong style="color: #8B0000;">💶 ${formatNumber(
-            Math.abs(totalNegativeSum),
-          )}</strong></span>
+            Math.abs(totalNegativeSumForProfit),
+          )}</strong></span>`
+              : ""
+          }
           <span style="color: #666;">=</span>
           <span><strong style="color: ${
             finalSumProfit >= 0 ? "#006400" : "#8B0000"
