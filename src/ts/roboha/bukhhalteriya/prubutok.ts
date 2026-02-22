@@ -31,6 +31,7 @@ interface ExpenseRecordLocal {
   tupOplatu?: string; // Тип оплати
   discount?: number; // Знижка у відсотках
   discountAmount?: number; // Сума знижки
+  tupAvansu?: string; // Тип авансу
 }
 
 type ExpenseMode = "add" | "edit" | "delete";
@@ -870,6 +871,7 @@ async function loadvutratuFromDatabase(): Promise<void> {
           tupOplatu: actItem.tupOplatu || undefined,
           discount: discountPercent,
           discountAmount: discountAmountValue,
+          tupAvansu: actData["Тип_Авансу"] || undefined,
         });
       }
     }
@@ -1137,13 +1139,12 @@ export function filtervutratuData(): void {
     if (paymentMethod) {
       const isFromAct = expense.category === "💰 Прибуток";
       if (isFromAct) {
-        // Для актів перевіряємо tupOplatu
-        if (
-          !expense.tupOplatu ||
-          !expense.tupOplatu.includes(
-            paymentMethod.replace(/💵 |💳 |🏦 |📱 /g, ""),
-          )
-        ) {
+        const cleanPaymentMethod = paymentMethod.replace(/💵 |💳 |🏦 |📱 /g, "").toLowerCase().trim();
+        const oplatuMatch = expense.tupOplatu && expense.tupOplatu.toLowerCase().includes(cleanPaymentMethod);
+        const avansuMatch = expense.tupAvansu && expense.tupAvansu.toLowerCase().includes(cleanPaymentMethod);
+
+        // Для актів перевіряємо tupOplatu АБО tupAvansu
+        if (!oplatuMatch && !avansuMatch) {
           return false;
         }
       } else {
@@ -1317,9 +1318,8 @@ export function updatevutratuTable(): void {
     if (isFromAct && expense.actNumber) {
       actCell.innerHTML = `
         <button class="Bukhhalter-act-btn"
-                onclick="event.stopPropagation(); openActModalWithClient(${
-                  Number(expense.actNumber) || 0
-                })"
+                onclick="event.stopPropagation(); openActModalWithClient(${Number(expense.actNumber) || 0
+        })"
                 title="Відкрити акт №${expense.actNumber}">
           📋 ${expense.actNumber}
         </button>
@@ -1445,11 +1445,18 @@ export function updatevutratuTable(): void {
         }
       }
 
+      let avansEmojiStr = "💰";
+      if (expense.tupAvansu) {
+        if (expense.tupAvansu.toLowerCase().includes("готівка")) avansEmojiStr = "💵";
+        else if (expense.tupAvansu.toLowerCase().includes("карта") || expense.tupAvansu.toLowerCase().includes("картка")) avansEmojiStr = "💳";
+        else if (expense.tupAvansu.toLowerCase().includes("iban")) avansEmojiStr = "🏦";
+      }
+
       const avansInfo =
         expense.paymentMethod && Number(expense.paymentMethod) > 0
-          ? `<br><span style="color: #000; font-weight: 600; font-size: 0.95em;">💰 ${formatNumber(
-              Number(expense.paymentMethod),
-            )}</span>`
+          ? `<br><span style="color: #000; font-weight: 600; font-size: 0.95em;">${avansEmojiStr} ${formatNumber(
+            Number(expense.paymentMethod),
+          )}</span>`
           : "";
       methodCell.innerHTML = `
         <span style="font-size: 0.95em;">
@@ -1461,10 +1468,16 @@ export function updatevutratuTable(): void {
       expense.paymentMethod &&
       Number(expense.paymentMethod) > 0
     ) {
+      let avansEmojiStr = "💰";
+      if (expense.tupAvansu) {
+        if (expense.tupAvansu.toLowerCase().includes("готівка")) avansEmojiStr = "💵";
+        else if (expense.tupAvansu.toLowerCase().includes("карта") || expense.tupAvansu.toLowerCase().includes("картка")) avansEmojiStr = "💳";
+        else if (expense.tupAvansu.toLowerCase().includes("iban")) avansEmojiStr = "🏦";
+      }
       // Для актів з авансом - відображаємо чорним
       methodCell.innerHTML = `
         <span style="color: #000; font-weight: 600; font-size: 0.95em;">
-          💰 ${formatNumber(Number(expense.paymentMethod))}
+          ${avansEmojiStr} ${formatNumber(Number(expense.paymentMethod))}
         </span>
       `;
     } else if (isFromAct) {
@@ -1631,9 +1644,8 @@ export function updatevutratuDisplayedSums(): void {
           <span style="color: #666;">+</span>
           <span><strong style="color: #000;">💰 ${formatNumber(totalAvansSum)}</strong></span>
           <span style="color: #666;">=</span>
-          <span><strong style="color: ${
-            finalSumCasa >= 0 ? "#006400" : "#8B0000"
-          };">📈 ${formatNumber(finalSumCasa)}</strong> грн</span>
+          <span><strong style="color: ${finalSumCasa >= 0 ? "#006400" : "#8B0000"
+      };">📈 ${formatNumber(finalSumCasa)}</strong> грн</span>
         </div>
         <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px;">
           <span>Прибуток</span>
@@ -1641,9 +1653,8 @@ export function updatevutratuDisplayedSums(): void {
           <span style="color: #666;">+</span>
           <span><strong style="color: #FF8C00;">🛠️ ${formatNumber(totalNetWorkProfit)}</strong></span>
           <span style="color: #666;">=</span>
-          <span><strong style="color: ${
-            finalSumProfit >= 0 ? "#006400" : "#8B0000"
-          };">📈 ${formatNumber(finalSumProfit)}</strong> грн</span>
+          <span><strong style="color: ${finalSumProfit >= 0 ? "#006400" : "#8B0000"
+      };">📈 ${formatNumber(finalSumProfit)}</strong> грн</span>
           
           <span style="color: #ccc; margin-left: 10px;">|</span>
           
@@ -1659,57 +1670,53 @@ export function updatevutratuDisplayedSums(): void {
         <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px;">
           <span>Каса</span>
           <span><strong style="color: #1E90FF;">⚙️ ${formatNumber(
-            totalNetFullDetails,
-          )}</strong></span>
+      totalNetFullDetails,
+    )}</strong></span>
           <span style="color: #666;">+</span>
           <span><strong style="color: #FF8C00;">🛠️ ${formatNumber(
-            totalNetFullWork,
-          )}</strong></span>
+      totalNetFullWork,
+    )}</strong></span>
           <span style="color: #666;">+</span>
           <span><strong style="color: #000;">💰 ${formatNumber(
-            totalAvansSum,
-          )}</strong></span>${
-            totalNegativeSum < 0
-              ? `
+      totalAvansSum,
+    )}</strong></span>${totalNegativeSum < 0
+        ? `
           <span style="color: #666;">-</span>
           <span><strong style="color: #8B0000;">💶 ${formatNumber(
-            Math.abs(totalNegativeSum),
-          )}</strong></span>`
-              : ""
-          }
+          Math.abs(totalNegativeSum),
+        )}</strong></span>`
+        : ""
+      }
           <span style="color: #666;">=</span>
-          <span><strong style="color: ${
-            finalSumCasa >= 0 ? "#006400" : "#8B0000"
-          };">📈 ${formatNumber(finalSumCasa)}</strong> грн</span>
+          <span><strong style="color: ${finalSumCasa >= 0 ? "#006400" : "#8B0000"
+      };">📈 ${formatNumber(finalSumCasa)}</strong> грн</span>
         </div>
         <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px;">
           <span>Прибуток</span>
           <span><strong style="color: #1E90FF;">⚙️ ${formatNumber(
-            totalNetDetailsProfit,
-          )}</strong></span>
+        totalNetDetailsProfit,
+      )}</strong></span>
           <span style="color: #666;">+</span>
           <span><strong style="color: #FF8C00;">🛠️ ${formatNumber(
-            totalNetWorkProfit,
-          )}</strong></span>${
-            totalNegativeSumForProfit < 0
-              ? `
+        totalNetWorkProfit,
+      )}</strong></span>${totalNegativeSumForProfit < 0
+        ? `
           <span style="color: #666;">-</span>
           <span><strong style="color: #8B0000;">💶 ${formatNumber(
-            Math.abs(totalNegativeSumForProfit),
-          )}</strong></span>`
-              : ""
-          }
+          Math.abs(totalNegativeSumForProfit),
+        )}</strong></span>`
+        : ""
+      }
           <span style="color: #666;">=</span>
-          <span><strong style="color: ${
-            finalSumProfit >= 0 ? "#006400" : "#8B0000"
-          };">📈 ${formatNumber(finalSumProfit)}</strong> грн</span>
+          <span><strong style="color: ${finalSumProfit >= 0 ? "#006400" : "#8B0000"
+      };">📈 ${formatNumber(finalSumProfit)}</strong> грн</span>
           
           <span style="color: #ccc; margin-left: 10px;">|</span>
           
           <span>Знижки</span>
           <span><strong style="color: #c62828;">🏷️ ${formatNumber(
-            totalDiscountSum,
-          )}</strong> грн</span>
+        totalDiscountSum,
+      )}</strong> грн</span>
         </div>
       </div>
     `;

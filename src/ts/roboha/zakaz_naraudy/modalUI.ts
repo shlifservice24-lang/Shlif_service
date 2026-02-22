@@ -901,7 +901,7 @@ export function generateTableHTML(
     <p class="sum-row" style="display: flex; align-items: center; justify-content: flex-end; flex-wrap: nowrap; white-space: nowrap;">
       <span class="sum-label">Аванс:</span>
       <span id="avans-type-container" style="margin: 0 5px; display: inline-flex; align-items: center; justify-content: center; user-select: none;">
-        <span id="avans-type-emoji" title="Готівка" style="cursor: pointer; font-size: 1.2em; transition: all 0.2s; display: flex; align-items: center; justify-content: center;">💵</span>
+        <span id="avans-type-emoji" title="Готівка" style="${globalCache.isActClosed ? 'cursor: default; pointer-events: none;' : 'cursor: pointer;'} font-size: 1.2em; transition: all 0.2s; display: flex; align-items: center; justify-content: center;">💵</span>
       </span>
       <input 
         type="text"
@@ -910,6 +910,7 @@ export function generateTableHTML(
         value="0"
         placeholder="0"
         autocomplete="off"
+        ${globalCache.isActClosed ? "disabled" : ""}
       />
       <span class="sum-currency">грн</span>
     </p>
@@ -928,6 +929,7 @@ export function generateTableHTML(
         value="0"
         placeholder="0"
         autocomplete="off"
+        ${globalCache.isActClosed ? "disabled" : ""}
       />
       <span class="sum-currency">%</span>
     </p>
