@@ -22,12 +22,10 @@ export function createViknoPidtverdchennayZakruttiaAkty(): HTMLDivElement {
     <p id="vikno_pidtverdchennay_zakruttia_akty-message">Підтвердити закриття акту?</p>
     <div class="vikno_pidtverdchennay_zakruttia_akty-buttons save-buttons">
       <button id="vikno_pidtverdchennay_zakruttia_akty-confirm" class="vikno_pidtverdchennay_zakruttia_akty-confirm-btn btn-save-confirm">Так</button>
-      <div class="payment-type-container">
-        <select id="payment-type-select" class="payment-type-select">
-          <option value="Готівка" selected>💵 Готівка</option>
-          <option value="Картка">💳 Картка</option>
-          <option value="IBAN">🏦 IBAN</option>
-        </select>
+      <div class="payment-split-container" style="display: flex; gap: 8px; flex-direction: column; text-align: left; padding: 10px; background: #f9f9f9; border-radius: 6px; margin: 10px 0;">
+        <label style="display: flex; justify-content: space-between; align-items: center; font-weight: 500;">💵 Готівка <input type="number" id="pay-cash-input" value="0" class="payment-input" style="width: 100px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;"></label>
+        <label style="display: flex; justify-content: space-between; align-items: center; font-weight: 500;">💳 Картка <input type="number" id="pay-card-input" value="0" class="payment-input" style="width: 100px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;"></label>
+        <label style="display: flex; justify-content: space-between; align-items: center; font-weight: 500;">🏦 IBAN <input type="number" id="pay-iban-input" value="0" class="payment-input" style="width: 100px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;"></label>
       </div>
       <button id="vikno_pidtverdchennay_zakruttia_akty-cancel" class="vikno_pidtverdchennay_zakruttia_akty-cancel-btn btn-save-cancel">Ні</button>
     </div>
@@ -116,6 +114,19 @@ export function showViknoPidtverdchennayZakruttiaAkty(
 
     modal.style.display = "flex";
 
+    const avansInput = document.getElementById("editable-avans") as HTMLInputElement | null;
+    const avansVal = avansInput ? Number(avansInput.value.replace(/\s/g, "")) : 0;
+    const avansTypeContainer = document.getElementById("avans-type-container");
+    const tupAvansu = avansTypeContainer?.getAttribute("data-selected-type") || "готівка";
+
+    const cashInput = document.getElementById("pay-cash-input") as HTMLInputElement | null;
+    const cardInput = document.getElementById("pay-card-input") as HTMLInputElement | null;
+    const ibanInput = document.getElementById("pay-iban-input") as HTMLInputElement | null;
+
+    if (cashInput) cashInput.value = (tupAvansu.toLowerCase() === "готівка" ? String(avansVal) : "0");
+    if (cardInput) cardInput.value = (tupAvansu.toLowerCase() === "карта" || tupAvansu.toLowerCase() === "картка" ? String(avansVal) : "0");
+    if (ibanInput) ibanInput.value = (tupAvansu.toLowerCase() === "iban" ? String(avansVal) : "0");
+
     const confirmBtn = document.getElementById(
       "vikno_pidtverdchennay_zakruttia_akty-confirm"
     ) as HTMLButtonElement | null;
@@ -143,11 +154,20 @@ export function showViknoPidtverdchennayZakruttiaAkty(
     const onConfirm = async () => {
       confirmBtn.disabled = true;
       try {
-        // Отримуємо вибраний тип оплати
-        const paymentSelect = document.getElementById(
-          "payment-type-select"
-        ) as HTMLSelectElement | null;
-        const selectedPaymentType = paymentSelect?.value || "Готівка";
+        const cashQInput = document.getElementById("pay-cash-input") as HTMLInputElement | null;
+        const cardQInput = document.getElementById("pay-card-input") as HTMLInputElement | null;
+        const ibanQInput = document.getElementById("pay-iban-input") as HTMLInputElement | null;
+
+        const cashVal = Number(cashQInput?.value) || 0;
+        const cardVal = Number(cardQInput?.value) || 0;
+        const ibanVal = Number(ibanQInput?.value) || 0;
+
+        const paymentData = {
+          "готівка": cashVal,
+          "картка": cardVal,
+          "iban": ibanVal
+        };
+        const selectedPaymentType = JSON.stringify(paymentData);
 
         console.log(`💳 Обрано тип оплати: ${selectedPaymentType}`);
 

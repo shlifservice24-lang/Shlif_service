@@ -1140,7 +1140,19 @@ export function filtervutratuData(): void {
       const isFromAct = expense.category === "💰 Прибуток";
       if (isFromAct) {
         const cleanPaymentMethod = paymentMethod.replace(/💵 |💳 |🏦 |📱 /g, "").toLowerCase().trim();
-        const oplatuMatch = expense.tupOplatu && expense.tupOplatu.toLowerCase().includes(cleanPaymentMethod);
+        let oplatuMatch = false;
+
+        if (expense.tupOplatu) {
+          try {
+            const parsedPayment = JSON.parse(expense.tupOplatu);
+            if (cleanPaymentMethod === "готівка" && parsedPayment["готівка"] > 0) oplatuMatch = true;
+            else if ((cleanPaymentMethod === "карта" || cleanPaymentMethod === "картка") && parsedPayment["картка"] > 0) oplatuMatch = true;
+            else if (cleanPaymentMethod === "iban" && parsedPayment["iban"] > 0) oplatuMatch = true;
+          } catch (e) {
+            oplatuMatch = expense.tupOplatu.toLowerCase().includes(cleanPaymentMethod);
+          }
+        }
+
         const avansuMatch = expense.tupAvansu && expense.tupAvansu.toLowerCase().includes(cleanPaymentMethod);
 
         // Для актів перевіряємо tupOplatu АБО tupAvansu
@@ -1398,11 +1410,28 @@ export function updatevutratuTable(): void {
       const discountVal = expense.discountAmount || 0;
       const finalVal = expense.fullAmount - discountVal;
 
-      let html = `<span style="color: #006400; font-size: 0.95em; font-weight: 500;">
-          ${formatNumber(expense.fullAmount)}
-        </span>`;
+      let isJson = false;
+      let parsedPayment: any = null;
+      if (expense.tupOplatu) {
+        try {
+          parsedPayment = JSON.parse(expense.tupOplatu);
+          isJson = true;
+        } catch (e) { }
+      }
+
+      let splitHtml = "";
+      if (isJson && parsedPayment) {
+        const parts = [];
+        if (parsedPayment["готівка"] > 0) parts.push(`<div style="color: #006400; font-size: 0.95em; font-weight: 500;">💵 ${formatNumber(parsedPayment["готівка"])}</div>`);
+        if (parsedPayment["картка"] > 0) parts.push(`<div style="color: #006400; font-size: 0.95em; font-weight: 500;">💳 ${formatNumber(parsedPayment["картка"])}</div>`);
+        if (parsedPayment["iban"] > 0) parts.push(`<div style="color: #006400; font-size: 0.95em; font-weight: 500;">🏦 ${formatNumber(parsedPayment["iban"])}</div>`);
+        splitHtml = parts.join("");
+      }
+
+      let html = splitHtml || `<span style="color: #006400; font-size: 0.95em; font-weight: 500;">${formatNumber(expense.fullAmount)}</span>`;
 
       if (discount > 0) {
+        const finalDisplay = splitHtml ? `<div style="text-align: right; width: 100%;">${splitHtml}</div>` : `<div style="font-size: 0.95em; font-weight: 700; color: #006400; margin-top: 2px;">${formatNumber(finalVal)}</div>`;
         html = `
             <div style="display: flex; flex-direction: column; align-items: flex-end;">
               <span style="color: #1a73e8; font-size: 0.95em; font-weight: 500;">
@@ -1411,8 +1440,8 @@ export function updatevutratuTable(): void {
               <div style="font-size: 0.85em; color: #d32f2f; margin-top: 2px;">
                 🏷️${Math.round(discount)}% ${formatNumber(discountVal)}
               </div>
-              <div style="font-size: 0.95em; font-weight: 700; color: #006400; margin-top: 2px; border-top: 1px solid #ddd; padding-top: 2px;">
-                ${formatNumber(finalVal)}
+              <div style="border-top: 1px solid #ddd; padding-top: 2px; width: 100%;">
+                ${finalDisplay}
               </div>
             </div>
           `;
@@ -1429,19 +1458,34 @@ export function updatevutratuTable(): void {
     if (isFromAct && expense.tupOplatu) {
       // Для актів - відображаємо тип оплати з tupOplatu
       let paymentText = expense.tupOplatu;
+      let isJson = false;
+      let parsedPayment: any = null;
 
-      // Додаємо емодзі якщо їх немає
-      if (
-        !paymentText.includes("💵") &&
-        !paymentText.includes("💳") &&
-        !paymentText.includes("🏦")
-      ) {
-        if (paymentText.toLowerCase().includes("готівка")) {
-          paymentText = "💵 " + paymentText;
-        } else if (paymentText.toLowerCase().includes("картка")) {
-          paymentText = "💳 " + paymentText;
-        } else if (paymentText.toLowerCase().includes("iban")) {
-          paymentText = "🏦 " + paymentText;
+      try {
+        parsedPayment = JSON.parse(paymentText);
+        isJson = true;
+      } catch (e) { }
+
+      if (isJson && parsedPayment) {
+        const parts = [];
+        if (parsedPayment["готівка"] > 0) parts.push(`💵 ${parsedPayment["готівка"]}`);
+        if (parsedPayment["картка"] > 0) parts.push(`💳 ${parsedPayment["картка"]}`);
+        if (parsedPayment["iban"] > 0) parts.push(`🏦 ${parsedPayment["iban"]}`);
+        paymentText = parts.join("<br>") || "💵 0";
+      } else {
+        // Додаємо емодзі якщо їх немає
+        if (
+          !paymentText.includes("💵") &&
+          !paymentText.includes("💳") &&
+          !paymentText.includes("🏦")
+        ) {
+          if (paymentText.toLowerCase().includes("готівка")) {
+            paymentText = "💵 " + paymentText;
+          } else if (paymentText.toLowerCase().includes("картка")) {
+            paymentText = "💳 " + paymentText;
+          } else if (paymentText.toLowerCase().includes("iban")) {
+            paymentText = "🏦 " + paymentText;
+          }
         }
       }
 
@@ -1680,12 +1724,12 @@ export function updatevutratuDisplayedSums(): void {
           <span><strong style="color: #000;">💰 ${formatNumber(
       totalAvansSum,
     )}</strong></span>${totalNegativeSum < 0
-        ? `
+      ? `
           <span style="color: #666;">-</span>
           <span><strong style="color: #8B0000;">💶 ${formatNumber(
-          Math.abs(totalNegativeSum),
-        )}</strong></span>`
-        : ""
+        Math.abs(totalNegativeSum),
+      )}</strong></span>`
+      : ""
       }
           <span style="color: #666;">=</span>
           <span><strong style="color: ${finalSumCasa >= 0 ? "#006400" : "#8B0000"
