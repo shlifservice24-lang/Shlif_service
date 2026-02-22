@@ -1498,13 +1498,14 @@ export function updatevutratuTable(): void {
 
       const avansInfo =
         expense.paymentMethod && Number(expense.paymentMethod) > 0
-          ? `<br><span style="color: #000; font-weight: 600; font-size: 0.95em;">${avansEmojiStr} ${formatNumber(
+          ? `<span style="color: #000; font-weight: 600; font-size: 0.95em;">${avansEmojiStr} ${formatNumber(
             Number(expense.paymentMethod),
           )}</span>`
           : "";
+
       methodCell.innerHTML = `
         <span style="font-size: 0.95em;">
-          ${paymentText}${avansInfo}
+          ${isJson ? avansInfo : `${paymentText}${avansInfo ? `<br>${avansInfo}` : ''}`}
         </span>
       `;
     } else if (
