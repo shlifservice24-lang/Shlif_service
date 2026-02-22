@@ -898,7 +898,7 @@ export function generateTableHTML(
     ? ""
     : `
   <div class="zakaz_narayd-sums-footer">
-    <p class="sum-row">
+    <p class="sum-row" style="display: flex; align-items: center; flex-wrap: nowrap; white-space: nowrap;">
       <span class="sum-label">Аванс:</span>
       <span id="avans-type-container" style="margin: 0 5px; display: inline-flex; align-items: center; justify-content: center; user-select: none;">
         <span id="avans-type-emoji" title="Готівка" style="cursor: pointer; font-size: 1.2em; transition: all 0.2s; display: inline-block;">💵</span>
