@@ -1707,7 +1707,7 @@ export function updatevutratuDisplayedSums(): void {
   };
 
   const avansDisplay = formatSplit(avansCash, avansCard, avansIban, "💰", totalAvansSum);
-  const casaDisplay = formatSplit(casaCash, casaCard, casaIban, "📈", finalSumCasa);
+  const casaDisplay = formatSplit(casaCash, casaCard, casaIban, "💵", finalSumCasa);
 
   let htmlContent = "";
 
@@ -1736,7 +1736,7 @@ export function updatevutratuDisplayedSums(): void {
           <span><strong style="color: #000;">${avansDisplay}</strong></span>
           <span style="color: #666;">=</span>
           <span><strong style="color: ${finalSumCasa >= 0 ? "#006400" : "#8B0000"
-      };">${casaDisplay}</strong> грн</span>
+      };">(<u>${casaDisplay}</u>)</strong> <strong style="color: #000;">📈 ${formatNumber(finalSumCasa)}</strong> грн</span>
         </div>
         <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px;">
           <span>Прибуток</span>
@@ -1778,7 +1778,7 @@ export function updatevutratuDisplayedSums(): void {
       }
           <span style="color: #666;">=</span>
           <span><strong style="color: ${finalSumCasa >= 0 ? "#006400" : "#8B0000"
-      };">${casaDisplay}</strong> грн</span>
+      };">(<u>${casaDisplay}</u>)</strong> <strong style="color: #000;">📈 ${formatNumber(finalSumCasa)}</strong> грн</span>
         </div>
         <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px;">
           <span>Прибуток</span>
