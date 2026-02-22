@@ -1355,8 +1355,7 @@ async function syncPruimalnikHistory(
           const buyPrice = priceMap.get(part.scladId) || 0;
           partsTotalBuy += buyPrice * part.qty;
           console.log(
-            `🛒 Деталь ID=${part.scladId}: Qty=${
-              part.qty
+            `🛒 Деталь ID=${part.scladId}: Qty=${part.qty
             }, BuyPrice=${buyPrice}, TotalBuy=${buyPrice * part.qty}`,
           );
         } else {
@@ -1767,6 +1766,8 @@ async function saveActData(actId: number, originalActData: any): Promise<void> {
     ? parseFloat(avansInput.value.replace(/\s/g, "") || "0")
     : 0;
 
+  const avansType = document.getElementById("avans-type-container")?.getAttribute("data-selected-type") || null;
+
   const discountInput = document.getElementById(
     "editable-discount",
   ) as HTMLInputElement;
@@ -1819,6 +1820,7 @@ async function saveActData(actId: number, originalActData: any): Promise<void> {
     "За роботу": totalWorksSum,
     "Загальна сума": grandTotalSum,
     Аванс: avansValue,
+    "Тип_Авансу": avansType,
     Знижка: exactDiscountPercent, // 🔥 Зберігаємо ТОЧНИЙ відсоток (з усіма десятковими), щоб сума була точна
     "Прибуток за деталі": Number(finalDetailsProfit.toFixed(2)),
     "Прибуток за роботу": Number(finalWorksProfit.toFixed(2)),
