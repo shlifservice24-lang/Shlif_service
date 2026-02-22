@@ -1682,6 +1682,17 @@ export function updatevutratuDisplayedSums(): void {
     }
   });
 
+  // Перекидаємо від'ємні залишки (витрати) з карти чи IBAN на готівку
+  // щоб не відображати "🏦 -500" або "💳 -100" в касі кінцевого балансу
+  if (casaIban < 0) {
+    casaCash += casaIban;
+    casaIban = 0;
+  }
+  if (casaCard < 0) {
+    casaCash += casaCard;
+    casaCard = 0;
+  }
+
   // Фінальні суми
   const finalSumCasa = totalNetFullDetails + totalNetFullWork + totalAvansSum + totalNegativeSum;
   const finalSumProfit = totalNetDetailsProfit + totalNetWorkProfit + totalNegativeSumForProfit;
