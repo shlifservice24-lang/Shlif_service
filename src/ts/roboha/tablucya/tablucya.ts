@@ -1485,10 +1485,10 @@ function sortActsByClosingDate(): void {
     actsGlobal.sort((a, b) => {
       const aClosed = isActClosed(a);
       const bClosed = isActClosed(b);
-      
+
       if (aClosed && !bClosed) return -1;
       if (!aClosed && bClosed) return 1;
-      
+
       if (aClosed && bClosed) {
         const timeA = a.date_off && !isNaN(Date.parse(a.date_off)) ? new Date(a.date_off).getTime() : 0;
         const timeB = b.date_off && !isNaN(Date.parse(b.date_off)) ? new Date(b.date_off).getTime() : 0;
@@ -1677,7 +1677,7 @@ function createTableHeader(
 ): HTMLTableSectionElement {
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
-  const headers = ["№ акту", "Дата", "Клієнт 🔽", "Автомобіль"];
+  const headers = ["№ акту", "Дата", "Клієнт", "Автомобіль"];
   // ✅ Показуємо "Сума" тільки якщо showSumaColumn = true
   if (showSumaColumn) headers.push("Сума");
 
@@ -1691,7 +1691,7 @@ function createTableHeader(
     th.style.position = "sticky";
     th.style.top = "0";
     th.style.zIndex = "20"; // ✅ Вище ніж іконки (z-index: 10) та примітки (z-index: 5)
-    
+
     if (header === "Дата") {
       th.textContent = sortByClosingDateStep === 1 ? "Дата 🔽" : "Дата";
       th.style.cursor = "pointer";
@@ -1700,15 +1700,16 @@ function createTableHeader(
         th.textContent = sortByClosingDateStep === 1 ? "Дата 🔽" : "Дата";
         updateTableBody();
       });
-    } else {
-      th.textContent = header;
-    }
-
-    if (header.includes("Клієнт")) {
+    } else if (header === "Клієнт") {
+      th.textContent = sortByDateStep === 1 ? "Клієнт 🔽" : "Клієнт";
+      th.style.cursor = "pointer";
       th.addEventListener("click", () => {
         sortActs();
+        th.textContent = sortByDateStep === 1 ? "Клієнт 🔽" : "Клієнт";
         updateTableBody();
       });
+    } else {
+      th.textContent = header;
     }
     headerRow.appendChild(th);
   });
