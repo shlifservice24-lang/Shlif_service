@@ -1485,42 +1485,43 @@ function renderModalContent(
       avansInput.dispatchEvent(new Event("input"));
     }
 
-    const avansTypeEmojis = document.querySelectorAll(".avans-type-emoji");
+    const avansTypeContainer = document.getElementById("avans-type-container");
+    const avansTypeEmoji = document.getElementById("avans-type-emoji");
     const savedAvansType = actDetails?.["Тип_Авансу"];
 
-    if (avansTypeEmojis.length > 0) {
-      avansTypeEmojis.forEach((emoji) => {
-        const type = emoji.getAttribute("data-type");
-        if (savedAvansType && savedAvansType === type) {
-          (emoji as HTMLElement).style.filter = "none";
-          (emoji as HTMLElement).style.transform = "scale(1.2)";
-          emoji.classList.add("active");
-        }
+    if (avansTypeEmoji && avansTypeContainer) {
+      const avansOptions = [
+        { type: "готівка", emoji: "💵", title: "Готівка" },
+        { type: "карта", emoji: "💳", title: "Карта" },
+        { type: "IBAN", emoji: "🏦", title: "IBAN" }
+      ];
 
-        if (!isClosed) {
-          emoji.addEventListener("click", () => {
-            const isActive = emoji.classList.contains("active");
-
-            avansTypeEmojis.forEach((e) => {
-              e.classList.remove("active");
-              (e as HTMLElement).style.filter = "grayscale(100%)";
-              (e as HTMLElement).style.transform = "scale(1)";
-            });
-
-            if (!isActive) {
-              emoji.classList.add("active");
-              (emoji as HTMLElement).style.filter = "none";
-              (emoji as HTMLElement).style.transform = "scale(1.2)";
-              document.getElementById("avans-type-container")?.setAttribute("data-selected-type", type || "");
-            } else {
-              document.getElementById("avans-type-container")?.removeAttribute("data-selected-type");
-            }
-          });
-        }
-      });
+      let currentAvansIndex = 0;
 
       if (savedAvansType) {
-        document.getElementById("avans-type-container")?.setAttribute("data-selected-type", savedAvansType);
+        const idx = avansOptions.findIndex(o => o.type === savedAvansType);
+        if (idx !== -1) currentAvansIndex = idx;
+      }
+
+      const updateEmoji = () => {
+        const option = avansOptions[currentAvansIndex];
+        avansTypeEmoji.textContent = option.emoji;
+        avansTypeEmoji.title = option.title;
+        avansTypeContainer.setAttribute("data-selected-type", option.type);
+      };
+
+      updateEmoji(); // initial set
+
+      if (!isClosed) {
+        avansTypeEmoji.addEventListener("click", () => {
+          currentAvansIndex = (currentAvansIndex + 1) % avansOptions.length;
+          updateEmoji();
+
+          avansTypeEmoji.style.transform = "scale(1.3)";
+          setTimeout(() => {
+            avansTypeEmoji.style.transform = "scale(1)";
+          }, 150);
+        });
       }
     }
 

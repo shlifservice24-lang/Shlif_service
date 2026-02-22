@@ -900,10 +900,8 @@ export function generateTableHTML(
   <div class="zakaz_narayd-sums-footer">
     <p class="sum-row">
       <span class="sum-label">Аванс:</span>
-      <span id="avans-type-container" style="margin: 0 5px; display: inline-flex; gap: 4px; user-select: none;">
-        <span class="avans-type-emoji disabled" data-type="готівка" title="Готівка" style="cursor: pointer; filter: grayscale(100%); transition: all 0.2s;">💵</span>
-        <span class="avans-type-emoji disabled" data-type="карта" title="Карта" style="cursor: pointer; filter: grayscale(100%); transition: all 0.2s;">💳</span>
-        <span class="avans-type-emoji disabled" data-type="IBAN" title="IBAN" style="cursor: pointer; filter: grayscale(100%); transition: all 0.2s;">🏦</span>
+      <span id="avans-type-container" style="margin: 0 5px; display: inline-flex; align-items: center; justify-content: center; user-select: none;">
+        <span id="avans-type-emoji" title="Готівка" style="cursor: pointer; font-size: 1.2em; transition: all 0.2s; display: inline-block;">💵</span>
       </span>
       <input 
         type="text"
