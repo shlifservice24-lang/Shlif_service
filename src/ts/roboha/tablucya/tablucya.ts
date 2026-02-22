@@ -48,6 +48,7 @@ let modifiedActIdsGlobal: Set<number> = new Set();
 // Зберігаємо кількість повідомлень для кожного акту
 let actNotificationCounts: Map<number, number> = new Map();
 let sortByDateStep = 0;
+let sortByClosingDateStep = 0;
 
 // ✏️ Глобальна мапа: actId -> ПІБ редактора (для показу хто редагує акт)
 let actEditorsMap: Map<number, string> = new Map();
@@ -1479,6 +1480,33 @@ function sortActs(): void {
   }
 }
 
+function sortActsByClosingDate(): void {
+  if (sortByClosingDateStep === 0) {
+    actsGlobal.sort((a, b) => {
+      const aClosed = isActClosed(a);
+      const bClosed = isActClosed(b);
+      
+      if (aClosed && !bClosed) return -1;
+      if (!aClosed && bClosed) return 1;
+      
+      if (aClosed && bClosed) {
+        const timeA = a.date_off && !isNaN(Date.parse(a.date_off)) ? new Date(a.date_off).getTime() : 0;
+        const timeB = b.date_off && !isNaN(Date.parse(b.date_off)) ? new Date(b.date_off).getTime() : 0;
+        return timeB - timeA;
+      }
+      return 0;
+    });
+    sortByClosingDateStep = 1;
+  } else {
+    actsGlobal.sort(
+      (a, b) =>
+        (getActDateAsDate(b)?.getTime() || 0) -
+        (getActDateAsDate(a)?.getTime() || 0),
+    );
+    sortByClosingDateStep = 0;
+  }
+}
+
 function getDefaultDateRange(): string {
   const today = new Date();
   const lastMonth = new Date(
@@ -1658,12 +1686,24 @@ function createTableHeader(
 
   headers.forEach((header) => {
     const th = document.createElement("th");
-    th.textContent = header;
     th.style.backgroundColor = tableColor;
     th.style.color = "#fff";
     th.style.position = "sticky";
     th.style.top = "0";
     th.style.zIndex = "20"; // ✅ Вище ніж іконки (z-index: 10) та примітки (z-index: 5)
+    
+    if (header === "Дата") {
+      th.textContent = sortByClosingDateStep === 1 ? "Дата 🔽" : "Дата";
+      th.style.cursor = "pointer";
+      th.addEventListener("click", () => {
+        sortActsByClosingDate();
+        th.textContent = sortByClosingDateStep === 1 ? "Дата 🔽" : "Дата";
+        updateTableBody();
+      });
+    } else {
+      th.textContent = header;
+    }
+
     if (header.includes("Клієнт")) {
       th.addEventListener("click", () => {
         sortActs();
