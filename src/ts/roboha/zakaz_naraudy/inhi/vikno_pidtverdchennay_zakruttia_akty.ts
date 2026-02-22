@@ -129,40 +129,54 @@ export function showViknoPidtverdchennayZakruttiaAkty(
     const cardInput = document.getElementById("pay-card-input") as HTMLInputElement | null;
     const ibanInput = document.getElementById("pay-iban-input") as HTMLInputElement | null;
 
-    let initCash = tupAvansu.toLowerCase() === "готівка" ? avansVal : 0;
-    let initCard = (tupAvansu.toLowerCase() === "карта" || tupAvansu.toLowerCase() === "картка") ? avansVal : 0;
-    let initIban = tupAvansu.toLowerCase() === "iban" ? avansVal : 0;
+    let minCash = tupAvansu.toLowerCase() === "готівка" ? avansVal : 0;
+    let minCard = (tupAvansu.toLowerCase() === "карта" || tupAvansu.toLowerCase() === "картка") ? avansVal : 0;
+    let minIban = tupAvansu.toLowerCase() === "iban" ? avansVal : 0;
+
+    let initCash = minCash;
+    let initCard = minCard;
+    let initIban = minIban;
 
     initCash += (actTotalSum - initCash - initCard - initIban);
-    if (initCash < 0) initCash = 0;
+    if (initCash < minCash) initCash = minCash;
 
     if (cashInput) cashInput.value = String(initCash);
     if (cardInput) cardInput.value = String(initCard);
     if (ibanInput) ibanInput.value = String(initIban);
 
-    const syncInputs = (changed: 'cash' | 'card' | 'iban') => {
+    const syncInputs = (changed: 'cash' | 'card' | 'iban', enforceMins: boolean = false) => {
       let c = Number(cashInput?.value) || 0;
       let cd = Number(cardInput?.value) || 0;
       let i = Number(ibanInput?.value) || 0;
 
+      if (enforceMins) {
+        if (c < minCash) { c = minCash; if (cashInput) cashInput.value = String(c); }
+        if (cd < minCard) { cd = minCard; if (cardInput) cardInput.value = String(cd); }
+        if (i < minIban) { i = minIban; if (ibanInput) ibanInput.value = String(i); }
+      }
+
       if (changed === 'cash' && cardInput) {
         cd = actTotalSum - c - i;
-        if (cd < 0) { c += cd; cd = 0; if (cashInput) cashInput.value = String(c); }
+        if (cd < minCard) { c += (cd - minCard); cd = minCard; if (cashInput) cashInput.value = String(c); }
         cardInput.value = String(cd);
       } else if (changed === 'card' && cashInput) {
         c = actTotalSum - cd - i;
-        if (c < 0) { cd += c; c = 0; if (cardInput) cardInput.value = String(cd); }
+        if (c < minCash) { cd += (c - minCash); c = minCash; if (cardInput) cardInput.value = String(cd); }
         cashInput.value = String(c);
       } else if (changed === 'iban' && cashInput) {
         c = actTotalSum - cd - i;
-        if (c < 0) { i += c; c = 0; if (ibanInput) ibanInput.value = String(i); }
+        if (c < minCash) { i += (c - minCash); c = minCash; if (ibanInput) ibanInput.value = String(i); }
         cashInput.value = String(c);
       }
     };
 
-    cashInput?.addEventListener("input", () => syncInputs('cash'));
-    cardInput?.addEventListener("input", () => syncInputs('card'));
-    ibanInput?.addEventListener("input", () => syncInputs('iban'));
+    cashInput?.addEventListener("input", () => syncInputs('cash', false));
+    cardInput?.addEventListener("input", () => syncInputs('card', false));
+    ibanInput?.addEventListener("input", () => syncInputs('iban', false));
+
+    cashInput?.addEventListener("change", () => syncInputs('cash', true));
+    cardInput?.addEventListener("change", () => syncInputs('card', true));
+    ibanInput?.addEventListener("change", () => syncInputs('iban', true));
 
     const confirmBtn = document.getElementById(
       "vikno_pidtverdchennay_zakruttia_akty-confirm"
