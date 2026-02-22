@@ -114,6 +114,12 @@ export function showViknoPidtverdchennayZakruttiaAkty(
 
     modal.style.display = "flex";
 
+    const pN = (t: string | null | undefined) => parseFloat((t ?? "0").replace(/\s/g, "").replace(",", ".")) || 0;
+    const worksSum = pN(document.getElementById("total-works-sum")?.textContent);
+    const detailsSum = pN(document.getElementById("total-details-sum")?.textContent);
+    const actualDiscountAmount = pN((document.getElementById("editable-discount-amount") as HTMLInputElement)?.value);
+    const actTotalSum = Math.round((worksSum - actualDiscountAmount) + detailsSum);
+
     const avansInput = document.getElementById("editable-avans") as HTMLInputElement | null;
     const avansVal = avansInput ? Number(avansInput.value.replace(/\s/g, "")) : 0;
     const avansTypeContainer = document.getElementById("avans-type-container");
@@ -123,9 +129,40 @@ export function showViknoPidtverdchennayZakruttiaAkty(
     const cardInput = document.getElementById("pay-card-input") as HTMLInputElement | null;
     const ibanInput = document.getElementById("pay-iban-input") as HTMLInputElement | null;
 
-    if (cashInput) cashInput.value = (tupAvansu.toLowerCase() === "готівка" ? String(avansVal) : "0");
-    if (cardInput) cardInput.value = (tupAvansu.toLowerCase() === "карта" || tupAvansu.toLowerCase() === "картка" ? String(avansVal) : "0");
-    if (ibanInput) ibanInput.value = (tupAvansu.toLowerCase() === "iban" ? String(avansVal) : "0");
+    let initCash = tupAvansu.toLowerCase() === "готівка" ? avansVal : 0;
+    let initCard = (tupAvansu.toLowerCase() === "карта" || tupAvansu.toLowerCase() === "картка") ? avansVal : 0;
+    let initIban = tupAvansu.toLowerCase() === "iban" ? avansVal : 0;
+
+    initCash += (actTotalSum - initCash - initCard - initIban);
+    if (initCash < 0) initCash = 0;
+
+    if (cashInput) cashInput.value = String(initCash);
+    if (cardInput) cardInput.value = String(initCard);
+    if (ibanInput) ibanInput.value = String(initIban);
+
+    const syncInputs = (changed: 'cash' | 'card' | 'iban') => {
+      let c = Number(cashInput?.value) || 0;
+      let cd = Number(cardInput?.value) || 0;
+      let i = Number(ibanInput?.value) || 0;
+
+      if (changed === 'cash' && cardInput) {
+        cd = actTotalSum - c - i;
+        if (cd < 0) { c += cd; cd = 0; if (cashInput) cashInput.value = String(c); }
+        cardInput.value = String(cd);
+      } else if (changed === 'card' && cashInput) {
+        c = actTotalSum - cd - i;
+        if (c < 0) { cd += c; c = 0; if (cardInput) cardInput.value = String(cd); }
+        cashInput.value = String(c);
+      } else if (changed === 'iban' && cashInput) {
+        c = actTotalSum - cd - i;
+        if (c < 0) { i += c; c = 0; if (ibanInput) ibanInput.value = String(i); }
+        cashInput.value = String(c);
+      }
+    };
+
+    cashInput?.addEventListener("input", () => syncInputs('cash'));
+    cardInput?.addEventListener("input", () => syncInputs('card'));
+    ibanInput?.addEventListener("input", () => syncInputs('iban'));
 
     const confirmBtn = document.getElementById(
       "vikno_pidtverdchennay_zakruttia_akty-confirm"
@@ -144,6 +181,7 @@ export function showViknoPidtverdchennayZakruttiaAkty(
       modal.style.display = "none";
       confirmBtn.removeEventListener("click", onConfirm);
       cancelBtn.removeEventListener("click", onCancel);
+      // Event listeners for inputs do not strongly leak since modal persists, but ideally could be cleaned.
     };
 
     const onCancel = () => {
@@ -161,6 +199,21 @@ export function showViknoPidtverdchennayZakruttiaAkty(
         const cashVal = Number(cashQInput?.value) || 0;
         const cardVal = Number(cardQInput?.value) || 0;
         const ibanVal = Number(ibanQInput?.value) || 0;
+
+        const totalEntered = cashVal + cardVal + ibanVal;
+
+        const pN = (t: string | null | undefined) => parseFloat((t ?? "0").replace(/\s/g, "").replace(",", ".")) || 0;
+        const worksSum = pN(document.getElementById("total-works-sum")?.textContent);
+        const detailsSum = pN(document.getElementById("total-details-sum")?.textContent);
+        const actualDiscountAmount = pN((document.getElementById("editable-discount-amount") as HTMLInputElement)?.value);
+
+        const sumAfterDiscount = Math.round((worksSum - actualDiscountAmount) + detailsSum);
+
+        if (totalEntered > sumAfterDiscount) {
+          showNotification(`Сума оплат (${totalEntered} грн) перевищує суму акту (${sumAfterDiscount} грн)`, "warning", 5000);
+          confirmBtn.disabled = false;
+          return;
+        }
 
         const paymentData = {
           "готівка": cashVal,
