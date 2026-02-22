@@ -1591,13 +1591,26 @@ export function updatevutratuDisplayedSums(): void {
   // Окремо рахуємо витрати ТІЛЬКИ для прибутку (не для каси)
   let totalNegativeSumForProfit = 0;
 
+  // Спліти для авансів
+  let avansCash = 0;
+  let avansCard = 0;
+  let avansIban = 0;
+
+  // Спліти для загальної каси
+  let casaCash = 0;
+  let casaCard = 0;
+  let casaIban = 0;
+
   filteredvutratuData.forEach((expense) => {
-    // 1. Витрати (від'ємні суми) — ТІЛЬКИ реальні витрати з таблиці vutratu
-    // Акти (💰 Прибуток) з від'ємним amount (наприклад через знижку) НЕ рахуємо тут —
-    // вони вже враховані в totalNetWorkProfit / totalNetDetailsProfit
+    // 1. Витрати (від'ємні суми)
     if (expense.amount < 0 && expense.category !== "💰 Прибуток") {
       totalNegativeSum += expense.amount;
       totalNegativeSumForProfit += expense.amount;
+
+      const pm = (expense.paymentMethod || "готівка").toLowerCase();
+      if (pm.includes("карт")) casaCard += expense.amount;
+      else if (pm.includes("iban")) casaIban += expense.amount;
+      else casaCash += expense.amount;
     }
 
     // 2. Акти (Прибуток)
@@ -1616,10 +1629,6 @@ export function updatevutratuDisplayedSums(): void {
         let detailsProfit = expense.detailsAmount || 0;
         let workProfit = expense.workAmount || 0;
 
-        // Від'ємні прибутки (збитки через знижку, де зарплата > виручка) —
-        // переносимо у витрати ТІЛЬКИ ДЛЯ ПРИБУТКУ, щоб вони відображались у колонці 💶
-        // і НЕ зменшували колонки ⚙️ та 🛠️
-        // ⚠️ Але НЕ впливали на розрахунок КАСИ (бо каса = фактичні гроші від клієнта)
         if (detailsProfit < 0) {
           totalNegativeSumForProfit += detailsProfit;
           detailsProfit = 0;
@@ -1636,32 +1645,58 @@ export function updatevutratuDisplayedSums(): void {
         let fullDetails = expense.fullDetailsAmount || 0;
         let fullWork = expense.fullWorkAmount || 0;
 
-        // ✅ ВИПРАВЛЕНО: Знижка віднімається ТІЛЬКИ від робіт, а не від деталей
         if (discountVal > 0) {
           fullWork -= discountVal;
         }
 
-        // Аванс НЕ виключаємо з повної суми закритих актів —
-        // він вже входить у fullDetailsAmount/fullWorkAmount.
-        // Колонка 💰 показується ТІЛЬКИ для відкритих актів.
         totalNetFullDetails += fullDetails;
         totalNetFullWork += fullWork;
+
+        const fullActSum = fullDetails + fullWork;
+
+        // Парсимо метод оплати для касового спліту
+        let pParsed = null;
+        if (expense.tupOplatu) {
+          try { pParsed = JSON.parse(expense.tupOplatu); } catch (e) { }
+        }
+        if (pParsed && typeof pParsed === "object") {
+          casaCash += (pParsed["готівка"] || 0);
+          casaCard += (pParsed["картка"] || 0);
+          casaIban += (pParsed["iban"] || 0);
+        } else {
+          const ta = (expense.tupOplatu || "готівка").toLowerCase();
+          if (ta.includes("карт")) casaCard += fullActSum;
+          else if (ta.includes("iban")) casaIban += fullActSum;
+          else casaCash += fullActSum;
+        }
+
       } else {
         // Відкритий акт — тільки аванс йде в касу (💰)
         totalAvansSum += avans;
+
+        const ta = (expense.tupAvansu || "готівка").toLowerCase();
+        if (ta.includes("карт")) { avansCard += avans; casaCard += avans; }
+        else if (ta.includes("iban")) { avansIban += avans; casaIban += avans; }
+        else { avansCash += avans; casaCash += avans; }
       }
     }
   });
 
   // Фінальні суми
-  // Каса = (Повна сума закритих актів) + (Аванси відкритих актів) - (Реальні витрати)
-  // ⚠️ Для каси використовуємо ТІЛЬКИ реальні витрати (не від'ємні прибутки від знижок)
-  const finalSumCasa =
-    totalNetFullDetails + totalNetFullWork + totalAvansSum + totalNegativeSum;
+  const finalSumCasa = totalNetFullDetails + totalNetFullWork + totalAvansSum + totalNegativeSum;
+  const finalSumProfit = totalNetDetailsProfit + totalNetWorkProfit + totalNegativeSumForProfit;
 
-  // Прибуток = (Чиста Маржа Деталі + Чиста Маржа Робота) - Витрати (включно з від'ємними прибутками)
-  const finalSumProfit =
-    totalNetDetailsProfit + totalNetWorkProfit + totalNegativeSumForProfit;
+  // Форматування відображення авансів (💰 або 💵💳🏦)
+  const formatSplit = (csh: number, crd: number, ibn: number, fallbackEmoji: string, total: number) => {
+    let parts = [];
+    if (csh !== 0) parts.push(`💵 ${formatNumber(csh)}`);
+    if (crd !== 0) parts.push(`💳 ${formatNumber(crd)}`);
+    if (ibn !== 0) parts.push(`🏦 ${formatNumber(ibn)}`);
+    return parts.length > 0 ? parts.join(" + ") : `${fallbackEmoji} ${formatNumber(total)}`;
+  };
+
+  const avansDisplay = formatSplit(avansCash, avansCard, avansIban, "💰", totalAvansSum);
+  const casaDisplay = formatSplit(casaCash, casaCard, casaIban, "📈", finalSumCasa);
 
   let htmlContent = "";
 
@@ -1687,10 +1722,10 @@ export function updatevutratuDisplayedSums(): void {
           <span style="color: #666;">+</span>
           <span><strong style="color: #FF8C00;">🛠️ ${formatNumber(totalNetFullWork)}</strong></span>
           <span style="color: #666;">+</span>
-          <span><strong style="color: #000;">💰 ${formatNumber(totalAvansSum)}</strong></span>
+          <span><strong style="color: #000;">${avansDisplay}</strong></span>
           <span style="color: #666;">=</span>
           <span><strong style="color: ${finalSumCasa >= 0 ? "#006400" : "#8B0000"
-      };">📈 ${formatNumber(finalSumCasa)}</strong> грн</span>
+      };">${casaDisplay}</strong> грн</span>
         </div>
         <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px;">
           <span>Прибуток</span>
@@ -1722,19 +1757,17 @@ export function updatevutratuDisplayedSums(): void {
       totalNetFullWork,
     )}</strong></span>
           <span style="color: #666;">+</span>
-          <span><strong style="color: #000;">💰 ${formatNumber(
-      totalAvansSum,
-    )}</strong></span>${totalNegativeSum < 0
-      ? `
+          <span><strong style="color: #000;">${avansDisplay}</strong></span>${totalNegativeSum < 0
+        ? `
           <span style="color: #666;">-</span>
           <span><strong style="color: #8B0000;">💶 ${formatNumber(
-        Math.abs(totalNegativeSum),
-      )}</strong></span>`
-      : ""
+          Math.abs(totalNegativeSum),
+        )}</strong></span>`
+        : ""
       }
           <span style="color: #666;">=</span>
           <span><strong style="color: ${finalSumCasa >= 0 ? "#006400" : "#8B0000"
-      };">📈 ${formatNumber(finalSumCasa)}</strong> грн</span>
+      };">${casaDisplay}</strong> грн</span>
         </div>
         <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px;">
           <span>Прибуток</span>
