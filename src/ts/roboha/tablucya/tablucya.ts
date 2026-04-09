@@ -65,7 +65,7 @@ function safeParseJSON(data: any): any {
       return JSON.parse(data);
     } catch {
       return null;
-    }
+    } 
   }
   return data;
 }

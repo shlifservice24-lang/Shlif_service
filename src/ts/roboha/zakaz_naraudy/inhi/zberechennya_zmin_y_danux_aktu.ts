@@ -1355,7 +1355,8 @@ async function syncPruimalnikHistory(
           const buyPrice = priceMap.get(part.scladId) || 0;
           partsTotalBuy += buyPrice * part.qty;
           console.log(
-            `🛒 Деталь ID=${part.scladId}: Qty=${part.qty
+            `🛒 Деталь ID=${part.scladId}: Qty=${
+              part.qty
             }, BuyPrice=${buyPrice}, TotalBuy=${buyPrice * part.qty}`,
           );
         } else {
@@ -1764,16 +1765,21 @@ async function saveActData(actId: number, originalActData: any): Promise<void> {
   ) as HTMLInputElement;
   const avansValue = avansInput
     ? parseFloat(avansInput.value.replace(/\s/g, "") || "0")
-    : 0;
+    : (originalActData?.["Аванс"] ?? 0);
 
-  const avansType = document.getElementById("avans-type-container")?.getAttribute("data-selected-type") || null;
+  const avansType =
+    document
+      .getElementById("avans-type-container")
+      ?.getAttribute("data-selected-type") ||
+    originalActData?.["Тип_Авансу"] ||
+    null;
 
   const discountInput = document.getElementById(
     "editable-discount",
   ) as HTMLInputElement;
   const discountValue = discountInput
     ? parseFloat(discountInput.value.replace(/\s/g, "") || "0")
-    : 0;
+    : (originalActData?.["Знижка"] ?? 0);
 
   // Отримуємо збережену суму знижки (введену вручну або розраховану)
   const discountAmountInput = document.getElementById(
@@ -1785,8 +1791,12 @@ async function saveActData(actId: number, originalActData: any): Promise<void> {
 
   // 🔥 Розраховуємо ТОЧНИЙ відсоток знижки тільки від РОБІТ (не від загальної суми)
   // Знижка застосовується ЛИШЕ до робіт, запчастини виводяться без знижки
-  const exactDiscountPercent =
-    totalWorksSum > 0 ? (discountAmountValue / totalWorksSum) * 100 : 0;
+  // Якщо інпутів знижки немає (Слюсар), зберігаємо оригінальне значення
+  const exactDiscountPercent = discountInput
+    ? totalWorksSum > 0
+      ? (discountAmountValue / totalWorksSum) * 100
+      : 0
+    : (originalActData?.["Знижка"] ?? 0);
 
   // Розраховуємо знижку - застосовується ТІЛЬКИ до робіт
   const discountMultiplier = discountValue > 0 ? 1 - discountValue / 100 : 1;
@@ -1820,7 +1830,7 @@ async function saveActData(actId: number, originalActData: any): Promise<void> {
     "За роботу": totalWorksSum,
     "Загальна сума": grandTotalSum,
     Аванс: avansValue,
-    "Тип_Авансу": avansType,
+    Тип_Авансу: avansType,
     Знижка: exactDiscountPercent, // 🔥 Зберігаємо ТОЧНИЙ відсоток (з усіма десятковими), щоб сума була точна
     "Прибуток за деталі": Number(finalDetailsProfit.toFixed(2)),
     "Прибуток за роботу": Number(finalWorksProfit.toFixed(2)),
