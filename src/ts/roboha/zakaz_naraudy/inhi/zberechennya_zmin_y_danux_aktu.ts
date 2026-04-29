@@ -238,12 +238,16 @@ export function cacheHiddenColumnsData(actDetails: any): void {
     ? actDetails["Роботи"]
     : [];
 
+  // ✅ ВИПРАВЛЕНО БАГ №2: Використовуємо індекс для унікальності ключа кешу
+  // Раніше ключ був `detail:${name}`, що призводило до перезапису при дублях імен
+  // Тепер: `detail:${index}:${name}` — кожен рядок має унікальний ключ
+
   // Кешуємо деталі
-  details.forEach((d: any) => {
+  details.forEach((d: any, index: number) => {
     const name = d["Деталь"]?.trim();
     if (!name) return;
 
-    const cacheKey = `detail:${name}`;
+    const cacheKey = `detail:${index}:${name}`;
     fullRowDataCache.set(cacheKey, {
       type: "detail",
       name,
@@ -259,11 +263,11 @@ export function cacheHiddenColumnsData(actDetails: any): void {
   });
 
   // Кешуємо роботи
-  works.forEach((w: any) => {
+  works.forEach((w: any, index: number) => {
     const name = w["Робота"]?.trim();
     if (!name) return;
 
-    const cacheKey = `work:${name}`;
+    const cacheKey = `work:${index}:${name}`;
     fullRowDataCache.set(cacheKey, {
       type: "work",
       name,
@@ -324,6 +328,10 @@ export function parseTableRows(): ParsedItem[] {
   );
   const items: ParsedItem[] = [];
 
+  // ✅ ВИПРАВЛЕНО БАГ №2: Лічильники індексів для деталей та робіт окремо
+  // Індекс відповідає порядку рядка в DOM, що збігається з порядком в кеші
+  const typeIndexCounters = { detail: 0, work: 0 };
+
   tableRows.forEach((row: Element) => {
     const nameCell = row.querySelector('[data-name="name"]') as HTMLElement;
     // Використовуємо getNameCellText для отримання повної назви
@@ -337,8 +345,9 @@ export function parseTableRows(): ParsedItem[] {
         ? "work"
         : "detail";
 
-    // Створюємо ключ для кешу
-    const cacheKey = `${type}:${name}`;
+    // ✅ ВИПРАВЛЕНО БАГ №2: Використовуємо індексований ключ для кешу
+    const typeIndex = typeIndexCounters[type]++;
+    const cacheKey = `${type}:${typeIndex}:${name}`;
     const cachedData = fullRowDataCache.get(cacheKey);
 
     // Отримуємо посилання на всі комірки
@@ -1684,10 +1693,38 @@ async function savePruimalnykToActs(actId: number): Promise<void> {
   }
 }
 
-async function saveActData(actId: number, originalActData: any): Promise<void> {
+async function saveActData(actId: number, _originalActData: any): Promise<void> {
   if (globalCache.isActClosed) {
     throw new Error("Неможливо редагувати закритий акт");
   }
+
+  // ✅ ВИПРАВЛЕНО БАГ №1: Отримуємо СВІЖІ дані з БД перед збереженням
+  // Раніше використовувався originalActData з замикання, який міг бути застарілим
+  // якщо інший користувач зберіг зміни між відкриттям і збереженням
+  let freshActData: any = {};
+  try {
+    const { data: freshAct, error: freshError } = await supabase
+      .from("acts")
+      .select("data, info, details")
+      .eq("act_id", actId)
+      .single();
+
+    if (freshError || !freshAct) {
+      console.warn("⚠️ Не вдалося отримати свіжі дані акту з БД, використовуємо оригінальні:", freshError?.message);
+      freshActData = _originalActData || {};
+    } else {
+      const rawData = freshAct.info || freshAct.data || freshAct.details;
+      freshActData = (typeof rawData === "string" ? JSON.parse(rawData) : rawData) || {};
+      console.log("✅ Отримано свіжі дані акту з БД перед збереженням");
+    }
+  } catch (err) {
+    console.warn("⚠️ Помилка отримання свіжих даних акту:", err);
+    freshActData = _originalActData || {};
+  }
+
+  // ✅ ВИПРАВЛЕНО БАГ №3: Оновлюємо кеш прихованих стовпців свіжими даними з БД
+  // Раніше кеш заповнювався тільки при відкритті модалки і ставав застарілим
+  cacheHiddenColumnsData(freshActData);
 
   // Завантажуємо закупівельні ціни перед обробкою
   await loadPurchasePrices();
@@ -1718,7 +1755,7 @@ async function saveActData(actId: number, originalActData: any): Promise<void> {
 
   // ⚠️ ПЕРЕВІРКА ДЛЯ СЛЮСАРЯ: він може зберігати зміни тільки в своїх рядках
   if (userAccessLevel === "Слюсар" && userName) {
-    const originalItems = originalActData?.actItems || [];
+    const originalItems = freshActData?.actItems || [];
 
     // Перевіряємо, чи слюсар намагається змінити існуючі рядки
     for (const item of items) {
@@ -1765,13 +1802,13 @@ async function saveActData(actId: number, originalActData: any): Promise<void> {
   ) as HTMLInputElement;
   const avansValue = avansInput
     ? parseFloat(avansInput.value.replace(/\s/g, "") || "0")
-    : (originalActData?.["Аванс"] ?? 0);
+    : (freshActData?.["Аванс"] ?? 0);
 
   const avansType =
     document
       .getElementById("avans-type-container")
       ?.getAttribute("data-selected-type") ||
-    originalActData?.["Тип_Авансу"] ||
+    freshActData?.["Тип_Авансу"] ||
     null;
 
   const discountInput = document.getElementById(
@@ -1779,7 +1816,7 @@ async function saveActData(actId: number, originalActData: any): Promise<void> {
   ) as HTMLInputElement;
   const discountValue = discountInput
     ? parseFloat(discountInput.value.replace(/\s/g, "") || "0")
-    : (originalActData?.["Знижка"] ?? 0);
+    : (freshActData?.["Знижка"] ?? 0);
 
   // Отримуємо збережену суму знижки (введену вручну або розраховану)
   const discountAmountInput = document.getElementById(
@@ -1796,7 +1833,7 @@ async function saveActData(actId: number, originalActData: any): Promise<void> {
     ? totalWorksSum > 0
       ? (discountAmountValue / totalWorksSum) * 100
       : 0
-    : (originalActData?.["Знижка"] ?? 0);
+    : (freshActData?.["Знижка"] ?? 0);
 
   // Розраховуємо знижку - застосовується ТІЛЬКИ до робіт
   const discountMultiplier = discountValue > 0 ? 1 - discountValue / 100 : 1;
@@ -1819,7 +1856,7 @@ async function saveActData(actId: number, originalActData: any): Promise<void> {
   const finalWorksProfit = worksSaleAfterDiscount - totalSlyusarSalary; // ЗІ знижкою
 
   const updatedActData = {
-    ...(originalActData || {}),
+    ...(freshActData || {}),
     Пробіг: newProbig,
     "Причина звернення": newReason,
     Рекомендації: newRecommendations,

@@ -245,7 +245,7 @@ const fillSlusarInputs = (data: any, selectedName: string) => {
     }
     // Оновлюємо видимість інпутів відповідно до ролі
     updatePercentInputsVisibility(accessSelect.value);
-    updatePasswordVisibility(accessSelect.value);
+    updatePasswordVisibility(selectedName);
   }
   if (percentInput && data?.ПроцентРоботи !== undefined) {
     percentInput.value = String(data.ПроцентРоботи);
@@ -260,7 +260,7 @@ const fillSlusarInputs = (data: any, selectedName: string) => {
 };
 
 // Функція для керування видимістю пароля
-const updatePasswordVisibility = (selectedRole: string) => {
+const updatePasswordVisibility = (selectedName: string) => {
   const passwordInput = document.getElementById(
     "slusar-password"
   ) as HTMLInputElement;
@@ -271,8 +271,10 @@ const updatePasswordVisibility = (selectedRole: string) => {
 
   // Якщо поточний користувач - Адміністратор
   if (userAccessLevel === "Адміністратор") {
-    // Показуємо пароль тільки для НЕ адміністраторів
-    if (selectedRole !== "Адміністратор") {
+    const currentUser = getCurrentUserFromLocalStorage();
+    const isOwnRecord = normalizeName(selectedName) === normalizeName(currentUser?.name || "");
+    // Показуємо пароль для ВСІХ інших, крім свого власного
+    if (!isOwnRecord) {
       passwordInput.type = "text";
     }
   }
@@ -331,7 +333,7 @@ const clearSlusarInputs = () => {
     accessSelect.disabled = !isAdmin; // Блокуємо для не-адміністраторів
     // Скидаємо видимість (для Слюсаря поле запчастин приховане)
     updatePercentInputsVisibility("Слюсар");
-    updatePasswordVisibility("Слюсар");
+    updatePasswordVisibility("");
   }
   if (percentInput) {
     percentInput.value = "50";
@@ -491,7 +493,6 @@ const createCustomDropdown = (
       if (employeeData) {
         const access = employeeData.Доступ || "";
         const password = employeeData.Пароль || "";
-        const isAdmin = access === "Адміністратор";
 
         // Показуємо рівень доступу
         const accessSpan = document.createElement("span");
@@ -504,12 +505,15 @@ const createCustomDropdown = (
         passwordSpan.style.minWidth = "80px";
         passwordSpan.style.fontFamily = "monospace";
 
-        if (isAdmin) {
-          // Для адміністраторів завжди зірочки
+        const currentUser = getCurrentUserFromLocalStorage();
+        const isOwnRecord = normalizeName(val) === normalizeName(currentUser?.name || "");
+
+        if (isOwnRecord) {
+          // Свій власний пароль — завжди зірочки
           passwordSpan.textContent = "****";
-          passwordSpan.title = "Пароль адміністратора прихований";
+          passwordSpan.title = "Ваш пароль прихований";
         } else {
-          // Для інших - зірочки, але при ховері показуємо пароль
+          // Для всіх інших — зірочки, але при ховері показуємо пароль
           passwordSpan.textContent = "****";
           passwordSpan.dataset.realPassword = password;
         }
@@ -721,11 +725,12 @@ const createSlusarAdditionalInputs = async () => {
     accessSelect.addEventListener("change", (e) => {
       const target = e.target as HTMLSelectElement;
       updatePercentInputsVisibility(target.value);
-      updatePasswordVisibility(target.value);
+      const searchInput = document.getElementById("search-input-all_other_bases") as HTMLInputElement;
+      updatePasswordVisibility(searchInput?.value?.trim() || "");
     });
     // Ініціалізація початкового стану (за замовчуванням Слюсар - приховано)
     updatePercentInputsVisibility(accessSelect.value);
-    updatePasswordVisibility(accessSelect.value);
+    updatePasswordVisibility("");
   }
 
   // Завантажуємо статистику після створення контейнера
