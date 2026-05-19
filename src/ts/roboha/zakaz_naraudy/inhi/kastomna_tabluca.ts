@@ -579,6 +579,8 @@ function renderAutocompleteList(target: HTMLElement, suggestions: Suggest[]) {
 
     li.addEventListener("mousedown", (e) => {
       e.preventDefault();
+      // ✅ Позначаємо що є незбережені зміни при виборі з автодоповнення
+      globalCache.isActDirty = true;
       const el = e.currentTarget as HTMLElement;
       const chosenValue = el.dataset.value || value;
       const chosenScladId = Number(el.dataset.scladId) || undefined;

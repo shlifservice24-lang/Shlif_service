@@ -1190,6 +1190,9 @@ export function addNewRow(containerId: string): void {
   );
   tableBody.insertAdjacentHTML("beforeend", newRowHTML);
 
+  // ✅ Позначаємо що є незбережені зміни
+  globalCache.isActDirty = true;
+
   // Focus the new row's Name input
   const lastRow = tableBody.lastElementChild as HTMLElement;
   if (lastRow) {

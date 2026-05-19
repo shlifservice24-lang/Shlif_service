@@ -132,6 +132,7 @@ export interface GlobalDataCache {
   skladLite: SkladLiteRow[];
   oldNumbers: Map<number, number>;
   initialActItems: ActItem[];
+  isActDirty: boolean; // ✅ Прапор: чи є незбережені зміни в акті
   generalSettings: GeneralSettings; // Загальні налаштування СТО
 }
 
@@ -156,6 +157,7 @@ export const globalCache: GlobalDataCache = {
   skladLite: [],
   oldNumbers: new Map<number, number>(),
   initialActItems: [],
+  isActDirty: false,
   generalSettings: {
     stoName: "B.S.Motorservice",
     address: "вул. Корольова, 6, Вінниця",

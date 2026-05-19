@@ -916,6 +916,9 @@ export async function showModal(
     }
 
     showNotification("Дані успішно завантажено", "success", 1500);
+
+    // ✅ Скидаємо прапор змін після завантаження
+    globalCache.isActDirty = false;
   } catch (error) {
     console.error("💥 Критична помилка при завантаженні акту:", error);
     showNotification(`Критична помилка завантаження акту`, "error");
@@ -1687,6 +1690,9 @@ function handleInputChange(event: Event): void {
     showNotification("Неможливо редагувати закритий акт", "warning", 1000);
     return;
   }
+
+  // ✅ Позначаємо що є незбережені зміни
+  globalCache.isActDirty = true;
   switch (dataName) {
     case "price":
     case "id_count": {
@@ -2110,6 +2116,20 @@ export async function refreshActTableSilently(actId: number): Promise<void> {
   console.log(
     `🔄 [refreshActTableSilently] Тихе оновлення таблиці акту #${actId}...`,
   );
+
+  // ✅ ВИПРАВЛЕНО: Якщо користувач має незбережені зміни — НЕ замінюємо таблицю,
+  // а тільки показуємо повідомлення. Це запобігає самовільному додаванню чужих робіт.
+  if (globalCache.isActDirty) {
+    console.warn(
+      `⚠️ [refreshActTableSilently] Пропущено: є незбережені зміни (isActDirty=true)`,
+    );
+    showNotification(
+      "⚠️ Інший користувач зберіг зміни в цьому акті. Збережіть свої зміни або перевідкрийте акт.",
+      "warning",
+      5000,
+    );
+    return;
+  }
 
   try {
     // ✅ 0. ВАЖЛИВО: Перезавантажуємо слюсарів з БД, щоб мати актуальні дані з історії (зарплати!)

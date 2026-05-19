@@ -393,24 +393,10 @@ async function syncSlyusarsHistoryForAct(params: {
         }
       }
       
-      // 3. ПРІОРИТЕТ №3: Пошук за частковим збігом назви (для скорочених назв) - НОРМАЛІЗОВАНО
-      if (!sourceForDates && fullWorkName) {
-        const normalizedFullWorkName = normalizeName(fullWorkName);
-        for (const pw of prevWorks) {
-          // Перевіряємо часткове співпадіння (початок назви) - нечутливе до регістру
-          const normalizedPwName = normalizeName(pw.Робота || "");
-          if (normalizedPwName && (normalizedPwName.startsWith(normalizedFullWorkName.substring(0, 30)) || 
-                            normalizedFullWorkName.startsWith(normalizedPwName.substring(0, 30)))) {
-            sourceForDates = pw;
-            console.log(`✅ [save_work] Знайдено за частковим збігом:`, {
-              Записано: sourceForDates?.Записано,
-              Розраховано: sourceForDates?.Розраховано,
-              recordId: sourceForDates?.recordId,
-            });
-            break;
-          }
-        }
-      }
+      // 3. ПРІОРИТЕТ №3 ВИДАЛЕНО: Частковий збіг назви (перші 30 символів) міг
+      // неправильно прив'язувати різні роботи зі схожими назвами, що призводило
+      // до самовільного додавання записів в історію слюсаря.
+      // Тепер пошук працює ТІЛЬКИ за recordId або ТОЧНИМ збігом назви.
       
       if (!sourceForDates) {
         console.log(`⚠️ [save_work] Попередній запис НЕ знайдено - це нова робота`);

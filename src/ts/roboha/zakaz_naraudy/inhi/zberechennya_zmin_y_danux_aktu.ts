@@ -845,8 +845,14 @@ function compareActChanges(
     currentItems,
   );
 
-  // Створюємо унікальний ключ для кожної позиції (тип + назва)
-  const createKey = (item: ParsedItem) => `${item.type}:${item.name}`;
+  // ✅ ВИПРАВЛЕНО: Ключ тепер включає recordId та ПІБ/Магазин для правильного
+  // розрізнення дублікатів робіт (наприклад, "Заміна масла" від різних слюсарів)
+  const createKey = (item: ParsedItem) => {
+    const parts = [item.type, item.name];
+    if (item.pibMagazin) parts.push(item.pibMagazin);
+    if (item.recordId) parts.push(item.recordId);
+    return parts.join(":");
+  };
 
   // Створюємо мапи для швидкого пошуку
   const initialMap = new Map<string, ParsedItem>();
@@ -1937,6 +1943,9 @@ async function saveActData(actId: number, _originalActData: any): Promise<void> 
 
   updateCalculatedSumsInFooter();
   refreshActsTable();
+
+  // ✅ Скидаємо прапор незбережених змін після успішного збереження
+  globalCache.isActDirty = false;
 }
 
 export function addSaveHandler(actId: number, originalActData: any): void {
