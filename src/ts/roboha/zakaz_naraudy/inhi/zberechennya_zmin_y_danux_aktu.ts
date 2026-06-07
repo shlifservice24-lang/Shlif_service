@@ -845,43 +845,67 @@ function compareActChanges(
     currentItems,
   );
 
-  // ✅ ВИПРАВЛЕНО: Ключ тепер включає recordId та ПІБ/Магазин для правильного
-  // розрізнення дублікатів робіт (наприклад, "Заміна масла" від різних слюсарів)
+  // ✅ ВИПРАВЛЕНО: Ключ включає ПІБ/Магазин для розрізнення дублікатів робіт
+  // (наприклад, "Заміна масла" від різних слюсарів).
+  // recordId НАВМИСНО НЕ включається в ключ, бо:
+  // - initialActItems можуть не мати recordId (старі записи)
+  // - currentItems отримують НОВИЙ згенерований recordId в processItems()
+  // Це призводило до того, що одна і та ж робота вважалася одночасно
+  // "видаленою" (старий ключ без recordId) і "доданою" (новий ключ з recordId),
+  // що створювало фантомні дублікати в act_changes_notifications.
   const createKey = (item: ParsedItem) => {
     const parts = [item.type, item.name];
     if (item.pibMagazin) parts.push(item.pibMagazin);
-    if (item.recordId) parts.push(item.recordId);
     return parts.join(":");
   };
 
-  // Створюємо мапи для швидкого пошуку
-  const initialMap = new Map<string, ParsedItem>();
-  const currentMap = new Map<string, ParsedItem>();
+  // Для випадків коли є дублікати робіт з однаковою назвою від одного слюсаря,
+  // використовуємо лічильники: Map<ключ, кількість>
+  const initialCounts = new Map<string, number>();
+  const currentCounts = new Map<string, number>();
 
   initialParsed.forEach((item) => {
-    initialMap.set(createKey(item), item);
+    const key = createKey(item);
+    initialCounts.set(key, (initialCounts.get(key) || 0) + 1);
   });
 
-  currentItems.forEach((item) => {
-    currentMap.set(createKey(item), item);
-  });
-
-  // Знаходимо додані позиції (є в current, немає в initial)
-  const added: ParsedItem[] = [];
   currentItems.forEach((item) => {
     const key = createKey(item);
-    if (!initialMap.has(key)) {
+    currentCounts.set(key, (currentCounts.get(key) || 0) + 1);
+  });
+
+  // Знаходимо додані позиції: ті, що є в current більше разів ніж в initial
+  const added: ParsedItem[] = [];
+  const addedCounts = new Map<string, number>();
+
+  currentItems.forEach((item) => {
+    const key = createKey(item);
+    const countInInitial = initialCounts.get(key) || 0;
+    const alreadyAdded = addedCounts.get(key) || 0;
+    const countInCurrent = currentCounts.get(key) || 0;
+
+    // Додаємо тільки якщо в current є БІЛЬШЕ екземплярів ніж в initial
+    if (countInCurrent > countInInitial && alreadyAdded < (countInCurrent - countInInitial)) {
       added.push(item);
+      addedCounts.set(key, alreadyAdded + 1);
       console.log(`➕ [compareActChanges] Додано: ${key}`, item);
     }
   });
 
-  // Знаходимо видалені позиції (є в initial, немає в current)
+  // Знаходимо видалені позиції: ті, що є в initial більше разів ніж в current
   const deleted: ParsedItem[] = [];
+  const deletedCounts = new Map<string, number>();
+
   initialParsed.forEach((item) => {
     const key = createKey(item);
-    if (!currentMap.has(key)) {
+    const countInCurrent = currentCounts.get(key) || 0;
+    const alreadyDeleted = deletedCounts.get(key) || 0;
+    const countInInitial = initialCounts.get(key) || 0;
+
+    // Видаляємо тільки якщо в initial є БІЛЬШЕ екземплярів ніж в current
+    if (countInInitial > countInCurrent && alreadyDeleted < (countInInitial - countInCurrent)) {
       deleted.push(item);
+      deletedCounts.set(key, alreadyDeleted + 1);
       console.log(`➖ [compareActChanges] Видалено: ${key}`, item);
     }
   });
@@ -1728,9 +1752,14 @@ async function saveActData(actId: number, _originalActData: any): Promise<void> 
     freshActData = _originalActData || {};
   }
 
-  // ✅ ВИПРАВЛЕНО БАГ №3: Оновлюємо кеш прихованих стовпців свіжими даними з БД
-  // Раніше кеш заповнювався тільки при відкритті модалки і ставав застарілим
-  cacheHiddenColumnsData(freshActData);
+  // ✅ ВИПРАВЛЕНО: НЕ перезаписуємо кеш під час збереження.
+  // cacheHiddenColumnsData(freshActData) тут спричиняв критичний баг:
+  // Свіжі дані з БД могли містити інший порядок/кількість рядків ніж в DOM,
+  // що призводило до неправильного збігу кешованих даних з рядками таблиці.
+  // В результаті роботи класифікувалися як запчастини, суми дублювалися,
+  // і програма "дописувала" зайві записи.
+  // Кеш заповнюється правильно при ВІДКРИТТІ акту (modalMain.ts),
+  // і parseTableRows() використовує його як fallback для прихованих стовпців.
 
   // Завантажуємо закупівельні ціни перед обробкою
   await loadPurchasePrices();
