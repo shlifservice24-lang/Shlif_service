@@ -7,7 +7,6 @@ import {
   globalCache,
   loadGlobalData,
   ACT_ITEMS_TABLE_CONTAINER_ID,
-  ZAKAZ_NARAYD_SAVE_BTN_ID, // <-- Імпортуємо ID кнопки збереження
 } from "../globalCache";
 import { refreshActsTable } from "../../tablucya/tablucya";
 import {
@@ -22,6 +21,8 @@ import {
   recordSlusarCompletion,
   hideSlusarNotificationsForAct,
 } from "./slusar_notification_tracker";
+import { formatLocalDateTimeForDB } from "./formatuvannya_datu";
+import { saveActData } from "./zberechennya_zmin_y_danux_aktu";
 
 // Імпортуємо функцію показу модального вікна
 import { showModal } from "../modalMain";
@@ -1086,13 +1087,19 @@ export function initStatusLockDelegation(): void {
 
         // 3️⃣ Автозбереження перед закриттям
         console.log("Автоматичне збереження перед закриттям...");
-        (
-          document.getElementById(ZAKAZ_NARAYD_SAVE_BTN_ID) as HTMLButtonElement
-        )?.click();
+        showNotification("Зберігаємо актуальні зміни перед закриттям...", "info");
+        await saveActData(actId, {});
+
+        try {
+          const { notifyActSaved } = await import("../actPresence");
+          await notifyActSaved(actId);
+        } catch (notifyErr) {
+          console.warn("Помилка відправки сповіщення після автозбереження:", notifyErr);
+        }
 
         // 4️⃣ Вікно підтвердження закриття (як в адміна, з попередженнями)
-        const confirmed = await showViknoPidtverdchennayZakruttiaAkty(actId);
-        if (!confirmed) {
+        const selectedPaymentType = await showViknoPidtverdchennayZakruttiaAkty(actId);
+        if (!selectedPaymentType) {
           showNotification("Скасовано закриття акту", "warning");
           btn.disabled = false;
           return;
@@ -1111,7 +1118,7 @@ export function initStatusLockDelegation(): void {
             "Не вдалося отримати записи складу: " + scladError.message
           );
 
-        const currentDateTime = new Date().toISOString();
+        const currentDateTime = formatLocalDateTimeForDB(new Date());
 
         if (scladRows && scladRows.length > 0) {
           const { error: updateScladError } = await supabase
@@ -1128,6 +1135,7 @@ export function initStatusLockDelegation(): void {
           .from("acts")
           .update({
             date_off: currentDateTime,
+            tupOplatu: selectedPaymentType,
             slusarsOn: false, // ✅ АВТОМАТИЧНЕ СКИДАННЯ slusarsOn ПРИ ЗАКРИТТІ АКТУ
           })
           .eq("act_id", actId);

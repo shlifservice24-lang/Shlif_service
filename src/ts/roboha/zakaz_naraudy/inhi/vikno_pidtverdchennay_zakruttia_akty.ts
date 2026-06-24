@@ -1,11 +1,8 @@
 // src/ts/roboha/zakaz_naraudy/inhi/vikno_pidtverdchennay_zakruttia_akty.ts
 
 import { showNotification } from "./vspluvauhe_povidomlenna";
-import { closeActAndMarkSlyusars } from "./save_work";
-import { refreshActsTable } from "../../tablucya/tablucya";
 import { ACT_ITEMS_TABLE_CONTAINER_ID } from "../globalCache";
 import { userAccessLevel } from "../../tablucya/users";
-import { supabase } from "../../../vxid/supabaseClient";
 
 export const viknoPidtverdchennayZakruttiaAktyId =
   "vikno_pidtverdchennay_zakruttia_akty-modal";
@@ -82,7 +79,7 @@ function checkForWarnings(): boolean {
  */
 export function showViknoPidtverdchennayZakruttiaAkty(
   actId: number
-): Promise<boolean> {
+): Promise<string | null> {
   return new Promise((resolve) => {
     const modal = ensureModalMounted();
 
@@ -188,11 +185,14 @@ export function showViknoPidtverdchennayZakruttiaAkty(
     if (!confirmBtn || !cancelBtn) {
       console.error("Кнопки підтвердження/скасування не знайдені");
       modal.style.display = "none";
-      return resolve(false);
+      return resolve(null);
     }
+
+    confirmBtn.disabled = false;
 
     const cleanup = () => {
       modal.style.display = "none";
+      confirmBtn.disabled = false;
       confirmBtn.removeEventListener("click", onConfirm);
       cancelBtn.removeEventListener("click", onCancel);
       // Event listeners for inputs do not strongly leak since modal persists, but ideally could be cleaned.
@@ -200,7 +200,7 @@ export function showViknoPidtverdchennayZakruttiaAkty(
 
     const onCancel = () => {
       cleanup();
-      resolve(false);
+      resolve(null);
     };
 
     const onConfirm = async () => {
@@ -238,44 +238,12 @@ export function showViknoPidtverdchennayZakruttiaAkty(
 
         console.log(`💳 Обрано тип оплати: ${selectedPaymentType}`);
 
-        showNotification("Закриваємо акт...", "info", 1200);
-
-        // Основне закриття акту + розмітка слюсарів
-        await closeActAndMarkSlyusars(actId);
-
-        // Зберігаємо тип оплати в acts.tupOplatu
-        const { error: updatePaymentError } = await supabase
-          .from("acts")
-          .update({ tupOplatu: selectedPaymentType })
-          .eq("act_id", actId);
-
-        if (updatePaymentError) {
-          console.error(
-            "❌ Помилка збереження типу оплати:",
-            updatePaymentError
-          );
-        } else {
-          console.log(
-            `✅ Тип оплати "${selectedPaymentType}" збережено для акту ${actId}`
-          );
-        }
-
-        // SMS відправка видалена звідси за запитом користувача
-
-        await refreshActsTable();
         cleanup();
-
-        if (hasWarnings) {
-          showNotification("Акт закрито (з попередженнями)", "warning", 2500);
-        } else {
-          showNotification("Акт успішно закрито", "success", 2000);
-        }
-
-        resolve(true);
+        resolve(selectedPaymentType);
       } catch (e: any) {
         console.error(e);
         showNotification(
-          "Помилка при закритті акту: " + (e?.message || e),
+          "Помилка при підтвердженні закриття акту: " + (e?.message || e),
           "error",
           2500
         );

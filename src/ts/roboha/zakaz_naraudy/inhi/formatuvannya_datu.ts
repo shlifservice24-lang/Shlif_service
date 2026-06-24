@@ -26,9 +26,28 @@ export const formatDate = (dateString: string | null): string | null => {
   if (!dateString) {
     return null;
   }
-  // Створюємо Date об'єкт з рядка.
-  // НЕ ДОДАЄМО 'Z', оскільки рядок з БД вже є локальним часом.
-  const date = new Date(dateString);
+
+  const value = String(dateString).trim();
+  const hasExplicitTimezone = /(?:z|[+-]\d{2}:?\d{2})$/i.test(value);
+  const localMatch = value.match(
+    /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/,
+  );
+
+  const date =
+    localMatch && !hasExplicitTimezone
+      ? new Date(
+          Number(localMatch[1]),
+          Number(localMatch[2]) - 1,
+          Number(localMatch[3]),
+          Number(localMatch[4]),
+          Number(localMatch[5]),
+          Number(localMatch[6] || 0),
+        )
+      : new Date(value);
+
+  if (isNaN(date.getTime())) {
+    return value;
+  }
 
   return date.toLocaleString("uk-UA", {
     day: "2-digit",

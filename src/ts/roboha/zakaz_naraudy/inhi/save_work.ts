@@ -3,6 +3,7 @@ import { supabase } from "../../../vxid/supabaseClient";
 import { showNotification } from "./vspluvauhe_povidomlenna";
 import { globalCache, ACT_ITEMS_TABLE_CONTAINER_ID } from "../globalCache";
 import { safeParseJSON } from "./ctvorennia_papku_googleDrive.";
+import { formatLocalDateTimeForDB } from "./formatuvannya_datu";
 
 /* ===================== ХЕЛПЕРИ ДЛЯ SLYUSARS ===================== */
 
@@ -630,12 +631,12 @@ export async function syncSlyusarsOnActSave(
 export async function closeActAndMarkSlyusars(actId: number): Promise<void> {
   try {
     const now = new Date();
-    const nowISO = now.toISOString();
+    const nowLocal = formatLocalDateTimeForDB(now);
     const nowDateOnly = toISODateOnly(now)!;
 
     const { error: upErr } = await supabase
       .from("acts")
-      .update({ date_off: nowISO })
+      .update({ date_off: nowLocal })
       .eq("act_id", actId);
     if (upErr)
       throw new Error(

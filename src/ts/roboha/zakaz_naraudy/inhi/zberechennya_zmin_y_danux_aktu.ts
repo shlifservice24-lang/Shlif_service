@@ -203,6 +203,154 @@ const parseNum = (s?: string | null): number => {
 const getCellText = (el?: HTMLElement | null): string =>
   cleanText(el?.textContent);
 
+const normalizeMergeText = (value: unknown): string =>
+  String(value ?? "")
+    .replace(/\u00A0/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+
+function buildLegacyMergeBase(item: ParsedItem | ActItem): string {
+  const type = item.type;
+  const name = "name" in item ? item.name : "";
+  const catalog = "catalog" in item ? item.catalog : "";
+  const person =
+    "pibMagazin" in item ? item.pibMagazin : item.person_or_store || "";
+  const scladId = item.sclad_id;
+  const slyusarId = item.slyusar_id;
+
+  return [
+    type,
+    "legacy",
+    normalizeMergeText(name),
+    normalizeMergeText(person),
+    normalizeMergeText(catalog),
+    scladId ?? "",
+    slyusarId ?? "",
+  ].join(":");
+}
+
+function keyItemsForMerge<T extends ParsedItem | ActItem>(
+  items: T[],
+): Array<{ key: string; item: T }> {
+  const legacyCounts = new Map<string, number>();
+
+  return items.map((item) => {
+    if (item.recordId) {
+      return { key: `${item.type}:id:${item.recordId}`, item };
+    }
+
+    const base = buildLegacyMergeBase(item);
+    const index = legacyCounts.get(base) ?? 0;
+    legacyCounts.set(base, index + 1);
+    return { key: `${base}:${index}`, item };
+  });
+}
+
+function actDataToParsedItems(actData: any): ParsedItem[] {
+  const details = Array.isArray(actData?.["Деталі"]) ? actData["Деталі"] : [];
+  const works = Array.isArray(actData?.["Роботи"]) ? actData["Роботи"] : [];
+
+  return [
+    ...details.map(
+      (d: any): ParsedItem => ({
+        type: "detail",
+        name: d?.["Деталь"] || "",
+        quantity: Number(d?.["Кількість"]) || 0,
+        price: Number(d?.["Ціна"]) || 0,
+        sum: Number(d?.["Сума"]) || 0,
+        pibMagazin: d?.["Магазин"] || "",
+        catalog: d?.["Каталог"] || "",
+        sclad_id: d?.["sclad_id"] ?? null,
+        slyusar_id: null,
+        slyusarSum: 0,
+        recordId: d?.recordId,
+      }),
+    ),
+    ...works.map(
+      (w: any): ParsedItem => ({
+        type: "work",
+        name: w?.["Робота"] || "",
+        quantity: Number(w?.["Кількість"]) || 0,
+        price: Number(w?.["Ціна"]) || 0,
+        sum: Number(w?.["Сума"]) || 0,
+        pibMagazin: w?.["Слюсар"] || "",
+        catalog: w?.["Каталог"] || "",
+        sclad_id: null,
+        slyusar_id: w?.["slyusar_id"] ?? null,
+        slyusarSum: Number(w?.["Зарплата"]) || 0,
+        recordId: w?.recordId,
+      }),
+    ),
+  ].filter((item) => item.name.trim() !== "");
+}
+
+function mergeCurrentItemsWithFreshActData(params: {
+  freshActData: any;
+  currentItems: ParsedItem[];
+  initialItems: ActItem[];
+}): ParsedItem[] {
+  const keyedFresh = keyItemsForMerge(actDataToParsedItems(params.freshActData));
+  const keyedCurrent = keyItemsForMerge(params.currentItems);
+  const keyedInitial = keyItemsForMerge(params.initialItems);
+
+  const currentByKey = new Map(
+    keyedCurrent.map((entry) => [entry.key, entry.item]),
+  );
+  const freshKeys = new Set(keyedFresh.map((entry) => entry.key));
+  const initialKeys = new Set(keyedInitial.map((entry) => entry.key));
+  const usedCurrentKeys = new Set<string>();
+  const merged: ParsedItem[] = [];
+
+  for (const { key, item: freshItem } of keyedFresh) {
+    const currentItem = currentByKey.get(key);
+
+    if (currentItem) {
+      merged.push({
+        ...currentItem,
+        recordId: currentItem.recordId || freshItem.recordId,
+      });
+      usedCurrentKeys.add(key);
+      continue;
+    }
+
+    if (initialKeys.has(key)) {
+      console.log(
+        `🗑️ [mergeActItems] Рядок видалено користувачем: ${freshItem.name}`,
+      );
+      continue;
+    }
+
+    merged.push(freshItem);
+  }
+
+  for (const { key, item } of keyedCurrent) {
+    if (!usedCurrentKeys.has(key) && !freshKeys.has(key)) {
+      merged.push(item);
+    }
+  }
+
+  console.log(
+    `🔀 [mergeActItems] fresh=${keyedFresh.length}, current=${keyedCurrent.length}, merged=${merged.length}`,
+  );
+
+  return merged;
+}
+
+function updateOldNumbersFromDetails(details: any[]): void {
+  globalCache.oldNumbers = new Map<number, number>();
+  for (const d of details || []) {
+    const id = Number(d?.sclad_id);
+    const qty = Number(d?.["Кількість"] ?? 0);
+    if (id) {
+      globalCache.oldNumbers.set(
+        id,
+        (globalCache.oldNumbers.get(id) || 0) + qty,
+      );
+    }
+  }
+}
+
 /**
  * Отримує назву з комірки, перевіряючи спочатку атрибут data-full-name.
  * Якщо назва скорочена (є атрибут), повертає повну назву.
@@ -726,13 +874,17 @@ function processItems(items: ParsedItem[]) {
 
       totalDetailsMargin += margin;
 
+      const detailRecordId =
+        recordId ||
+        `new_detail_${name.substring(0, 20)}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
       details.push({
         ...itemBase,
         Деталь: name,
         Магазин: pibMagazin,
         Каталог: catalog,
         sclad_id,
-        recordId, // ✅ Додаємо recordId для acts
+        recordId: detailRecordId, // ✅ Завжди є recordId для захисту від перезапису
       });
       totalDetailsSum += sum;
 
@@ -744,7 +896,7 @@ function processItems(items: ParsedItem[]) {
           Каталог: catalog || null,
           Кількість: quantity,
           Ціна: price,
-          recordId, // ✅ Передаємо recordId для історії магазину
+          recordId: detailRecordId, // ✅ Передаємо recordId для історії магазину
         });
       }
       if (sclad_id) newScladIds.add(sclad_id);
@@ -1723,7 +1875,10 @@ async function savePruimalnykToActs(actId: number): Promise<void> {
   }
 }
 
-async function saveActData(actId: number, _originalActData: any): Promise<void> {
+export async function saveActData(
+  actId: number,
+  _originalActData: any = {},
+): Promise<void> {
   if (globalCache.isActClosed) {
     throw new Error("Неможливо редагувати закритий акт");
   }
@@ -1786,14 +1941,19 @@ async function saveActData(actId: number, _originalActData: any): Promise<void> 
       document.getElementById(EDITABLE_NOTE_ID) as HTMLElement
     )?.innerText?.trim() || "";
 
-  const items = parseTableRows();
+  const currentItems = parseTableRows();
+  const items = mergeCurrentItemsWithFreshActData({
+    freshActData,
+    currentItems,
+    initialItems: globalCache.initialActItems || [],
+  });
 
   // ⚠️ ПЕРЕВІРКА ДЛЯ СЛЮСАРЯ: він може зберігати зміни тільки в своїх рядках
   if (userAccessLevel === "Слюсар" && userName) {
     const originalItems = freshActData?.actItems || [];
 
     // Перевіряємо, чи слюсар намагається змінити існуючі рядки
-    for (const item of items) {
+    for (const item of currentItems) {
       // Знаходимо оригінальний рядок
       const originalItem = originalItems.find(
         (orig: any) =>
@@ -1944,7 +2104,6 @@ async function saveActData(actId: number, _originalActData: any): Promise<void> 
 
   // ===== ЛОГУВАННЯ ЗМІН =====
   try {
-    const currentItems = items;
     const { added, deleted } = compareActChanges(
       globalCache.initialActItems || [],
       currentItems,
@@ -1956,25 +2115,35 @@ async function saveActData(actId: number, _originalActData: any): Promise<void> 
   }
   // =====================================
 
-  globalCache.oldNumbers = readTableNewNumbers();
   updateInitialActItems(details, works);
+  updateOldNumbersFromDetails(details);
 
   // ✅ ВИПРАВЛЕНО: Інвалідуємо кеш перед завантаженням, щоб отримати свіжі дані з БД
   // Це вирішує проблему, коли після збереження акту і повторного відкриття
   // без перезавантаження сторінки дані зарплати не оновлювалися
   invalidateGlobalDataCache();
 
-  await Promise.all([
-    loadGlobalData(),
-    refreshQtyWarningsIn(ACT_ITEMS_TABLE_CONTAINER_ID),
-    cleanupEmptyRows(),
-  ]);
+  // ✅ Скидаємо прапор до тихого оновлення, щоб DOM підтягнув merged-стан з БД.
+  globalCache.isActDirty = false;
+
+  await loadGlobalData();
+
+  try {
+    const { refreshActTableSilently } = await import("../modalMain");
+    await refreshActTableSilently(actId);
+  } catch (refreshError) {
+    console.warn(
+      "⚠️ Не вдалося тихо оновити таблицю після збереження, виконуємо базове оновлення:",
+      refreshError,
+    );
+    await Promise.all([
+      refreshQtyWarningsIn(ACT_ITEMS_TABLE_CONTAINER_ID),
+      cleanupEmptyRows(),
+    ]);
+  }
 
   updateCalculatedSumsInFooter();
   refreshActsTable();
-
-  // ✅ Скидаємо прапор незбережених змін після успішного збереження
-  globalCache.isActDirty = false;
 }
 
 export function addSaveHandler(actId: number, originalActData: any): void {
@@ -1987,6 +2156,9 @@ export function addSaveHandler(actId: number, originalActData: any): void {
   saveButton.parentNode?.replaceChild(newSaveButton, saveButton);
 
   newSaveButton.addEventListener("click", async () => {
+    if (newSaveButton.disabled) return;
+    newSaveButton.disabled = true;
+
     try {
       await saveActData(actId, originalActData);
 
@@ -2005,6 +2177,10 @@ export function addSaveHandler(actId: number, originalActData: any): void {
         `Помилка збереження даних: ${err?.message || err}`,
         "error",
       );
+    } finally {
+      if (!globalCache.isActClosed) {
+        newSaveButton.disabled = false;
+      }
     }
   });
 }
