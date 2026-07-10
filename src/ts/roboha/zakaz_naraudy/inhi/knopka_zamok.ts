@@ -886,6 +886,20 @@ export function initStatusLockDelegation(): void {
           return;
         }
 
+        console.log("Автоматичне збереження перед зміною slusarsOn...");
+        showNotification("Зберігаємо актуальні зміни перед ключем...", "info");
+        await saveActData(actId, {});
+
+        try {
+          const { notifyActSaved } = await import("../actPresence");
+          await notifyActSaved(actId);
+        } catch (notifyErr) {
+          console.warn(
+            "Помилка відправки сповіщення після автозбереження слюсаря:",
+            notifyErr
+          );
+        }
+
         // Запис в базу даних
         const newSlusarsOn = !currentSlusarsOn;
         const { error: updateError } = await supabase

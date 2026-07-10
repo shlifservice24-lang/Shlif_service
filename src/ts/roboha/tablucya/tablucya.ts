@@ -70,6 +70,19 @@ function safeParseJSON(data: any): any {
   return data;
 }
 
+function getActPayload(act: any): any {
+  for (const source of [act?.data, act?.info, act?.details]) {
+    const parsed = safeParseJSON(source);
+    if (!parsed || typeof parsed !== "object") continue;
+    if (Array.isArray(parsed)) {
+      if (parsed.length > 0) return parsed;
+      continue;
+    }
+    if (Object.keys(parsed).length > 0) return parsed;
+  }
+  return {};
+}
+
 function formatDate(date: Date): string {
   return `${date.getDate().toString().padStart(2, "0")}.${(date.getMonth() + 1)
     .toString()
@@ -803,7 +816,7 @@ function getCarInfo(act: any, cars: any[]): { number: string; name: string } {
 }
 
 function getActAmount(act: any): number {
-  const actData = safeParseJSON(act.info || act.data || act.details);
+  const actData = getActPayload(act);
   const rawAmount =
     actData?.["Загальна сума"] ||
     actData?.["total"] ||
@@ -816,14 +829,14 @@ function getActAmount(act: any): number {
 
 // Отримуємо відсоток знижки з акту
 function getActDiscount(act: any): number {
-  const actData = safeParseJSON(act.info || act.data || act.details);
+  const actData = getActPayload(act);
   const discount = Number(actData?.["Знижка"]) || 0;
   return discount;
 }
 
 // Отримуємо повну суму ДО знижки (За деталі + За роботу)
 function getActFullAmount(act: any): number {
-  const actData = safeParseJSON(act.info || act.data || act.details);
+  const actData = getActPayload(act);
   const detailsSum = Number(actData?.["За деталі"]) || 0;
   const workSum = Number(actData?.["За роботу"]) || 0;
   return detailsSum + workSum;
@@ -853,7 +866,7 @@ async function handleCallIndicatorClick(
 ): Promise<void> {
   try {
     // Отримуємо поточні дані акту
-    const actData = safeParseJSON(act.info || act.data || act.details);
+    const actData = getActPayload(act);
     const currentCallData = actData?.["Дзвінок"] || "";
 
     // Визначаємо наступний стан
@@ -888,7 +901,7 @@ async function handleCallIndicatorClick(
     // Зберігаємо в базу даних
     const { error } = await supabase
       .from("acts")
-      .update({ data: actData })
+      .update({ data: actData, info: actData })
       .eq("act_id", actId);
 
     if (error) {
@@ -982,7 +995,7 @@ function createClientCell(
   let pibOnly = clientInfo.pib;
 
   // Отримуємо дані про дзвінок з акту
-  const actData = safeParseJSON(act.info || act.data || act.details);
+  const actData = getActPayload(act);
   const callData = actData?.["Дзвінок"] || "";
   const noteData = actData?.["Примітка"] || "";
 
@@ -1263,7 +1276,7 @@ function createSumCell(act: any, actId: number): HTMLTableCellElement {
   const fullAmount = getActFullAmount(act); // Повна сума ДО знижки (За деталі + За роботу)
 
   // ✅ ВИПРАВЛЕНО: Отримуємо суму робіт та деталей окремо
-  const actData = safeParseJSON(act.info || act.data || act.details);
+  const actData = getActPayload(act);
   const detailsSum = Number(actData?.["За деталі"]) || 0;
   const workSum = Number(actData?.["За роботу"]) || 0;
 

@@ -71,6 +71,19 @@ import { removeNotificationsForAct } from "../tablucya/povidomlennya_tablucya";
 import { handleSmsButtonClick } from "../sms/sendActSMS";
 import { refreshActsTable } from "../tablucya/tablucya";
 
+function parseActDetailsPayload(...sources: any[]): any {
+  for (const source of sources) {
+    const parsed = safeParseJSON(source);
+    if (!parsed || typeof parsed !== "object") continue;
+    if (Array.isArray(parsed)) {
+      if (parsed.length > 0) return parsed;
+      continue;
+    }
+    if (Object.keys(parsed).length > 0) return parsed;
+  }
+  return {};
+}
+
 function initDeleteRowHandler(): void {
   const body = document.getElementById(ZAKAZ_NARAYD_BODY_ID);
   if (!body) return;
@@ -816,7 +829,7 @@ export async function showModal(
       fetchCarData(act.cars_id),
     ]);
 
-    const actDetails = safeParseJSON(act.info || act.data || act.details) || {};
+    const actDetails = parseActDetailsPayload(act.data, act.info, act.details);
 
     cacheHiddenColumnsData(actDetails);
     globalCache.oldNumbers = new Map<number, number>();
@@ -1225,9 +1238,6 @@ function renderModalContent(
   const isClosed = globalCache.isActClosed;
   const isRestricted = userAccessLevel === "Слюсар";
 
-  const showCatalog = globalCache.settings.showCatalog;
-  const showPibMagazin = globalCache.settings.showPibMagazin;
-
   const clientInfo = {
     fio: clientData?.["ПІБ"] || clientData?.fio || "—",
     phone: clientData?.["Телефон"] || clientData?.phone || "—",
@@ -1254,7 +1264,7 @@ function renderModalContent(
 
   const allItems = [
     ...(actDetails?.["Деталі"] || []).map((item: any) => {
-      const shopName = showPibMagazin ? item["Магазин"] || "" : "";
+      const shopName = item["Магазин"] || "";
       const detailName = item["Деталь"] || "";
 
       // ✅ Визначаємо індекс деталі для цього магазину
@@ -1272,14 +1282,14 @@ function renderModalContent(
         price: item["Ціна"] || 0,
         sum: item["Сума"] || 0,
         person_or_store: shopName,
-        catalog: showCatalog ? item["Каталог"] || "" : "",
-        sclad_id: showCatalog ? item["sclad_id"] || null : null,
+        catalog: item["Каталог"] || "",
+        sclad_id: item["sclad_id"] || null,
         slyusar_id: null,
         recordId, // ✅ Додаємо recordId для деталей
       };
     }),
     ...(actDetails?.["Роботи"] || []).map((item: any) => {
-      const slyusarName = showPibMagazin ? item["Слюсар"] || "" : "";
+      const slyusarName = item["Слюсар"] || "";
       const workName = item["Робота"] || "";
 
       // ✅ Визначаємо індекс роботи для цього слюсаря
@@ -1301,8 +1311,8 @@ function renderModalContent(
         price: item["Ціна"] || 0,
         sum: item["Сума"] || 0,
         person_or_store: slyusarName,
-        catalog: showCatalog ? item["Каталог"] || "" : "",
-        sclad_id: showCatalog ? null : null,
+        catalog: item["Каталог"] || "",
+        sclad_id: null,
         slyusar_id: item["slyusar_id"] || null,
         recordId, // ✅ Додаємо recordId для точного пошуку при збереженні
       };
@@ -2149,7 +2159,8 @@ export async function refreshActTableSilently(actId: number): Promise<void> {
     }
 
     // 2. Парсимо деталі акту
-    const actDetails = safeParseJSON(act.info || act.data || act.details) || {};
+    const actDetails = parseActDetailsPayload(act.data, act.info, act.details);
+    cacheHiddenColumnsData(actDetails);
 
     // 3. Знаходимо контейнер таблиці
     const tableContainer = document.getElementById(
@@ -2210,7 +2221,7 @@ export async function refreshActTableSilently(actId: number): Promise<void> {
     // 6. Формуємо нові дані
     const allItems = [
       ...(actDetails?.["Деталі"] || []).map((item: any) => {
-        const shopName = showPibMagazin ? item["Магазин"] || "" : "";
+        const shopName = item["Магазин"] || "";
         const detailName = item["Деталь"] || "";
         const shopKey = shopName.toLowerCase();
         const detailIndex = shopDetailIndexMap.get(shopKey) ?? 0;
@@ -2224,14 +2235,14 @@ export async function refreshActTableSilently(actId: number): Promise<void> {
           price: item["Ціна"] || 0,
           sum: item["Сума"] || 0,
           person_or_store: shopName,
-          catalog: showCatalog ? item["Каталог"] || "" : "",
-          sclad_id: showCatalog ? item["sclad_id"] || null : null,
+          catalog: item["Каталог"] || "",
+          sclad_id: item["sclad_id"] || null,
           slyusar_id: null,
           recordId,
         };
       }),
       ...(actDetails?.["Роботи"] || []).map((item: any) => {
-        const slyusarName = showPibMagazin ? item["Слюсар"] || "" : "";
+        const slyusarName = item["Слюсар"] || "";
         const workName = item["Робота"] || "";
         const slyusarKey = slyusarName.toLowerCase();
         const workIndex = slyusarWorkIndexMap.get(slyusarKey) ?? 0;
@@ -2254,7 +2265,7 @@ export async function refreshActTableSilently(actId: number): Promise<void> {
           price: item["Ціна"] || 0,
           sum: item["Сума"] || 0,
           person_or_store: slyusarName,
-          catalog: showCatalog ? item["Каталог"] || "" : "",
+          catalog: item["Каталог"] || "",
           sclad_id: null,
           slyusar_id: item["slyusar_id"] || null,
           recordId,

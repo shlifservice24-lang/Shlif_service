@@ -200,6 +200,30 @@ const parseNum = (s?: string | null): number => {
   return isFinite(n) ? n : 0;
 };
 
+function parseActPayloadValue(source: any): any {
+  if (typeof source === "string") {
+    try {
+      return JSON.parse(source);
+    } catch {
+      return null;
+    }
+  }
+  return source;
+}
+
+function pickActPayload(...sources: any[]): any {
+  for (const source of sources) {
+    const parsed = parseActPayloadValue(source);
+    if (!parsed || typeof parsed !== "object") continue;
+    if (Array.isArray(parsed)) {
+      if (parsed.length > 0) return parsed;
+      continue;
+    }
+    if (Object.keys(parsed).length > 0) return parsed;
+  }
+  return {};
+}
+
 const getCellText = (el?: HTMLElement | null): string =>
   cleanText(el?.textContent);
 
@@ -440,12 +464,25 @@ function readTableNewNumbers(): Map<number, number> {
     `#${ACT_ITEMS_TABLE_CONTAINER_ID} tbody tr`,
   );
   const numberMap = new Map<number, number>();
+  const typeIndexCounters: Record<"detail" | "work", number> = {
+    detail: 0,
+    work: 0,
+  };
 
   tableRows.forEach((row) => {
     const nameCell = row.querySelector(
       '[data-name="name"]',
     ) as HTMLElement | null;
-    if (!nameCell?.textContent?.trim()) return;
+    const name = getNameCellText(nameCell);
+    if (!name) return;
+
+    const typeFromCell = nameCell?.getAttribute("data-type");
+    const type =
+      typeFromCell === "works" || globalCache.works.includes(name)
+        ? "work"
+        : "detail";
+    const typeIndex = typeIndexCounters[type]++;
+    const cachedData = fullRowDataCache.get(`${type}:${typeIndex}:${name}`);
 
     const catalogCell = row.querySelector(
       '[data-name="catalog"]',
@@ -454,13 +491,10 @@ function readTableNewNumbers(): Map<number, number> {
       '[data-name="id_count"]',
     ) as HTMLElement | null;
     const scladIdAttr = catalogCell?.getAttribute("data-sclad-id");
-
-    if (!scladIdAttr) return;
-
-    const sclad_id = Number(scladIdAttr);
+    const sclad_id = scladIdAttr ? Number(scladIdAttr) : cachedData?.sclad_id ?? null;
     const qty = parseNum(qtyCell?.textContent);
 
-    if (!isNaN(sclad_id)) {
+    if (sclad_id && !isNaN(Number(sclad_id))) {
       numberMap.set(sclad_id, (numberMap.get(sclad_id) || 0) + qty);
     }
   });
@@ -613,10 +647,11 @@ export function parseTableRows(): ParsedItem[] {
     }
 
     const scladIdAttr = catalogCell?.getAttribute("data-sclad-id");
-    const sclad_id = scladIdAttr ? Number(scladIdAttr) : null;
-    const slyusar_id = nameCell.getAttribute("data-slyusar-id")
-      ? Number(nameCell.getAttribute("data-slyusar-id"))
-      : null;
+    const sclad_id = scladIdAttr ? Number(scladIdAttr) : cachedData?.sclad_id ?? null;
+    const slyusarIdAttr = nameCell.getAttribute("data-slyusar-id");
+    const slyusar_id = slyusarIdAttr
+      ? Number(slyusarIdAttr)
+      : cachedData?.slyusar_id ?? null;
 
     // 📊 ДІАГНОСТИКА: Логуємо зібрані дані з DOM
     console.log(`📊 [parseTableRows] Рядок DOM:`, {
@@ -1898,8 +1933,7 @@ export async function saveActData(
       console.warn("⚠️ Не вдалося отримати свіжі дані акту з БД, використовуємо оригінальні:", freshError?.message);
       freshActData = _originalActData || {};
     } else {
-      const rawData = freshAct.info || freshAct.data || freshAct.details;
-      freshActData = (typeof rawData === "string" ? JSON.parse(rawData) : rawData) || {};
+      freshActData = pickActPayload(freshAct.data, freshAct.info, freshAct.details);
       console.log("✅ Отримано свіжі дані акту з БД перед збереженням");
     }
   } catch (err) {
@@ -2072,14 +2106,32 @@ export async function saveActData(
 
   showNotification("Збереження змін...", "info");
 
-  // 💾 Збереження даних акту (тільки JSONB, без окремих колонок)
-  const { error: updateError } = await supabase
+  // 💾 Збереження даних акту. Пишемо і в data, і в info, бо старі читачі ще можуть дивитись в info.
+  let updateError: any = null;
+  const updateResult = await supabase
     .from("acts")
     .update({
       data: updatedActData,
+      info: updatedActData,
       avans: avansValue,
     })
     .eq("act_id", actId);
+  updateError = updateResult.error;
+
+  if (updateError) {
+    console.warn(
+      "⚠️ Не вдалося оновити поле info, пробуємо зберегти тільки data:",
+      updateError,
+    );
+    const fallbackUpdate = await supabase
+      .from("acts")
+      .update({
+        data: updatedActData,
+        avans: avansValue,
+      })
+      .eq("act_id", actId);
+    updateError = fallbackUpdate.error;
+  }
 
   if (updateError) {
     throw new Error(`Не вдалося оновити акт: ${updateError.message}`);
