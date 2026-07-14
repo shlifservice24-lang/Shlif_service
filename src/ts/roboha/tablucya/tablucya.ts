@@ -901,7 +901,7 @@ async function handleCallIndicatorClick(
     // Зберігаємо в базу даних
     const { error } = await supabase
       .from("acts")
-      .update({ data: actData, info: actData })
+      .update({ data: actData })
       .eq("act_id", actId);
 
     if (error) {
@@ -936,7 +936,6 @@ async function handleCallIndicatorClick(
     const actIndex = actsGlobal.findIndex((a) => a.act_id === actId);
     if (actIndex !== -1) {
       actsGlobal[actIndex].data = actData;
-      actsGlobal[actIndex].info = actData;
     }
 
     // Показуємо повідомлення

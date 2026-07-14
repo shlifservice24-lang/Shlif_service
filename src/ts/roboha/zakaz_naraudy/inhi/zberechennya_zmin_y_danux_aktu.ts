@@ -2106,32 +2106,15 @@ export async function saveActData(
 
   showNotification("Збереження змін...", "info");
 
-  // 💾 Збереження даних акту. Пишемо і в data, і в info, бо старі читачі ще можуть дивитись в info.
-  let updateError: any = null;
+  // 💾 Збереження даних акту в актуальну колонку data.
   const updateResult = await supabase
     .from("acts")
     .update({
       data: updatedActData,
-      info: updatedActData,
       avans: avansValue,
     })
     .eq("act_id", actId);
-  updateError = updateResult.error;
-
-  if (updateError) {
-    console.warn(
-      "⚠️ Не вдалося оновити поле info, пробуємо зберегти тільки data:",
-      updateError,
-    );
-    const fallbackUpdate = await supabase
-      .from("acts")
-      .update({
-        data: updatedActData,
-        avans: avansValue,
-      })
-      .eq("act_id", actId);
-    updateError = fallbackUpdate.error;
-  }
+  const updateError = updateResult.error;
 
   if (updateError) {
     throw new Error(`Не вдалося оновити акт: ${updateError.message}`);
